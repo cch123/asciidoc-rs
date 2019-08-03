@@ -73,7 +73,7 @@ yaml_front_matter = {
 yaml_front_matter_token  = { "---" ~ EOLS }
 
 yaml_front_matter_content = {
-    ((!yaml_front_matter_token .)+)*
+    ((!yaml_front_matter_token ~ CHAR)+)*
 }
 
 // ------------------------------------------
@@ -89,9 +89,10 @@ document_header = {
 document_authors = {
     document_authors_inline_form
     | document_authors_attribute_form
+}
 
 document_authors_inline_form = {
-    !":" document_author+ EOL
+    !":" ~ document_author+ ~ EOL
 }
 
 document_authors_attribute_form = {
@@ -104,11 +105,11 @@ document_author = {
 
 // "<" marks the beginning of the author email, and ";" is the authors separator
 document_author_name = {
-    (alphanums | (!"<" !";" !NEWLINE .))+
+    (alphanums | (!("<" | ";" | NEWLINE ) ~ CHAR))+
 }
 
 document_author_email = {
-    "<" ~ (alphanums / (!">" !EOL  .))+ ~ ">"
+    "<" ~ (alphanums | (! (">" | EOL ) ~ CHAR))+ ~ ">"
 }
 
 // see http://asciidoctor.org/docs/user-manual/#revision-number-date-and-remark
@@ -156,10 +157,10 @@ document_attribute_declaration = {
 // must begin with a word character (A-Z, a-z, 0-9 or _) and 
 // must only contain word Word and hyphens ("-").
 document_attribute_name = {
-    ([A-Z] | [a-z] | [0-9] | "_") ~ ([A-Z] | [a-z] | [0-9] | "-")*
+    ( ASCII_ALPHANUMERIC | "_") ~ (ASCII_ALPHANUMERIC | "-")*
 }
 
-document_attribute_value = { (!NEWLINE .)+ }
+document_attribute_value = { (!NEWLINE ~ CHAR)+ }
 
 /*
 document_attribute_reset = {
@@ -207,11 +208,11 @@ inline_element_ID = { "[[" ~ ID ~ "]]" ~ WS* }
 
 // a title attached to an element, such as a image_block
 // a title starts with a single "." followed by the value, without space in-between
-element_title = { "." ~ alphanums ~ (alphanums / spaces / (!NEWLINE .))*  ~ EOL }
+element_title = { "." ~ alphanums ~ (alphanums | spaces | (!NEWLINE ~ CHAR))*  ~ EOL }
 
 // a role attached to an element, such as a image_block
 // a role starts is wrapped in "[. ]" 
-element_role = { "[." ~ alphanums ~ (alphanums / spaces / (!NEWLINE !"]" .))* ~ "]" ~ EOLS }
+element_role = { "[." ~ alphanums ~ (alphanums | spaces | (!( NEWLINE | "]" ) ~ CHAR))* ~ "]" ~ EOLS }
 
 literal_attribute = { "[literal]" ~ WS* ~ NEWLINE }
 
@@ -220,7 +221,7 @@ admonition_marker_attribute = { "[" ~ admonition_ind ~ "]" ~ EOLS }
 
 // a paragraph or a delimited block may contain source code in a given language
 source_attributes = {
-    "[source" ~ ","? ~ ((alphanums | spaces | (!NEWLINE !"]" .))+)? ~ "]" ~ EOLS 
+    "[source" ~ ","? ~ ((alphanums | spaces | (!( NEWLINE |"]" ) ~ CHAR))+)? ~ "]" ~ EOLS 
 }
 
 // one or more attributes. eg: [foo, key1=value1, key2 = value2 , ]
@@ -233,14 +234,14 @@ generic_attribute = {
 }
 
 attribute_key = {
-    !"quote" !"verse" !"literal" ~ (alphanums | other_attribute_char)+ ~ WS*
+    !("quote" |"verse" |"literal") ~ (alphanums | other_attribute_char)+ ~ WS*
 }
 
 attribute_value = {
     (alphanums | spaces | other_attribute_char)+ ~ !"="
 }
 
-other_attribute_char = { (!WS !"=" !"," !"]" .) }
+other_attribute_char = { (!(WS |"=" |"," |"]") ~ CHAR) }
 
 horizontal_layout = { "[horizontal]" ~ EOLS }
 
@@ -258,13 +259,14 @@ verse_attributes = {
     ~ "]" ~ EOLS
 }
 
-quote_attribute = { (alphanums | spaces | (!"," !"]" !EOL .))* }
+quote_attribute = { (alphanums | spaces | (! ("," |"]" | EOL) ~  CHAR))* }
 
 inline_attributes = { "[" ~ generic_attribute* ~ "]" }
 
 // ------------------------------------------
 // Sections
 // ------------------------------------------
+/*
 section = { attributes:(element_attributes)?
     level:(("=")+ {   
         // `=` is level 0, etc.
@@ -277,10 +279,11 @@ section = { attributes:(element_attributes)?
     WS+ title:(title_elements) id:(inline_elementID*) EOL {
     return types.NewSection(level.(int), title.(types.inline_elements), id.([]interface{}), attributes) 
 }
+*/
 
 
 title_elements = {
-    (!NEWLINE !inline_elementID title_element)+
+    (! (NEWLINE |inline_element_ID ) ~ title_element)+
 }
 
 title_element = {
@@ -294,13 +297,13 @@ title_element = {
     | quoted_text
     | document_attribute_substitution
     | line_break
-    | other_word)
+    | other_word
 }
 
 // ------------------------------------------
 // table of Contents
 // ------------------------------------------
-table_of_contents_macro = { "toc::[]" EOL }
+table_of_contents_macro = { "toc::[]" ~ EOL }
 
 // ------------------------------------------
 // User Macro
@@ -313,15 +316,16 @@ inline_user_macro = {
     user_macro_name ~ ":" ~ user_macro_value ~ user_macro_attributes
 }
 
-user_macro_name = { ([a-zA-Z0-9] | "_" | "-")+ }
+user_macro_name = { (ASCII_ALPHANUMERIC | "_" | "-")+ }
 
-user_macro_value = { (alphanums / (!":" !"[" !EOL .))* }
+user_macro_value = { (alphanums | (!(":" |"[" |EOL ) ~ CHAR))* }
 
-user_macro_attributes = { "[" generic_attribute* "]" }
+user_macro_attributes = { "[" ~ generic_attribute* ~ "]" }
 
 // ------------------------------------------
 // file inclusions
 // ------------------------------------------
+/*
 file_inclusion = { incl:("include::" path:(file_location) inline_attributes:(fileInclude_attributes) { 
         return types.Newfile_inclusion(path.(types.Location), inline_attributes.(types.element_attributes), string(c.text))
     }) EOLS {
@@ -331,12 +335,14 @@ file_inclusion = { incl:("include::" path:(file_location) inline_attributes:(fil
 file_include_attributes = { "[" attrs:(LineRangesattribute / Genericattribute)* "]" {
     return types.NewInline_attributes(attrs.([]interface{}))
 } 
+*/
 
 line_ranges_attribute = {
     "lines=" ~ line_ranges_attribute_value ~ ","?
 } 
 
 // specific entry point for parsing 
+/*
 line_ranges_attribute_value = {
     (multiple_ranges | multiple_quoted_ranges | multiline_range | multiline_quoted_range | singleline_quoted_range | singleline_range | undefined_line_range)
     ~ WS* ~ (&"," / &"]")
@@ -355,6 +361,7 @@ multiple_quoted_ranges = { "\"" first:(multiline_range / singleline_range)
     })+ "\"" {
         return append([]interface{}{first}, others.([]interface{})...), nil
     }
+*/
 
 multiline_range = {
     NUMBER ~ ".." ~ NUMBER
@@ -373,7 +380,7 @@ singleline_quoted_range = {
 }
 
 undefined_line_range = {
-    (!"]" !"," !WS .)*
+    (!("]" |"," |WS) ~ CHAR)*
 }
 
 // ------------------------------------------
@@ -383,12 +390,14 @@ list_items = { list_item+ }
 
 list_item = { ordered_list_item | unordered_list_item | labeled_list_item | continued_list_item_element }
 
+/*
 list_paragraph = { comment:(single_line_comment) {
         return comment, nil
     } / lines:(list_paragraph_line)+ {
         return types.NewParagraph(lines.([]interface{}), nil)
     } 
-
+*/
+/*
 list_paragraph_line = { !EOF
     !blank_line 
     !single_line_comment
@@ -404,8 +413,9 @@ list_paragraph_line = { !EOF
         }) EOL { 
             return line, nil
         }
+*/
 
-list_item_continuation = { "+" EOLS  }
+list_item_continuation = { "+" ~ EOLS }
 
 continued_list_item_element = {
     blank_line* ~ list_item_continuation ~ document_block
@@ -420,6 +430,7 @@ ordered_list_item = {
     ~ ordered_list_item_content
 }
 
+/*
 ordered_list_item_prefix = { 
     WS* prefix:(
         // implicit numbering: "." to "....."
@@ -459,6 +470,7 @@ ordered_list_item_prefix = {
         }) WS+ {
     return prefix, nil
 }
+*/
 
 ordered_list_item_content = { list_paragraph+ }
 
@@ -472,6 +484,7 @@ unordered_list_item = {
     ~ unordered_list_item_content
 }
 
+/*
 unordered_list_item_prefix = { 
     WS* prefix:((
         // implicit numbering: "*" to "*****" 
@@ -501,7 +514,9 @@ unordered_list_item_prefix = {
         })) WS+ {
     return prefix, nil
 } 
+*/
 
+/*
 unordered_list_item_check_style = {
     &"[" style:(
       "[ ]" { return types.Unchecked, nil } 
@@ -510,6 +525,7 @@ unordered_list_item_check_style = {
     ) WS+ {
         return style, nil
     }
+    */
 
 unordered_list_item_content = { list_paragraph+ }
 
@@ -524,9 +540,10 @@ labeled_list_item = {
 }
 
 labeled_list_item_term = {
-    (alphanums | spaces | (!NEWLINE !"::" .))+
+    (alphanums | spaces | (!(NEWLINE |"::") ~ CHAR))+
 }
 
+/*
 labeled_list_item_separator = { 
     separator:((":")+ {   
         return string(c.text), nil
@@ -538,10 +555,9 @@ labeled_list_item_separator = {
     ((WS / NEWLINE)+ / EOL) {
     return separator, nil
 }
+*/
     
-labeled_list_item_description = { elements:(list_paragraph)+ { 
-    return types.Newlist_itemContent(elements.([]interface{}))
-}
+labeled_list_item_description = { list_paragraph+ }
 
 // ------------------------------------------
 // Admonitions
@@ -565,6 +581,7 @@ AdmonitionKind = { "TIP" {
 // ------------------------------------------
 // a paragraph is a group of line ending with a blank line (or end of file)
 // a paragraph cannot start with the `section` sequence (`= `, `== `, etc.)
+/*
 paragraph = { 
     // admonition paragraph 
     attributes:(element_attributes)? t:(AdmonitionKind) ": " lines:(inline_elements)+ { 
@@ -589,6 +606,7 @@ SimpleParagraph = { attributes:(element_attributes)?
     other_lines:(Otherparagraph_line)* { 
     return types.NewParagraph(append([]interface{}{firstLine}, other_lines.([]interface{})...), attributes)
 }
+*/
 
 paragraph_lines = {
     first_paragraph_line
@@ -597,7 +615,7 @@ paragraph_lines = {
 
 first_paragraph_line = {
     !(labeled_list_item_term ~ labeled_list_item_separator)
-    simple_word ~ inline_element* ~ line_break? ~ EOL
+    ~ simple_word ~ inline_element* ~ line_break? ~ EOL
 }
 
 other_paragraph_line = { inline_elements }
@@ -641,8 +659,8 @@ inline_elements = { !EOF !blank_line
     }
     */
 
-inline_element = { !EOL !line_break 
-    simple_word
+inline_element = { !(EOL |line_break )
+    ~ simple_word
     | spaces 
     | inline_image 
     | link 
@@ -660,12 +678,13 @@ inline_element = { !EOL !line_break
 // we should treat substitution that did not happen (eg: missing attribute) as regular
 // strings - (used by the inline element renderer)
 inline_elements_without_subtitution = {
-    !blank_line !_block_delimiter inline_element_without_subtitution*
+    !(blank_line |block_delimiter) ~ inline_element_without_subtitution*
     ~ line_break? ~ EOL
 } 
 
 inline_element_without_subtitution = {
-    !EOL !line_break simple_word
+    !(EOL |line_break )
+    ~ simple_word
     | spaces 
     | inline_image 
     | link 
@@ -678,28 +697,30 @@ inline_element_without_subtitution = {
 
 // special case for parsing files to include in delimited blocks with 'verbatim' substitution
 verbatim_block = {
-    (blank_line / file_inclusion / verbatimParagraph)* ~ EOF
+    (blank_line | file_inclusion | verbatim_paragraph)* ~ EOF
 }
 
+/*
 verbatim_paragraph = { attributes:(element_attributes)? lines:(!EOF line:(verbatimparagraph_line) {
     return line, nil
 })+ {
     return types.NewParagraph(lines.([]interface{}), attributes)
 }
+*/
 
 verbatim_paragraph_line = {
-    !_block_delimiter !blank_line
+    !(block_delimiter |blank_line)
     ~ verbatim_paragraph_line_lement*
     ~ line_break?
     ~ EOL
 }
 
-verbatim_paragraph_line_element = { (!EOL !line_break .)+ }
+verbatim_paragraph_line_element = { (!EOL |line_break ~ CHAR)+ }
 
 // ----------------------------------------------------------------------------
 // Explicit line breaks
 // ----------------------------------------------------------------------------
-line_break = { WS ~ "+" ~ WS* &EOL } // ??
+line_break = { WS ~ "+" ~ WS* ~ &EOL } // ??
 
 // ----------------------------------------------------------------------------
 // Quoted Texts (bold, italic and monospace) including substitution prevention
@@ -720,11 +741,13 @@ quoted_text = {
 
 quoted_text_prefix = { "**" | "*" | "__" | "_" | "``" | "`" | "^" | "~" }
 
-subscript_or_superscript_prefix = { "^" / "~" }
+subscript_or_superscript_prefix = { "^" | "~" }
 
+/*
 one_or_more_backslashes = { `\`+ }
 
 two_or_more_backslashes = { `\\` `\`* }
+*/
 
 // -----------------
 // Bold text
@@ -732,16 +755,19 @@ two_or_more_backslashes = { `\\` `\`* }
 
 bold_text = { double_quote_bold_text | single_quote_bold_text }
 
+/*
 double_quote_bold_text = {
     !`\\` ~ "**" ~ double_quote_bold_text_content ~ "**"
 }
+*/
 
 double_quote_bold_text_content = {
     double_quote_bold_text_element ~ !("**") ~ (WS | double_quote_bold_text_element)* 
 }
 
 double_quote_bold_text_element = {
-    !NEWLINE single_quote_bold_text 
+    !NEWLINE
+    ~ single_quote_bold_text 
     | italic_text 
     | monospace_text
     | subscript_text
@@ -752,36 +778,37 @@ double_quote_bold_text_element = {
     | nondouble_quote_bold_text
 }
 
-nondouble_quote_bold_text = { (.) (!"**" !WS !"^" !"~" !NEWLINE .)* { 
-    return types.NewStringElement(string(c.text))
-}
+nondouble_quote_bold_text = { (CHAR) ~ (!("**" |WS |"^" |"~" |NEWLINE) ~ CHAR)* } 
 
+/*
 single_quotebold_text = { !`\` !"**" "*" content:(single_quotebold_text_content) "*" { // single punctuation cannot be followed by a character (needs '**' to emphazise a portion of a word)
     return types.NewQuotedText(types.Bold, content.([]interface{}))
 } / !`\\` "**" content:(single_quotebold_text_content) "*" { // unbalanced `**` vs `*` punctuation.
     return types.NewQuotedText(types.Bold, append([]interface{}{types.StringElement{Content:"*"}}, content.([]interface{})...)) // include the second heading `*` as a regular StringElement in the bold content
 } 
+*/
 
+/*
 single_quotebold_text_content = { !WS single_quotebold_text_element (!("*" !alphanum) spaces:(WS*) element:(single_quotebold_text_element) {
     return append(spaces.([]interface{}), element), nil
 })*
+*/
 
-single_quotebold_text_element = { !NEWLINE element:(double_quote_bold_text
-        / italic_text 
-        / monospace_text
-        / subscript_text
-        / superscript_text
-        / inline_image 
-        / Link 
-        / Passthrough 
-        / Nonsingle_quotebold_text) { // word with quote punctuation is only accepted if nothing matched before, so we have a chance to stop
-    return element, nil
+single_quotebold_text_element = { !NEWLINE ~
+    double_quote_bold_text
+    | italic_text 
+    | monospace_text
+    | subscript_text
+    | superscript_text
+    | inline_image 
+    | link 
+    | passthrough 
+    | nonsingle_quotebold_text
 }
 
-nonsingle_quotebold_text = { (.) (!"*" !WS !"^" !"~" !NEWLINE .)* { 
-    return types.NewStringElement(string(c.text))
-}
+nonsingle_quotebold_text = { (CHAR) ~ (!("*" |WS |"^" |"~" |NEWLINE) ~ CHAR)* }
 
+/*
 escaped_bold_text = { 
     backslashes:(TwoOrMoreBackslashes) "**" content:(double_quote_bold_text_content) "**" { // double punctuation must be evaluated first
         return types.NewEscapedQuotedText(backslashes.(string), "**", content.([]interface{}))
@@ -791,37 +818,43 @@ escaped_bold_text = {
     } / backslashes:(OneOrMoreBackslashes) "*" content:(single_quotebold_text_content) "*" { // simple punctuation must be evaluated last
         return types.NewEscapedQuotedText(backslashes.(string), "*", content.([]interface{}))
 } 
+*/
 
 // -----------------
 // Italic text
 // -----------------
 
-italic_text = { double_quote_italic_text / single_quoteitalic_text
+italic_text = { double_quote_italic_text | single_quoteitalic_text }
 
+/*
 double_quote_italic_text = { !`\\` "__" content:(double_quote_italic_text_content) "__" { // double punctuation must be evaluated first
     return types.NewQuotedText(types.Italic, content.([]interface{}))
 }
+*/
 
+/*
 double_quote_italic_text_content = { double_quote_italic_text_element (!("__") element:(WS / double_quote_italic_text_element) { // may start and end with spaces
     return element, nil
 })*
+*/
 
-double_quote_italic_text_element = { !NEWLINE element:(single_quoteitalic_text 
-        / bold_text 
-        / monospace_text
-        / subscript_text
-        / superscript_text
-        / inline_image 
-        / Link 
-        / Passthrough 
-        / Nondouble_quote_italic_text) { // word with quote punctuation is only accepted if nothing matched before, so we have a chance to stop
-    return element, nil
+double_quote_italic_text_element = {
+    !NEWLINE
+    ~ single_quoteitalic_text 
+    | bold_text 
+    | monospace_text
+    | subscript_text
+    | superscript_text
+    | inline_image 
+    | link 
+    | passthrough 
+    | nondouble_quote_italic_text 
 }
 
-nondouble_quote_italic_text = { (.) (!"__" !"^" !"~" !NEWLINE .)* { 
-    return types.NewStringElement(string(c.text))
+nondouble_quote_italic_text = { (CHAR) ~ (!("__" |"^" |"~" |NEWLINE ) ~ CHAR)* 
 }
 
+/*
 single_quoteitalic_text = { !`\` !"__" "_" content:(single_quoteitalic_text_content) "_" { // single punctuation cannot be followed by a character (needs '__' to emphazise a portion of a word)
     return types.NewQuotedText(types.Italic, content.([]interface{}))
 } / !`\\` "__" content:(single_quoteitalic_text_content) "_" { // unbalanced `__` vs `_` punctuation.
@@ -831,23 +864,26 @@ single_quoteitalic_text = { !`\` !"__" "_" content:(single_quoteitalic_text_cont
 single_quote_italic_text_content = { !WS single_quoteitalic_text_element (!("_" !alphanum) spaces:(WS*) element:(single_quoteitalic_text_element) {
     return append(spaces.([]interface{}), element), nil
 })*
+*/
 
-single_quote_italic_text_element = { !NEWLINE element:(double_quote_italic_text
-        / bold_text 
-        / monospace_text
-        / subscript_text
-        / superscript_text
-        / inline_image 
-        / link 
-        / passthrough 
-        / nonsingle_quoteitalic_text) { // word with quote punctuation is only accepted if nothing matched before, so we have a chance to stop
-    return element, nil
+single_quote_italic_text_element = {
+    !NEWLINE
+    ~ double_quote_italic_text
+    | bold_text 
+    | monospace_text
+    | subscript_text
+    | superscript_text
+    | inline_image 
+    | link 
+    | passthrough 
+    | nonsingle_quoteitalic_text
 }
 
 nonsingle_quoteitalic_text = {
-    (.) (!"_" !WS !"^" !"~" !NEWLINE .)* 
+    (CHAR) ~ (!("_" |WS |"^" |"~" |NEWLINE) ~ CHAR)* 
 }
 
+/*
 escapeditalic_text = { 
     backslashes:(TwoOrMoreBackslashes) "__" content:(double_quote_italic_text_content) "__" { // double punctuation must be evaluated first
         return types.NewEscapedQuotedText(backslashes.(string), "__", content.([]interface{}))
@@ -857,12 +893,14 @@ escapeditalic_text = {
     } / backslashes:(OneOrMoreBackslashes) "_" content:(single_quoteitalic_text_content) "_" { // simple punctuation must be evaluated last
         return types.NewEscapedQuotedText(backslashes.(string), "_", content.([]interface{}))
 } 
+*/
 
 // -----------------
 // Monospace text
 // -----------------
-monospace_text = { double_quote_monospace_text / single_quotemonospace_text
+monospace_text = { double_quote_monospace_text | single_quotemonospace_text }
 
+/*
 double_quote_monospace_text = { !`\\` "``" content:(double_quote_monospace_text_content) "``" { // double punctuation must be evaluated first
     return types.NewQuotedText(types.Monospace, content.([]interface{}))
 }
@@ -870,23 +908,25 @@ double_quote_monospace_text = { !`\\` "``" content:(double_quote_monospace_text_
 double_quote_monospace_text_content = { double_quote_monospace_text_element (!("``") element:(WS / double_quote_monospace_text_element) { // may start and end with spaces
     return element, nil
 })*
+*/
 
-double_quote_monospace_text_element = { !NEWLINE element:(single_quotemonospace_text 
-        / bold_text
-        / italic_text 
-        / subscript_text
-        / superscript_text
-        / inline_image 
-        / link 
-        / passthrough 
-        / nondouble_quote_monospace_text) { // word with quote punctuation is only accepted if nothing matched before, so we have a chance to stop
-    return element, nil
+double_quote_monospace_text_element = { !NEWLINE
+    ~ single_quotemonospace_text 
+    | bold_text
+    | italic_text 
+    | subscript_text
+    | superscript_text
+    | inline_image 
+    | link 
+    | passthrough 
+    | nondouble_quote_monospace_text
 }
 
-nondouble_quote_monospace_text = { (.) (!"``" !WS !"^" !"~" !NEWLINE .)* { 
-    return types.NewStringElement(string(c.text))
+nondouble_quote_monospace_text = {
+    (CHAR) ~ (!("``" |WS |"^" |"~" |NEWLINE) ~ CHAR)*
 }
 
+/*
 single_quotemonospace_text = { !`\` !"``" "`" content:(single_quotemonospace_text_content) "`" { // single punctuation cannot be followed by a character (needs "``" to emphazise a portion of a word)
     return types.NewQuotedText(types.Monospace, content.([]interface{}))
 } / !`\\` "``" content:(single_quotemonospace_text_content) "`" { // unbalanced "``" vs "`" punctuation.
@@ -896,20 +936,22 @@ single_quotemonospace_text = { !`\` !"``" "`" content:(single_quotemonospace_tex
 single_quotemonospace_text_content = { !WS single_quotemonospace_text_element (!("`" !alphanum) spaces:(WS*) element:(single_quotemonospace_text_element) {
     return append(spaces.([]interface{}), element), nil
 })*
+*/
 
-single_quotemonospace_text_element = {  element:(NEWLINE // allows multiline
-        / double_quote_monospace_text 
-        / bold_text 
-        / italic_text
-        / subscript_text
-        / superscript_text
-        / inline_image 
-        / Link 
-        / Passthrough 
-        / Nonsingle_quotemonospace_text) { // word with quote punctuation is only accepted if nothing matched before, so we have a chance to stop
-    return element, nil
+single_quotemonospace_text_element = {
+    NEWLINE // allows multiline
+    | double_quote_monospace_text 
+    | bold_text 
+    | italic_text
+    | subscript_text
+    | superscript_text
+    | inline_image 
+    | link 
+    | passthrough 
+    | nonsingle_quotemonospace_text
 }
 
+/*
 nonsingle_quotemonospace_text = { (.) (!WS !"`" !"^" !"~" !NEWLINE .)* { // break at multiline
     return types.NewStringElement(string(c.text))
 }
@@ -927,13 +969,13 @@ escaped_monospace_text = {
 subscript_text = { !`\` "~" content:(subscript_text_element) "~" { // wraps a single word
     return types.NewQuotedText(types.Subscript, content)
 }
+*/
 
-subscript_text_element = { QuotedText / Nonsubscript_text 
+subscript_text_element = { quoted_text | nonsubscript_text }
 
-nonsubscript_text = { (!NEWLINE !WS !"~" .)+ { 
-    return c.text, nil
-}
+nonsubscript_text = { (!(NEWLINE |WS |"~" ) ~ CHAR)+ }
 
+/*
 escaped_subscript_text = { backslashes:(OneOrMoreBackslashes) "~" content:(subscript_text_element) "~" { // simple punctuation must be evaluated last
     return types.NewEscapedQuotedText(backslashes.(string), "~", content)
 } 
@@ -941,16 +983,17 @@ escaped_subscript_text = { backslashes:(OneOrMoreBackslashes) "~" content:(subsc
 superscript_text = { !`\` "^" content:(superscript_text_element) "^" { // wraps a single word
     return types.NewQuotedText(types.Superscript, content)
 }
+*/
 
-superscript_text_element = { QuotedText / Nonsuperscript_text 
+superscript_text_element = { quoted_text | nonsuperscript_text }
 
-nonsuperscript_text = { (!NEWLINE !WS !"^" .)+ { 
-    return c.text, nil
-}
+nonsuperscript_text = { (!(NEWLINE |WS |"^") ~ CHAR)+ }
 
+/*
 escaped_superscript_text = { backslashes:(OneOrMoreBackslashes) "^" content:(superscript_text_element) "^" { // simple punctuation must be evaluated last
     return types.NewEscapedQuotedText(backslashes.(string), "^", content)
 } 
+*/
 
 // ------------------------------------------
 // Passthrough
@@ -966,14 +1009,17 @@ single_plus_passthrough = {
     ~ !alphanum
 }
 
+/*
 single_plus_passthrough_content = { ((!single_plus_passthroughPrefix !WS !NEWLINE .) (!(WS+ single_plus_passthroughPrefix) !single_plus_passthroughPrefix !NEWLINE .)* { // no space in the first or last position of the content, but allowed elsewhere
     return types.NewStringElement(string(c.text))
 }) / ((!WS !NEWLINE !single_plus_passthroughPrefix .)  { // a single character
     return types.NewStringElement(string(c.text))
 })
+*/
 
 triple_plus_passthrough_prefix = { "+++" }
 
+/*
 triple_plus_passthrough = { triple_plus_passthroughPrefix content:(triple_plus_passthroughContent) triple_plus_passthroughPrefix !alphanum {
     return types.NewPassthrough(types.triple_plus_passthrough, []interface{}{content})
 }
@@ -983,13 +1029,14 @@ triple_plus_passthrough_content = { ((!triple_plus_passthroughPrefix .)* { // sp
 }) / ((!WS !NEWLINE !triple_plus_passthroughPrefix .)?  { // a single character
     return types.NewStringElement(string(c.text))
 })
+*/
 
 passthrough_macro = {
     "pass:[" ~ passthrough_macro_character* ~ "]"
     | "pass:q[" ~ (quoted_text | passthrough_macro_character*) ~ "]"
 }
 
-passthrough_macro_character = { (alphanums | spaces | (!"]" .) }
+passthrough_macro_character = { alphanums | spaces | (!"]" ~ CHAR) }
 
 // ------------------------------------------
 // Cross References
@@ -999,7 +1046,7 @@ cross_reference = {
     | "<<" ~ ID ~ ">>"
 }
 
-cross_reference_label = { (alphanums / spaces / (!">>"  .))+ }
+cross_reference_label = { (alphanums | spaces | (!">>" ~ CHAR))+ }
 
 // ------------------------------------------
 // Links
@@ -1054,7 +1101,7 @@ inline_image = {
 image_attributes = {
     "["
     ~ attribute_value? ~ ","?
-    ~ width:(attribute_value)?
+    ~ attribute_value?
     ~ ","?
     ~ attribute_value?
     ~ ","?
@@ -1066,6 +1113,7 @@ image_attributes = {
 // ------------------------------------------------------------------------------------
 // Inline foot notes
 // ------------------------------------------------------------------------------------
+/*
 inline_footnote = { "footnote:[" content:(footnote_content) "]" {
     return types.NewFootnote("", content.(types.inline_elements))
 } / "footnoteref:[" ref:(footnote_ref) "," content:(footnote_content) "]" {
@@ -1073,14 +1121,17 @@ inline_footnote = { "footnote:[" content:(footnote_content) "]" {
 } / "footnoteref:[" ref:(footnote_ref) "]" {
     return types.NewFootnote(ref.(string), types.inline_elements{}) // foot note referring to another note
 }
+*/
 
 footnote_ref = {
-    (alphanums | spaces | (!"," !"]" !EOL  .))*
+    (alphanums | spaces | (!("," |"]" |EOL) ~ CHAR))*
 }
 
+/*
 footnote_content = {
     (!"]" !EOL ~ WS* ~ !inline_element_ID ~ inline_element ~ WS*)+
 }
+*/
 
 // ------------------------------------------------------------------------------------
 // _delimited _blocks 
@@ -1098,19 +1149,21 @@ delimited_block = {
     | comment_block
 }
 
-block_delimiter = { Literal_block_delimiter 
-                / fenced_block_delimiter 
-                / listing_block_delimiter 
-                / example_block_delimiter 
-                / comment_block_delimiter 
-                / quote_block_delimiter
-                / sidebar_block_delimiter
+block_delimiter = {
+    literal_block_delimiter 
+    | fenced_block_delimiter 
+    | listing_block_delimiter 
+    | example_block_delimiter 
+    | comment_block_delimiter 
+    | quote_block_delimiter
+    | sidebar_block_delimiter
+}
 
 
 // -------------------------------------------------------------------------------------
 // fenced _blocks
 // -------------------------------------------------------------------------------------
-fenced_block_delimiter = { "```" EOLS }
+fenced_block_delimiter = { "```" ~ EOLS }
 
 fenced_block = {
     element_attributes? ~ fenced_block_delimiter ~ fenced_blockContent* ~ (fenced_block_delimiter | EOF)
@@ -1121,12 +1174,15 @@ fenced_block_content = { blank_line | file_inclusion | list_item | fenced_block_
 // blocks content
 fenced_block_paragraph = { fenced_block_paragraph_line+ }
 
-fenced_block_paragraph_line = { !fenced_block_delimiter !blank_line inline_elements }
+fenced_block_paragraph_line = {
+    !(fenced_block_delimiter |blank_line)
+    ~ inline_elements
+}
 
 // -------------------------------------------------------------------------------------
 // listing blocks
 // -------------------------------------------------------------------------------------
-listing_block_delimiter = { "----" EOLS
+listing_block_delimiter = { "----" ~ EOLS }
 
 // listing block: verbatim content
 listing_block = {
@@ -1141,40 +1197,42 @@ listing_block_paragraph = { listing_block_paragraph_line+ }
 
 listing_block_paragraph_line = {
     !listing_block_delimiter
-    ~ (!EOF ~ (alphanums | spaces | (!EOL .))*)
+    ~ (!EOF ~ (alphanums | spaces | (!EOL ~ CHAR))*)
     ~ EOL
 }
 
 // -------------------------------------------------------------------------------------
 // Example blocks
 // -------------------------------------------------------------------------------------
-example_block_delimiter = { "====" EOLS }
+example_block_delimiter = { "====" ~ EOLS }
 
+/*
 example_block = { attributes:(element_attributes)? Example_block_delimiter content:(blank_line / file_inclusion / list_item / Example_block_paragraph)*  (Example_block_delimiter / EOF) {
     return types.Newdelimited_block(types.Example, content.([]interface{}), types.None, attributes)
 }
+*/
 
 // blocks content
-example_block_paragraph = { example_block_paragraph_line)+ }
+example_block_paragraph = { example_block_paragraph_line+ }
 
 example_block_paragraph_line = {
-    !example_block_delimiter !blank_line inline_elements
+    !(example_block_delimiter |blank_line ) ~ inline_elements
 }
 
 // -------------------------------------------------------------------------------------
 // Quote blocks
 // -------------------------------------------------------------------------------------
-quote_block_delimiter = { "____" EOLS }// same for verse blocks
+quote_block_delimiter = { "____" ~ EOLS }// same for verse blocks
 
 quote_block = {
     element_attributes?
     ~ quote_block_delimiter
-    ~ quote_blockElement*
-    ~ (quote_block_delimiter / EOF)
+    ~ quote_block_element*
+    ~ (quote_block_delimiter | EOF)
 }
 
 quote_block_element = { 
-    !quote_block_delimiter !EOF  // 这里该用啥来表达啊
+    !(quote_block_delimiter | EOF)  // 这里该用啥来表达啊
     ~ blank_line 
     | file_inclusion
     | image_block 
@@ -1191,7 +1249,7 @@ quote_block_element = {
     | document_attribute_declaration 
     | document_attribute_reset 
     | table_of_contents_macro
-    | quote_block_paragraph) {
+    | quote_block_paragraph
 } 
 
 quote_block_paragraph = { inline_elements+ }
@@ -1214,10 +1272,10 @@ verse_block = { attributes:(element_attributes)
 
 verse_block_element = { versefile_include | blank_line | verse_block_paragraph }
 
-versefile_include = { !quote_block_delimiter file_inclusion }
+versefile_include = { !quote_block_delimiter ~ file_inclusion }
 
 // blocks content
-verse_block_paragraph = { verse_block_paragraph_line)+ }
+verse_block_paragraph = { verse_block_paragraph_line+ }
 
 /*
 verse_blockparagraph_line = { !Quote_block_delimiter !blank_line line:(elements:(verse_blockparagraph_lineElement)+ EOL {
@@ -1228,8 +1286,8 @@ verse_blockparagraph_line = { !Quote_block_delimiter !blank_line line:(elements:
 */
 
 verse_block_paragraph_line_element = {
-    !EOL !line_break 
-    spaces 
+    !(EOL |line_break)
+    ~ spaces 
     | inline_image 
     | link 
     | passthrough 
@@ -1245,7 +1303,7 @@ verse_block_paragraph_line_element = {
 // -------------------------------------------------------------------------------------
 // Sidebars
 // -------------------------------------------------------------------------------------
-sidebar_block_delimiter = { "****" EOLS }
+sidebar_block_delimiter = { "****" ~ EOLS }
 
 sidebar_block = {
     element_attributes? ~ sidebar_block_delimiter
@@ -1253,14 +1311,14 @@ sidebar_block = {
     ~ (sidebar_block_delimiter | EOF)
 }
 
-sidebar_block_content = { blank_line / file_inclusion / list_item / NonSidebar_block / Sidebar_block_paragraph
+sidebar_block_content = { blank_line | file_inclusion | list_item | non_sidebar_block | sidebar_block_paragraph }
 
-non_sidebar_block = { !sidebar_block delimited_block }
+non_sidebar_block = { !sidebar_block ~ delimited_block }
 
 // blocks content
 sidebar_block_paragraph = { sidebar_block_paragraph_line+ }
 
-sidebar_block_paragraph_line = { !sidebar_block_delimiter !blank_line inline_elements }
+sidebar_block_paragraph_line = { !( sidebar_block_delimiter |blank_line ) ~ inline_elements }
 
 
 // -------------------------------------------------------------------------------------
@@ -1279,14 +1337,14 @@ table_delimiter = { "|===" ~ EOLS }
         
 // table line header is a line followed by a blankline
 table_line_header = {
-    !table_delimiter table_cell+ ~ EOL ~ blank_line
+    !table_delimiter ~ table_cell+ ~ EOL ~ blank_line
 }
 
 table_line = { !table_delimiter ~ table_cell+ ~ EOL ~ blank_line* }
 
 table_cell = {
     table_cell_separator
-    ~ (!table_cell_separator ~ !EOL WS* ~ inline_element WS*)+
+    ~ (!(table_cell_separator | EOL) ~ WS* ~ inline_element ~ WS*)+
 }
 
 // -------------------------------------------------------------------------------------
@@ -1297,11 +1355,11 @@ comment_block_delimiter = { "////" }
 comment_block = {
     comment_block_delimiter ~ WS* ~ NEWLINE
     ~ comment_block_line*
-    ~ ((Comment_block_delimiter EOLS) | EOF)
+    ~ ((Comment_block_delimiter ~ EOLS) | EOF)
 }
 
 comment_blockLine = {
-    (alphanums | spaces | (!comment_block_delimiter ~ !EOL ~ .))* ~ EOL
+    (alphanums | spaces | (!(comment_block_delimiter | EOL) ~ CHAR))* ~ EOL
 }
 
 single_line_comment = {
@@ -1312,17 +1370,14 @@ single_line_comment = {
     ~ EOL
 }
 
-single_line_comment_content = { (alphanums / spaces / (!EOL  .))* {
-    return string(c.text), nil
-}
-
+single_line_comment_content = { (alphanums | spaces | (!EOL ~ CHAR))* }
 
 // -------------------------------------------------------------------------------------
 // Literal _blocks (see http://asciidoctor.org/docs/user-manual/#literal-text-and-blocks)
 // -------------------------------------------------------------------------------------
-literal_block = { Paragraph_with_literal_attribute / Paragraph_with_headingspaces / Paragraph_with_literal_block_delimiter
+literal_block = { paragraph_with_literal_attribute | paragraph_with_headingspaces | paragraph_with_literal_block_delimiter }
 
-literal_block_delimiter = { "...."
+literal_block_delimiter = { "...." }
 
 // paragraph indented with one or more spaces on the first line
 paragraph_with_headingspaces = {
@@ -1351,10 +1406,10 @@ paragraph_with_headingspaces_lines = {
 
 // paragraph with the literal block delimiter (`....`)
 paragraph_with_literal_block_delimiter = {
-    element_attributes)?
+    element_attributes?
     ~ literal_block_delimiter ~ WS* ~ NEWLINE
     ~ paragraph_with_literal_block_delimiter_lines
-    ~ ((Literal_block_delimiter EOLS) | EOF)
+    ~ (literal_block_delimiter ~ EOLS) | EOF
 }
 
 // include all lines until delimiter is reached
@@ -1363,7 +1418,7 @@ paragraph_with_literal_block_delimiter_lines = {
 }
 
 paragraph_with_literal_block_delimiter_line = {         
-    (alphanums | spaces | (!Literal_block_delimiter !EOL .))* ~ EOL
+    (alphanums | spaces | (!(literal_block_delimiter | EOL) ~ CHAR))* ~ EOL
 }
 
 // paragraph with the literal attribute (`[literal]`)
@@ -1392,33 +1447,34 @@ paragraph_with_literal_attributeLines = {
 }
 
 paragraph_with_literal_attribute_line = {
-    !(blank_line) (alphanums / spaces / (!EOL  .))+ ~ EOL
+    !blank_line ~ (alphanums | spaces | (!EOL ~ CHAR))+ ~ EOL
 }
 
 // ------------------------------------------
 // blank_line
 // ------------------------------------------
-blank_line = { !EOF EOLS }
+blank_line = { !EOF ~ EOLS }
 
 // ------------------------------------------
 // Base Types
 // ------------------------------------------
-alphanum = { [\pL0-9]
 
-parenthesis = { "(" / ")" / "[" / "]"
+//alphanum = { [\pL0-9] }
 
-alphanums = { [\pL0-9]+
+parenthesis = { "(" | ")" | "[" | "]" }
+
+//alphanums = { [\pL0-9]+ }
 
 dot = { "." }
 
-simple_word = { alphanums &(WS / EOL) }
+simple_word = { alphanums ~ &(WS | EOL) }
 
 // a word may end with a dot, but cannot have dots within
 other_word = {
     alphanums
     | quoted_text_prefix
     | parenthesis
-    | ((!NEWLINE !WS !dot !quoted_text_prefix .) ~ dot?)+
+    | ((!(NEWLINE |WS |dot |quoted_text_prefix) ~ CHAR) ~ dot?)+
     | "."+
 }
 
@@ -1428,33 +1484,39 @@ file_location = {
     (FILENAME | document_attribute_substitution)+
 }
 
-Location = {
-    URL_SCHEME ~ (FILENAME | document_attributeSubstitution | !EOL !"[" .)+
+location = {
+    URL_SCHEME ~ (FILENAME | document_attribute_substitution | !(EOL |"[") ~ CHAR)+
 }
 
 FILENAME = { (alphanums | "." | "_" | "/" | "-" )+ }
 
-URL = (alphanums | (!NEWLINE !WS !"[" !"]"  .))+ }
+URL = {(alphanums | (!(NEWLINE |WS |"[" |"]") ~ CHAR))+ }
 
 URL_SCHEME = { "http://" | "https://" | "ftp://" | "irc://" | "mailto:" }
 
-ID = {alphanums | (!NEWLINE !WS !"[" !"]" !"<<" !">>" !","  .))+ }
+ID = { alphanums | (!(NEWLINE |WS |"[" |"]" |"<<" |">>" |",") ~ CHAR)+ }
 
 // digit 在 pest 中已经有了
 // 需要替换
-DIGIT = { [0-9] }
+DIGIT = { ASCII_DIGIT }
 
 // number 在 pest 中可能已经有了
 // 需要确认
-NUMBER = { "-"? DIGIT+ }
+NUMBER = { "-"? ~ DIGIT+ }
 
 WS = _{ " " | "\t" }
 
 // newline 在 pest 中可能也有了，需确认
-NEWLINE = { "\r\n" / "\r" / "\n" }
+NEWLINE = { "\r\n" | "\r" | "\n" }
 
-EOF = { !. }
+EOF = { !CHAR }
 
 EOL = { NEWLINE | EOF }
 
 EOLS = { WS* ~ EOL }
+
+CHAR = {
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
