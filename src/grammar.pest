@@ -105,11 +105,11 @@ document_author = {
 
 // "<" marks the beginning of the author email, and ";" is the authors separator
 document_author_name = {
-    (STRING | (!("<" | ";" | NEWLINE ) ~ CHAR))+
+    (ASCII_ALPHANUMERIC | (!("<" | ";" | NEWLINE ) ~ CHAR))+
 }
 
 document_author_email = {
-    "<" ~ (STRING | (! (">" | EOL ) ~ CHAR))+ ~ ">"
+    "<" ~ (ASCII_ALPHANUMERIC | (! (">" | EOL ) ~ CHAR))+ ~ ">"
 }
 
 // see http://asciidoctor.org/docs/user-manual/#revision-number-date-and-remark
@@ -124,21 +124,13 @@ document_revision = {
 document_revision_number = {
     DIGIT
 }
-/*
-document_revision_number = {
-    "v"i DIGIT  (STRING / spaces / (!EOL !"," !":"  .))+ {
-    return string(c.text), nil
-} / "v"i? DIGIT  (STRING / spaces / (!EOL !"," !":"  .))+ WS* &"," {
-    return string(c.text), nil
-}
-*/
 
 document_revision_date = {
-    (STRING | spaces | (!(EOL |":") ~ CHAR))+
+    (ASCII_ALPHANUMERIC | spaces | (!(EOL |":") ~ CHAR))+
 }
 
 document_revision_remark = {
-    (STRING | spaces | (!EOL ~ CHAR))+
+    (ASCII_ALPHANUMERIC | spaces | (!EOL ~ CHAR))+
 }
 
 // ------------------------------------------
@@ -200,11 +192,11 @@ inline_element_ID = { "[[" ~ ID ~ "]]" ~ WS* }
 
 // a title attached to an element, such as a image_block
 // a title starts with a single "." followed by the value, without space in-between
-element_title = { "." ~ STRING ~ (STRING | spaces | (!NEWLINE ~ CHAR))*  ~ EOL }
+element_title = { "." ~ ASCII_ALPHANUMERIC ~ (ASCII_ALPHANUMERIC | spaces | (!NEWLINE ~ CHAR))*  ~ EOL }
 
 // a role attached to an element, such as a image_block
 // a role starts is wrapped in "[. ]" 
-element_role = { "[." ~ STRING ~ (STRING | spaces | (!( NEWLINE | "]" ) ~ CHAR))* ~ "]" ~ EOLS }
+element_role = { "[." ~ ASCII_ALPHANUMERIC ~ (ASCII_ALPHANUMERIC | spaces | (!( NEWLINE | "]" ) ~ CHAR))* ~ "]" ~ EOLS }
 
 literal_attribute = { "[literal]" ~ WS* ~ NEWLINE }
 
@@ -213,7 +205,7 @@ admonition_marker_attribute = { "[" ~ admonition_kind ~ "]" ~ EOLS }
 
 // a paragraph or a delimited block may contain source code in a given language
 source_attributes = {
-    "[source" ~ ","? ~ ((STRING | spaces | (!( NEWLINE |"]" ) ~ CHAR))+)? ~ "]" ~ EOLS 
+    "[source" ~ ","? ~ ((ASCII_ALPHANUMERIC | spaces | (!( NEWLINE |"]" ) ~ CHAR))+)? ~ "]" ~ EOLS
 }
 
 // one or more attributes. eg: [foo, key1=value1, key2 = value2 , ]
@@ -226,11 +218,11 @@ generic_attribute = {
 }
 
 attribute_key = {
-    !("quote" |"verse" |"literal") ~ (STRING | other_attribute_char)+ ~ WS*
+    !("quote" |"verse" |"literal") ~ (ASCII_ALPHANUMERIC | other_attribute_char)+ ~ WS*
 }
 
 attribute_value = {
-    (STRING | spaces | other_attribute_char)+ ~ !"="
+    (ASCII_ALPHANUMERIC | spaces | other_attribute_char)+ ~ !"="
 }
 
 other_attribute_char = { (!(WS |"=" |"," |"]") ~ CHAR) }
@@ -251,7 +243,7 @@ verse_attributes = {
     ~ "]" ~ EOLS
 }
 
-quote_attribute = { (STRING | spaces | (! ("," |"]" | EOL) ~  CHAR))* }
+quote_attribute = { (ASCII_ALPHANUMERIC | spaces | (! ("," |"]" | EOL) ~  CHAR))* }
 
 inline_attributes = { "[" ~ generic_attribute* ~ "]" }
 
@@ -300,7 +292,7 @@ inline_user_macro = {
 
 user_macro_name = { (ASCII_ALPHANUMERIC | "_" | "-")+ }
 
-user_macro_value = { (STRING | (!(":" |"[" |EOL ) ~ CHAR))* }
+user_macro_value = { (ASCII_ALPHANUMERIC | (!(":" |"[" |EOL ) ~ CHAR))* }
 
 user_macro_attributes = { "[" ~ generic_attribute* ~ "]" }
 
@@ -479,7 +471,7 @@ labeled_list_item = {
 }
 
 labeled_list_item_term = {
-    (STRING | spaces | (!(NEWLINE |"::") ~ CHAR))+
+    (ASCII_ALPHANUMERIC | spaces | (!(NEWLINE |"::") ~ CHAR))+
 }
 
 labeled_list_item_separator = { 
@@ -882,7 +874,7 @@ passthrough_macro = {
     | "pass:q[" ~ (quoted_text | passthrough_macro_character*) ~ "]"
 }
 
-passthrough_macro_character = { STRING | spaces | (!"]" ~ CHAR) }
+passthrough_macro_character = { ASCII_ALPHANUMERIC | spaces | (!"]" ~ CHAR) }
 
 // ------------------------------------------
 // Cross References
@@ -892,7 +884,7 @@ cross_reference = {
     | "<<" ~ ID ~ ">>"
 }
 
-cross_reference_label = { (STRING | spaces | (!">>" ~ CHAR))+ }
+cross_reference_label = { (ASCII_ALPHANUMERIC | spaces | (!">>" ~ CHAR))+ }
 
 // ------------------------------------------
 // Links
@@ -966,7 +958,7 @@ inline_footnote = {
 }
 
 footnote_ref = {
-    (STRING | spaces | (!("," |"]" |EOL) ~ CHAR))*
+    (ASCII_ALPHANUMERIC | spaces | (!("," |"]" |EOL) ~ CHAR))*
 }
 
 footnote_content = {
@@ -1037,7 +1029,7 @@ listing_block_paragraph = { listing_block_paragraph_line+ }
 
 listing_block_paragraph_line = {
     !listing_block_delimiter
-    ~ (!EOF ~ (STRING | spaces | (!EOL ~ CHAR))*)
+    ~ (!EOF ~ (ASCII_ALPHANUMERIC | spaces | (!EOL ~ CHAR))*)
     ~ EOL
 }
 
@@ -1195,7 +1187,7 @@ comment_block = {
 }
 
 comment_block_line = {
-    (STRING | spaces | (!(comment_block_delimiter | EOL) ~ CHAR))* ~ EOL
+    (ASCII_ALPHANUMERIC | spaces | (!(comment_block_delimiter | EOL) ~ CHAR))* ~ EOL
 }
 
 single_line_comment = {
@@ -1206,7 +1198,7 @@ single_line_comment = {
     ~ EOL
 }
 
-single_line_comment_content = { (STRING | spaces | (!EOL ~ CHAR))* }
+single_line_comment_content = { (ASCII_ALPHANUMERIC | spaces | (!EOL ~ CHAR))* }
 
 // -------------------------------------------------------------------------------------
 // Literal _blocks (see http://asciidoctor.org/docs/user-manual/#literal-text-and-blocks)
@@ -1223,8 +1215,8 @@ paragraph_with_headingspaces = {
 
 // first line MUST start with one (or more) space. Stop when reaching a blank line
 paragraph_with_headingspaces_lines = { 
-    (WS ~ (STRING | spaces | (!EOL ~ CHAR))+ ) ~ EOL // do not include the trailing 'EOL' on the first line
-    ~ (!blank_line ~ (STRING | spaces | (!EOL ~ CHAR))+ ~ EOL)* 
+    (WS ~ (ASCII_ALPHANUMERIC | spaces | (!EOL ~ CHAR))+ ) ~ EOL // do not include the trailing 'EOL' on the first line
+    ~ (!blank_line ~ (ASCII_ALPHANUMERIC | spaces | (!EOL ~ CHAR))+ ~ EOL)*
 }
 
 // paragraph with the literal block delimiter (`....`)
@@ -1241,7 +1233,7 @@ paragraph_with_literal_block_delimiter_lines = {
 }
 
 paragraph_with_literal_block_delimiter_line = {         
-    (STRING | spaces | (!(literal_block_delimiter | EOL) ~ CHAR))* ~ EOL
+    (ASCII_ALPHANUMERIC | spaces | (!(literal_block_delimiter | EOL) ~ CHAR))* ~ EOL
 }
 
 // paragraph with the literal attribute (`[literal]`)
@@ -1261,7 +1253,7 @@ paragraph_with_literal_attribute_lines = {
 }
 
 paragraph_with_literal_attribute_line = {
-    !blank_line ~ (STRING | spaces | (!EOL ~ CHAR))+ ~ EOL
+    !blank_line ~ (ASCII_ALPHANUMERIC | spaces | (!EOL ~ CHAR))+ ~ EOL
 }
 
 // ------------------------------------------
@@ -1277,15 +1269,15 @@ blank_line = { !EOF ~ EOLS }
 
 parenthesis = { "(" | ")" | "[" | "]" }
 
-//STRING = { [\pL0-9]+ }
+//ASCII_ALPHANUMERIC = { [\pL0-9]+ }
 
 dot = { "." }
 
-simple_word = { STRING ~ &(WS | EOL) }
+simple_word = { ASCII_ALPHANUMERIC ~ &(WS | EOL) }
 
 // a word may end with a dot, but cannot have dots within
 other_word = {
-    STRING
+    ASCII_ALPHANUMERIC
     | quoted_text_prefix
     | parenthesis
     | ((!(NEWLINE |WS |dot |quoted_text_prefix) ~ CHAR) ~ dot?)+
@@ -1302,13 +1294,13 @@ location = {
     URL_SCHEME ~ (FILENAME | document_attribute_substitution | !(EOL |"[") ~ CHAR)+
 }
 
-FILENAME = { (STRING | "." | "_" | "/" | "-" )+ }
+FILENAME = { (ASCII_ALPHANUMERIC | "." | "_" | "/" | "-" )+ }
 
-URL = {(STRING | (!(NEWLINE |WS |"[" |"]") ~ CHAR))+ }
+URL = {(ASCII_ALPHANUMERIC | (!(NEWLINE |WS |"[" |"]") ~ CHAR))+ }
 
 URL_SCHEME = { "http://" | "https://" | "ftp://" | "irc://" | "mailto:" }
 
-ID = { STRING | (!(NEWLINE |WS |"[" |"]" |"<<" |">>" |",") ~ CHAR)+ }
+ID = { ASCII_ALPHANUMERIC | (!(NEWLINE |WS |"[" |"]" |"<<" |">>" |",") ~ CHAR)+ }
 
 // digit 在 pest 中已经有了
 // 需要替换
@@ -1316,12 +1308,11 @@ DIGIT = { ASCII_DIGIT }
 
 // number 在 pest 中可能已经有了
 // 需要确认
-NUMBER = { "-"? ~ DIGIT+ }
+// NUMBER = { "-"? ~ ASCII_DIGIT+ ~ NUMBER}
 
 WS = _{ " " | "\t" }
 
 // newline 在 pest 中可能也有了，需确认
-NEWLINE = { "\r\n" | "\r" | "\n" }
 
 EOF = { !CHAR }
 
