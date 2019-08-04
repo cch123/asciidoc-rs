@@ -24,13 +24,14 @@ pub struct ParseError {
 pub fn convert(
     query: String
 ) {
-    let parse_result = ExprParser::parse(Rule::pre_flight_document, query.as_str());
+    let x = query.as_str();
+    let parse_result = ExprParser::parse(Rule::pre_flight_document, x);
     println!("{:#?}", parse_result);
 }
 
 use pest::iterators::Pair;
 
 fn main() {
-    let str = "==== abcd".to_string();
+    let str = "==== abcdsd\nfasdfs ".to_string();
     convert(str);
 }
