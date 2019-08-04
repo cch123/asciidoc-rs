@@ -23,71 +23,14 @@ pub struct ParseError {
 
 pub fn convert(
     query: String
-) -> Result<Expression, ParseError> {
-    let parse_result = ExprParser::parse(Rule::expr, query.as_str());
-    match parse_result {
-        Ok(mut expr_ast) => {
-            let ast = generate_ast(expr_ast.next().unwrap());
-            return Ok(ast);
-        }
-        Err(err) => {
-            // TODO: more friendly error
-            Err(ParseError {
-                location: err.location,
-                expected: "".to_string(),
-            })
-        }
-    }
+) {
+    let parse_result = ExprParser::parse(Rule::pre_flight_document, query.as_str());
+    println!("{:#?}", parse_result);
 }
 
 use pest::iterators::Pair;
 
-#[derive(Debug)]
-pub enum Expression {
-    CompExpr(String, String, String),
-    AndExpr(Box<Expression>, Box<Expression>),
-    OrExpr(Box<Expression>, Box<Expression>),
-}
-
-fn generate_ast(pair: Pair<Rule>) -> Expression {
-    let climber = PrecClimber::new(vec![
-        Operator::new(Rule::and_op, Assoc::Left) | Operator::new(Rule::or_op, Assoc::Left),
-    ]);
-
-    consume(pair, &climber)
-}
-
-fn consume(pair: Pair<Rule>, climber: &PrecClimber<Rule>) -> Expression {
-    let atom = |pair| consume(pair, climber);
-    let infix = |lhs, op, rhs| match (op as Pair<Rule>).as_rule() {
-        Rule::and_op => Expression::AndExpr(Box::new(lhs), Box::new(rhs)),
-        Rule::or_op => Expression::OrExpr(Box::new(lhs), Box::new(rhs)),
-        _ => unreachable!(),
-    };
-
-    match pair.as_rule() {
-        Rule::expr => {
-            climber.climb(pair.into_inner(), atom, infix)
-        }
-        Rule::paren_bool => pair.into_inner().next().map(atom).unwrap(),
-        Rule::comp_expr => {
-            let mut iter = pair.into_inner();
-            let (lhs, op, rhs) = (
-                iter.next().unwrap().as_str().to_string(),
-                iter.next().unwrap().as_str().to_string(),
-                iter.next().unwrap().as_str().to_string(),
-            );
-            return Expression::CompExpr(lhs, op, rhs);
-        }
-        _ => unreachable!(),
-    }
-}
-
 fn main() {
-    let str = "a = 1 and b = 2 and c = 3".to_string();
-    let res = convert(str);
-    println!("{:?}", res.unwrap());
-    let str = "a = 1 and (b = 2 and c = 3)".to_string();
-    let res = convert(str);
-    println!("{:?}", res.unwrap());
+    let str = "==== abcd".to_string();
+    convert(str);
 }

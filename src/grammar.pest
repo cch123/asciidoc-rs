@@ -360,7 +360,7 @@ list_paragraph = {
 } 
 
 list_paragraph_line = {
-    !(EOF
+    !(EOI
     | blank_line 
     | single_line_comment
     | ordered_list_item_prefix
@@ -386,48 +386,6 @@ ordered_list_item = {
     ~ ordered_list_item_prefix
     ~ ordered_list_item_content
 }
-
-/*
-ordered_list_item_prefix = { 
-    WS* prefix:(
-        // implicit numbering: "." to "....."
-        depth:((".")+ {   
-            // `.` is 1, etc.
-            return (len(c.text)), nil 
-        }) 
-        &{  
-            // use a predicate to make sure that only `.` to `.....` are allowed
-            return depth.(int) <= 5, nil 
-        } 
-        {
-            switch depth.(int){
-            case 1:
-                return types.NewOrderedlist_itemPrefix(types.Arabic, 1)
-            case 2:
-                return types.NewOrderedlist_itemPrefix(types.Loweralpha, 2)
-            case 3:
-                return types.NewOrderedlist_itemPrefix(types.LowerRoman, 3)
-            case 4:
-                return types.NewOrderedlist_itemPrefix(types.Upperalpha, 4)
-            default:
-                return types.NewOrderedlist_itemPrefix(types.UpperRoman, 5)
-            }
-        }
-        // explicit numbering
-        / ([0-9])+ "." {  // numbering style: "1."
-            return types.NewOrderedlist_itemPrefix(types.Arabic, 1)
-        } / ([a-z]) "." { // numbering style: "a."
-            return types.NewOrderedlist_itemPrefix(types.Loweralpha, 1)
-        } / ([A-Z]) "." { // numbering style: "A."
-            return types.NewOrderedlist_itemPrefix(types.Upperalpha, 1)
-        } / ([a-z])+ ")" { // numbering style: "i)"
-            return types.NewOrderedlist_itemPrefix(types.LowerRoman, 1)
-        } / ([A-Z])+ ")" { // numbering style: "I)"
-            return types.NewOrderedlist_itemPrefix(types.UpperRoman, 1)
-        }) WS+ {
-    return prefix, nil
-}
-*/
 
 ordered_list_item_content = { list_paragraph+ }
 
@@ -533,7 +491,7 @@ verse_paragraph = {
 }
     
 inline_elements = {
-    !(EOF | blank_line)
+    !(EOI | blank_line)
     ~ single_line_comment 
     | !block_delimiter ~ inline_element+ ~ line_break? ~ EOL 
 }
@@ -576,11 +534,11 @@ inline_element_without_subtitution = {
 
 // special case for parsing files to include in delimited blocks with 'verbatim' substitution
 verbatim_block = {
-    (blank_line | file_inclusion | verbatim_paragraph)* ~ EOF
+    (blank_line | file_inclusion | verbatim_paragraph)* ~ EOI
 }
 
 verbatim_paragraph = {
-    element_attributes? ~ (!EOF ~verbatim_paragraph_line)+
+    element_attributes? ~ (!EOI ~verbatim_paragraph_line)+
 }
 
 verbatim_paragraph_line = {
@@ -590,7 +548,7 @@ verbatim_paragraph_line = {
     ~ EOL
 }
 
-verbatim_paragraph_line_element = { (!EOL |line_break ~ CHAR)+ }
+verbatim_paragraph_line_element = { ((!EOL |line_break) ~ CHAR)+ }
 
 // ----------------------------------------------------------------------------
 // Explicit line breaks
@@ -865,7 +823,7 @@ triple_plus_passthrough = {
 
 triple_plus_passthrough_content = {
      // spaces and newlines are also allowed in the first or last position of the content and elsewhere too
-     (!triple_plus_passthrough_prefix ~ CHAR)*
+     (!triple_plus_passthrough_prefix ~ CHAR)+ // 这里原本是 *，但是理论上和下面规则有相容关系
      | (!(WS |NEWLINE |triple_plus_passthrough_prefix) ~ CHAR)?
 }
 
@@ -970,7 +928,7 @@ footnote_content = {
 // ------------------------------------------------------------------------------------
 delimited_block = {
     !CHAR
-    ~ fenced_block 
+    ~ (fenced_block
     | listing_block
     | example_block
     | verse_block
@@ -978,7 +936,7 @@ delimited_block = {
     | sidebar_block
     | single_line_comment
     | table
-    | comment_block
+    | comment_block)
 }
 
 block_delimiter = {
@@ -998,7 +956,7 @@ block_delimiter = {
 fenced_block_delimiter = { "```" ~ EOLS }
 
 fenced_block = {
-    element_attributes? ~ fenced_block_delimiter ~ fenced_block_content* ~ (fenced_block_delimiter | EOF)
+    element_attributes? ~ fenced_block_delimiter ~ fenced_block_content* ~ (fenced_block_delimiter | EOI)
 }
 
 fenced_block_content = { blank_line | file_inclusion | list_item | fenced_block_paragraph }
@@ -1020,7 +978,7 @@ listing_block_delimiter = { "----" ~ EOLS }
 listing_block = {
     element_attributes?
     ~ listing_block_delimiter
-    ~ listing_block_element* ~ (listing_block_delimiter | EOF)
+    ~ listing_block_element* ~ (listing_block_delimiter | EOI)
 }
 
 listing_block_element = { file_inclusion | listing_block_paragraph }
@@ -1029,7 +987,7 @@ listing_block_paragraph = { listing_block_paragraph_line+ }
 
 listing_block_paragraph_line = {
     !listing_block_delimiter
-    ~ (!EOF ~ (ASCII_ALPHANUMERIC | spaces | (!EOL ~ CHAR))*)
+    ~ (!EOI ~ (ASCII_ALPHANUMERIC | spaces | (!EOL ~ CHAR))*)
     ~ EOL
 }
 
@@ -1041,7 +999,7 @@ example_block_delimiter = { "====" ~ EOLS }
 example_block = {
     element_attributes? ~ example_block_delimiter
     ~ (blank_line | file_inclusion | list_item | example_block_paragraph)*
-    ~ (example_block_delimiter | EOF)
+    ~ (example_block_delimiter | EOI)
 }
 
 // blocks content
@@ -1060,28 +1018,30 @@ quote_block = {
     element_attributes?
     ~ quote_block_delimiter
     ~ quote_block_element*
-    ~ (quote_block_delimiter | EOF)
+    ~ (quote_block_delimiter | EOI)
 }
 
 quote_block_element = { 
-    !(quote_block_delimiter | EOF)  // 这里该用啥来表达啊
-    ~ blank_line 
-    | file_inclusion
-    | image_block 
-    | list_item
-    | fenced_block
-    | listing_block
-    | example_block
-    | comment_block
-    | single_line_comment
-    | quote_block 
-    | sidebar_block
-    | table 
-    | literal_block 
-    | document_attribute_declaration 
-    | document_attribute_reset 
-    | table_of_contents_macro
-    | quote_block_paragraph
+    !(quote_block_delimiter | EOI)  // 这里该用啥来表达啊
+    ~ (
+        blank_line
+        | file_inclusion
+        | image_block
+        | list_item
+        | fenced_block
+        | listing_block
+        | example_block
+        | comment_block
+        | single_line_comment
+        | quote_block
+        | sidebar_block
+        | table
+        | literal_block
+        | document_attribute_declaration
+        | document_attribute_reset
+        | table_of_contents_macro
+        | quote_block_paragraph
+    )
 } 
 
 quote_block_paragraph = { inline_elements+ }
@@ -1095,7 +1055,7 @@ verse_block = {
     element_attributes
     // FIXME
     ~ quote_block_delimiter ~ verse_block_element*
-    ~ (quote_block_delimiter | EOF)
+    ~ (quote_block_delimiter | EOI)
 }
 
 verse_block_element = { versefile_include | blank_line | verse_block_paragraph }
@@ -1133,7 +1093,7 @@ sidebar_block_delimiter = { "****" ~ EOLS }
 sidebar_block = {
     element_attributes? ~ sidebar_block_delimiter
     ~ sidebar_block_content*
-    ~ (sidebar_block_delimiter | EOF)
+    ~ (sidebar_block_delimiter | EOI)
 }
 
 sidebar_block_content = { blank_line | file_inclusion | list_item | non_sidebar_block | sidebar_block_paragraph }
@@ -1156,7 +1116,7 @@ table = {
     element_attributes? ~ table_delimiter
     ~ table_line_header?
     ~ table_line*
-    ~ (table_delimiter | EOF)
+    ~ (table_delimiter | EOI)
 }
 
 table_cell_separator = { "|" ~ WS* }
@@ -1183,7 +1143,7 @@ comment_block_delimiter = { "////" }
 comment_block = {
     comment_block_delimiter ~ WS* ~ NEWLINE
     ~ comment_block_line*
-    ~ ((comment_block_delimiter ~ EOLS) | EOF)
+    ~ ((comment_block_delimiter ~ EOLS) | EOI)
 }
 
 comment_block_line = {
@@ -1224,7 +1184,7 @@ paragraph_with_literal_block_delimiter = {
     element_attributes?
     ~ literal_block_delimiter ~ WS* ~ NEWLINE
     ~ paragraph_with_literal_block_delimiter_lines
-    ~ (literal_block_delimiter ~ EOLS) | EOF
+    ~ (literal_block_delimiter ~ EOLS) | EOI
 }
 
 // include all lines until delimiter is reached
@@ -1259,7 +1219,7 @@ paragraph_with_literal_attribute_line = {
 // ------------------------------------------
 // blank_line
 // ------------------------------------------
-blank_line = { !EOF ~ EOLS }
+blank_line = { !EOI ~ EOLS }
 
 // ------------------------------------------
 // Base Types
@@ -1314,13 +1274,13 @@ WS = _{ " " | "\t" }
 
 // newline 在 pest 中可能也有了，需确认
 
-EOF = { !CHAR }
+//EOI = { EOI}
 
-EOL = { NEWLINE | EOF }
+EOL = { NEWLINE | EOI }
 
 EOLS = { WS* ~ EOL }
 
-STRING = @{ CHAR* }
+// STRING = @{ CHAR* }
 
 CHAR = {
     !("\"" | "\\") ~ ANY
