@@ -33,7 +33,7 @@ document_block = {
     | image_block 
     | list_item
     | blank_line // must be before Literal_block
-    | literal_block 
+    | literal_block
     | document_attribute_declaration 
     | document_attribute_reset 
     | table_of_contents_macro
@@ -167,7 +167,6 @@ document_attribute_substitution = {
 // ------------------------------------------
 element_attributes = { element_attribute+ }
 
-
 element_attribute = {
     &("[" | "." | "#") // skip if the content does not start with one of those characters
     ~ element_id
@@ -254,12 +253,12 @@ inline_attributes = { "[" ~ generic_attribute* ~ "]" }
 // ------------------------------------------
 section = { 
     element_attributes?
-    ~ "="{0,5}
-    ~ WS* ~ title_elements ~ inline_element_id* ~ EOL
+    ~ "="{1,6}
+    ~ title_elements ~ inline_element_id* ~ EOL
 }
 
 title_elements = {
-    (!(NEWLINE | inline_element_id) ~ title_element)+
+    (!(NEWLINE | inline_element_id) ~ WS* ~ title_element)+
 }
 
 title_element = {
@@ -435,7 +434,7 @@ labeled_list_item_term = {
 }
 
 labeled_list_item_separator = { 
-    ("::" ~ !":" | "::::" ~ !":")
+    ("::" ~ !":") | ("::::" ~ !":")
     ~ ((WS | NEWLINE)+ | EOL)
 }
 
@@ -467,11 +466,7 @@ paragraph = {
 // a paragraph whose first line begins with a word surrounded by spaces
 simple_paragraph = {
     element_attributes?
-    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
-        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
-        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
-        | "idprefix" | "customID"
-    )
+    ~ !"[literal]"
     ~ first_paragraph_line
     ~ other_paragraph_line*
 }
@@ -490,20 +485,8 @@ other_paragraph_line = { inline_elements }
 
 verse_paragraph = {
     // admonition paragraph 
-    (element_attributes?
-    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
-        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
-        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
-        | "idprefix" | "customID"
-    )
-    ~ admonition_kind ~ ": " ~ inline_elements+)
-    | ( element_attributes?
-    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
-        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
-        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
-        | "idprefix" | "customID"
-    )
-    ~ inline_elements+)
+    ((&"[verse]" ~ element_attributes)? ~ admonition_kind ~ ": " ~ inline_elements+)
+    | ((&"[verse]" ~ element_attributes)? ~ inline_elements+)
 }
     
 inline_elements = {
@@ -1070,12 +1053,7 @@ quote_block_paragraph = { inline_elements+ }
 // verse_block_delimiter: see Quote_block_delimiter
 
 verse_block = {
-    element_attributes
-    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
-        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
-        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
-        | "idprefix" | "customID"
-    )
+    &"[verse]" ~ element_attributes
     ~ quote_block_delimiter ~ verse_block_element*
     ~ (quote_block_delimiter | EOI)
 }
@@ -1220,12 +1198,7 @@ paragraph_with_literal_block_delimiter_line = {
 
 // paragraph with the literal attribute (`[literal]`)
 paragraph_with_literal_attribute = { 
-    element_attributes?
-    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
-        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
-        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
-        | "idprefix" | "customID"
-    )
+    (&"[literal]" ~ element_attributes)?
     ~ paragraph_with_literal_attribute_lines
 }
 
@@ -1262,7 +1235,7 @@ other_word = @{
     ASCII_ALPHANUMERIC+
     | quoted_text_prefix
     | parenthesis
-    | (!(NEWLINE |WS |dot |quoted_text_prefix) ~ CHAR ~ dot?)+
+    | (!(NEWLINE |WS |dot |quoted_text_prefix | "=") ~ CHAR ~ dot?)+
     | "."+
 }
 

@@ -33,13 +33,13 @@ use pest::iterators::Pair;
 
 fn main() {
     let str = r#"= title
-    == second title
-    content line
-    [source, c]
-    ----
-    int main() {
-    }
-    ----
-    "#.to_string();
+== second title
+content line
+[source, c]
+----
+int main() {
+}
+----
+"#.to_string();
     convert(str);
 }
