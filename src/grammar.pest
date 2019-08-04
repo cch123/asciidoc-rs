@@ -81,15 +81,16 @@ yaml_front_matter_content = {
 // Document Header and Metadata
 // ------------------------------------------
 document_header = {
-    "=" ~ WS+ ~ title_elements ~ inline_element_ID* ~ EOL
+    "=" ~ WS+ ~ title_elements ~ inline_element_id* ~ EOL
     ~ document_authors?
     ~ document_revision?
 }
 
 
 document_authors = {
-    document_authors_inline_form
-    | document_authors_attribute_form
+    WS* ~ !"=" ~
+    (document_authors_inline_form
+    | document_authors_attribute_form)
 }
 
 document_authors_inline_form = {
@@ -101,7 +102,7 @@ document_authors_attribute_form = {
 }
 
 document_author = {
-    document_author_name ~ document_author_email? ~ ";"?
+    document_author_name ~ document_author_email? ~ WS* ~ ";"? ~ WS*
 }
 
 // "<" marks the beginning of the author email, and ";" is the authors separator
@@ -116,7 +117,7 @@ document_author_email = {
 // see http://asciidoctor.org/docs/user-manual/#revision-number-date-and-remark
 // Eg: "v1.0, October 2, 2013: First incarnation"
 document_revision = {
-    WS* ~ !":" ~
+    WS* ~ !(":"|"=") ~
     ((document_revision_number ~ ","? ~ document_revision_date? ~ ":"? ~ document_revision_remark?)
     | (document_revision_date ~ ":"? ~ document_revision_remark?))
     ~ EOL
@@ -169,7 +170,7 @@ element_attributes = { element_attribute+ }
 
 element_attribute = {
     &("[" | "." | "#") // skip if the content does not start with one of those characters
-    ~ element_ID
+    ~ element_id
     | element_title
     | element_role 
     | literal_attribute
@@ -184,12 +185,12 @@ element_attribute = {
 // identify all attributes that masquerade a block element into something else.
 masquerade_attribute = { quote_attributes | verse_attributes }
 
-element_ID = {
+element_id = {
     "[[" ~ ID ~ "]]" ~ EOLS 
     | "[#" ~ ID ~ "]" ~ EOLS
 }
 
-inline_element_ID = { "[[" ~ ID ~ "]]" ~ WS* }
+inline_element_id = { "[[" ~ ID ~ "]]" ~ WS* }
 
 // a title attached to an element, such as a image_block
 // a title starts with a single "." followed by the value, without space in-between
@@ -252,13 +253,13 @@ inline_attributes = { "[" ~ generic_attribute* ~ "]" }
 // Sections
 // ------------------------------------------
 section = { 
-    element_attributes
-    ~ ("=" | "==" | "===" | "====" | "=====") ~ !"="
-    ~ WS+ ~ title_elements ~ inline_element_ID ~ EOL
+    element_attributes?
+    ~ "="{0,5}
+    ~ WS* ~ title_elements ~ inline_element_id* ~ EOL
 }
 
 title_elements = {
-    (!(NEWLINE | inline_element_ID) ~ title_element)+
+    (!(NEWLINE | inline_element_id) ~ title_element)+
 }
 
 title_element = {
@@ -402,13 +403,13 @@ unordered_list_item = {
 
 unordered_list_item_prefix = { 
     WS*
-    ~ ("*" | "**" | "***" | "****" | "*****") ~ !"*"
+    ~ "*"{0,5} ~ WS*
     | ("-") ~ WS+
 }
 
 ordered_list_item_prefix = {
     WS*
-    ~ ("." | "." | "..." | "...." | ".....") ~ !"." ~ WS+
+    ~ "."{0,5} ~ WS*
     | ASCII_DIGIT ~ "." ~ WS+
     | ASCII_ALPHA ~ "." ~ WS+
 }
@@ -453,8 +454,8 @@ admonition_kind = {
 
 paragraph = { 
     // admonition paragraph 
-    element_attributes? ~ admonition_kind ~ ": " ~ inline_elements+
-    | element_attributes? ~ inline_elements+
+    (element_attributes? ~ admonition_kind ~ ": " ~ inline_elements+)
+    | (element_attributes? ~ inline_elements+)
 } 
 
 // ------------------------------------------
@@ -466,7 +467,11 @@ paragraph = {
 // a paragraph whose first line begins with a word surrounded by spaces
 simple_paragraph = {
     element_attributes?
-    // FIXME
+    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
+        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
+        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
+        | "idprefix" | "customID"
+    )
     ~ first_paragraph_line
     ~ other_paragraph_line*
 }
@@ -483,12 +488,22 @@ first_paragraph_line = {
 
 other_paragraph_line = { inline_elements }
 
-verse_paragraph = { 
+verse_paragraph = {
     // admonition paragraph 
     (element_attributes?
-    // FIXME
+    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
+        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
+        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
+        | "idprefix" | "customID"
+    )
     ~ admonition_kind ~ ": " ~ inline_elements+)
-    | ( element_attributes? /* FIXME*/ ~ inline_elements+)
+    | ( element_attributes?
+    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
+        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
+        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
+        | "idprefix" | "customID"
+    )
+    ~ inline_elements+)
 }
     
 inline_elements = {
@@ -510,7 +525,7 @@ inline_element = { !(EOL |line_break )
     | quoted_text 
     | cross_reference 
     | document_attribute_substitution 
-    | inline_element_ID 
+    | inline_element_id 
     | other_word)
 }
 
@@ -531,7 +546,7 @@ inline_element_without_subtitution = {
     | passthrough 
     | quoted_text 
     | cross_reference 
-    | inline_element_ID
+    | inline_element_id
     | other_word
 }
 
@@ -923,7 +938,7 @@ footnote_ref = {
 }
 
 footnote_content = {
-    (!("]" | EOL) ~ WS* ~ !inline_element_ID ~ inline_element ~ WS*)+
+    (!("]" | EOL) ~ WS* ~ !inline_element_id ~ inline_element ~ WS*)+
 }
 
 // ------------------------------------------------------------------------------------
@@ -1056,7 +1071,11 @@ quote_block_paragraph = { inline_elements+ }
 
 verse_block = {
     element_attributes
-    // FIXME
+    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
+        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
+        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
+        | "idprefix" | "customID"
+    )
     ~ quote_block_delimiter ~ verse_block_element*
     ~ (quote_block_delimiter | EOI)
 }
@@ -1084,7 +1103,7 @@ verse_block_paragraph_line_element = {
     | quoted_text 
     | cross_reference 
     | document_attribute_substitution 
-    | inline_element_ID 
+    | inline_element_id 
     | other_word
 }
 
@@ -1164,7 +1183,7 @@ single_line_comment = {
 single_line_comment_content = { (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))* }
 
 // -------------------------------------------------------------------------------------
-// Literal _blocks (see http://asciidoctor.org/docs/user-manual/#literal-text-and-blocks)
+// Literal_blocks (see http://asciidoctor.org/docs/user-manual/#literal-text-and-blocks)
 // -------------------------------------------------------------------------------------
 literal_block = { paragraph_with_literal_attribute | paragraph_with_headingspaces | paragraph_with_literal_block_delimiter }
 
@@ -1178,7 +1197,7 @@ paragraph_with_headingspaces = {
 
 // first line MUST start with one (or more) space. Stop when reaching a blank line
 paragraph_with_headingspaces_lines = { 
-    (WS ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))+ ) ~ EOL // do not include the trailing 'EOL' on the first line
+    (WS ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ASCII_ALPHANUMERIC))+ ) ~ EOL // do not include the trailing 'EOL' on the first line
     ~ (!blank_line ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))+ ~ EOL)*
 }
 
@@ -1202,7 +1221,11 @@ paragraph_with_literal_block_delimiter_line = {
 // paragraph with the literal attribute (`[literal]`)
 paragraph_with_literal_attribute = { 
     element_attributes?
-    // FIXME
+    ~ &("id" | "lines" | "qanda" | "numberingStyle" | "start" | "checkstyle"
+        | "language" | "source" | "quoteTitle" | "quoteAuthor" | "admonitionKind"
+        | "link" | "role" | "toc" | "toclevels" | "title" | "revision" |"authors"
+        | "idprefix" | "customID"
+    )
     ~ paragraph_with_literal_attribute_lines
 }
 
@@ -1228,11 +1251,7 @@ blank_line = { !EOI ~ EOLS }
 // Base Types
 // ------------------------------------------
 
-//alphanum = { [\pL0-9] }
-
 parenthesis = { "(" | ")" | "[" | "]" }
-
-//ASCII_ALPHANUMERIC+ = { [\pL0-9]+ }
 
 dot = { "." }
 
@@ -1248,7 +1267,7 @@ other_word = @{
 }
 
 // spaces will not be eate
-spaces = { (" " | "\t")+ }
+spaces = _{ (" " | "\t")+ }
 
 file_location = {
     (FILENAME | document_attribute_substitution)+
@@ -1270,21 +1289,11 @@ ID = { ASCII_ALPHANUMERIC+ | (!(NEWLINE |WS |"[" |"]" |"<<" |">>" |",") ~ CHAR)+
 // 需要替换
 DIGIT = { ASCII_DIGIT }
 
-// number 在 pest 中可能已经有了
-// 需要确认
-// NUMBER = { "-"? ~ ASCII_DIGIT+ ~ NUMBER}
-
-WS = { " " | "\t" }
-
-// newline 在 pest 中可能也有了，需确认
-
-//EOI = { EOI}
+WS = _{ " " | "\t" }
 
 EOL = _{ NEWLINE | EOI }
 
-EOLS = { WS* ~ EOL }
-
-// STRING = @{ CHAR* }
+EOLS = @{ WS* ~ EOL }
 
 CHAR = {
     !("\"" | "\\") ~ ANY

@@ -32,6 +32,14 @@ pub fn convert(
 use pest::iterators::Pair;
 
 fn main() {
-    let str = "==== abcdsd\nfasdfs ".to_string();
+    let str = r#"= title
+    == second title
+    content line
+    [source, c]
+    ----
+    int main() {
+    }
+    ----
+    "#.to_string();
     convert(str);
 }
