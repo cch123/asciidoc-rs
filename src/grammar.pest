@@ -1274,7 +1274,7 @@ DIGIT = { ASCII_DIGIT }
 // 需要确认
 // NUMBER = { "-"? ~ ASCII_DIGIT+ ~ NUMBER}
 
-WS = _{ " " | "\t" }
+WS = { " " | "\t" }
 
 // newline 在 pest 中可能也有了，需确认
 
