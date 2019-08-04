@@ -1,6 +1,10 @@
+# Overview
+Original Grammar copied from bytesparadise/libasciidoc
+
+Rewrite all grammars using pest
 
 # TODO
-
 - [ ] start to test
 - [ ] cover the most use cases
-- [ ] output ast
+- [ ] finish ast
+- [ ] display ast

@@ -490,7 +490,7 @@ verse_paragraph = {
 }
     
 inline_elements = {
-    !(EOI | blank_line)
+    !(EOI | blank_line | element_attribute)
     ~ (
         single_line_comment
         | (!block_delimiter ~ inline_element+ ~ line_break? ~ EOL)
@@ -925,10 +925,10 @@ footnote_content = {
 }
 
 // ------------------------------------------------------------------------------------
-// _delimited _blocks 
+// delimited _blocks
 // ------------------------------------------------------------------------------------
 delimited_block = {
-    !CHAR
+    !ASCII_ALPHANUMERIC
     ~ (fenced_block
     | listing_block
     | example_block
@@ -979,7 +979,8 @@ listing_block_delimiter = { "----" ~ EOLS }
 listing_block = {
     element_attributes?
     ~ listing_block_delimiter
-    ~ listing_block_element* ~ (listing_block_delimiter | EOI)
+    ~ listing_block_element*
+    ~ (listing_block_delimiter | EOI)
 }
 
 listing_block_element = { file_inclusion | listing_block_paragraph }
@@ -1266,7 +1267,7 @@ WS = _{ " " | "\t" }
 
 EOL = _{ NEWLINE | EOI }
 
-EOLS = @{ WS* ~ EOL }
+EOLS = _{ WS* ~ EOL }
 
 CHAR = {
     !("\"" | "\\") ~ ANY
