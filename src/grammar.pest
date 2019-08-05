@@ -401,16 +401,11 @@ unordered_list_item = {
 }
 
 unordered_list_item_prefix = { 
-    WS*
-    ~ "*"{0,5} ~ WS*
-    | ("-") ~ WS+
+    WS* ~ (("*"{1,6} ~ WS*) | (("-") ~ WS+))
 }
 
 ordered_list_item_prefix = {
-    WS*
-    ~ "."{0,5} ~ WS*
-    | ASCII_DIGIT ~ "." ~ WS+
-    | ASCII_ALPHA ~ "." ~ WS+
+    WS* ~ (("."{1,6} ~ WS*) | (ASCII_DIGIT ~ "." ~ WS+) | (ASCII_ALPHA ~ "." ~ WS+))
 }
 
 unordered_list_item_check_style = {
@@ -492,7 +487,7 @@ verse_paragraph = {
 }
     
 inline_elements = {
-    !(EOI | blank_line | element_attribute)
+    !(EOI | blank_line )
     ~ (
         single_line_comment
         | (!block_delimiter ~ inline_element+ ~ line_break? ~ EOL)

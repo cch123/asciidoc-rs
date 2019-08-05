@@ -5,7 +5,7 @@ extern crate pest;
 extern crate pest_derive;
 
 extern crate serde_json;
-use pest::prec_climber::{Assoc, Operator, PrecClimber};
+//use pest::prec_climber::{Assoc, Operator, PrecClimber};
 
 //use pest::error::Error;
 use pest::Parser;
@@ -29,7 +29,7 @@ pub fn convert(
     println!("{:#?}", parse_result);
 }
 
-use pest::iterators::Pair;
+//use pest::iterators::Pair;
 
 fn main() {
     // add toc to str will destroy the ast
@@ -51,6 +51,11 @@ image::trie.png[]
 * 单个节点代表一个字母
 * 如果需要对字符串进行匹配
 * 只要从根节点开始依次匹配即可
+
+1. first level list
+2. first level list
+3. first level list
+4. first level list
 
 "#.to_string();
     convert(str);
