@@ -25,20 +25,22 @@ document_blocks = {
 
 document_block = {
     !EOI
-    ~ (simple_paragraph
-    | section
-    | delimited_block
-    | file_inclusion
-    | verse_paragraph // must be before image_block
-    | image_block 
-    | list_item
-    | blank_line // must be before Literal_block
-    | literal_block
-    | document_attribute_declaration 
-    | document_attribute_reset 
-    | table_of_contents_macro
-    | user_macro_block
-    | paragraph)
+    ~ (
+        simple_paragraph
+        | section
+        | delimited_block
+        | file_inclusion
+        | verse_paragraph // must be before image_block
+        | image_block
+        | list_item
+        | blank_line // must be before Literal_block
+        | literal_block
+        | document_attribute_declaration
+        | document_attribute_reset
+        | table_of_contents_macro
+        | user_macro_block
+        | paragraph
+    )
 }
 
 document_blocks_within_delimited_block = {
@@ -169,16 +171,18 @@ element_attributes = { element_attribute+ }
 
 element_attribute = {
     &("[" | "." | "#") // skip if the content does not start with one of those characters
-    ~ element_id
-    | element_title
-    | element_role 
-    | literal_attribute
-    | source_attributes
-    | quote_attributes
-    | verse_attributes
-    | admonition_marker_attribute
-    | horizontal_layout
-    | attribute_group
+    ~ (
+        element_id
+        | element_title
+        | element_role
+        | literal_attribute
+        | source_attributes
+        | quote_attributes
+        | verse_attributes
+        | admonition_marker_attribute
+        | horizontal_layout
+        | attribute_group
+    )
 }
 
 // identify all attributes that masquerade a block element into something else.
@@ -206,7 +210,7 @@ admonition_marker_attribute = { "[" ~ admonition_kind ~ "]" ~ EOLS }
 
 // a paragraph or a delimited block may contain source code in a given language
 source_attributes = {
-    "[source" ~ ","? ~ ((ASCII_ALPHANUMERIC+ | spaces | (!( NEWLINE |"]" ) ~ CHAR))+)? ~ "]" ~ EOLS
+    "[source" ~ ","? ~ ((spaces | (!( NEWLINE |"]" ) ~ ASCII_ALPHANUMERIC))+)? ~ "]" ~ EOLS
 }
 
 // one or more attributes. eg: [foo, key1=value1, key2 = value2 , ]
@@ -922,7 +926,7 @@ footnote_content = {
 }
 
 // ------------------------------------------------------------------------------------
-// delimited _blocks
+// delimited_blocks
 // ------------------------------------------------------------------------------------
 delimited_block = {
     !ASCII_ALPHANUMERIC
@@ -1225,7 +1229,7 @@ dot = { "." }
 simple_word = { ASCII_ALPHANUMERIC+ ~ &(WS | EOL) }
 
 // a word may end with a dot, but cannot have dots within
-other_word = @{
+other_word = {
     ASCII_ALPHANUMERIC+
     | quoted_text_prefix
     | parenthesis
