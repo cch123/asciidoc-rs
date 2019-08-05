@@ -8,3 +8,4 @@ Rewrite all grammars using pest
 - [ ] cover the most use cases
 - [ ] finish ast
 - [ ] display ast
+- [ ] output html

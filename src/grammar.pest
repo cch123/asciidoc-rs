@@ -124,7 +124,7 @@ document_revision = {
 }
 // Document_revisionNumber MUST start with a `v` or MAY start with a `v` but MUST end with a `,`
 document_revision_number = {
-    DIGIT
+    ASCII_DIGIT
 }
 
 document_revision_date = {
@@ -1205,10 +1205,6 @@ paragraph_with_literal_attribute = {
     ~ paragraph_with_literal_attribute_lines
 }
 
-literal_kind = {
-    "literal"
-}
-
 // include all lines until blankline
 paragraph_with_literal_attribute_lines = {
     paragraph_with_literal_attribute_line+
@@ -1260,10 +1256,6 @@ URL = {(ASCII_ALPHANUMERIC+ | (!(NEWLINE |WS |"[" |"]") ~ CHAR))+ }
 URL_SCHEME = { "http://" | "https://" | "ftp://" | "irc://" | "mailto:" }
 
 ID = { ASCII_ALPHANUMERIC+ | (!(NEWLINE |WS |"[" |"]" |"<<" |">>" |",") ~ CHAR)+ }
-
-// digit 在 pest 中已经有了
-// 需要替换
-DIGIT = { ASCII_DIGIT }
 
 WS = _{ " " | "\t" }
 
