@@ -1201,7 +1201,7 @@ paragraph_with_literal_block_delimiter_line = {
 
 // paragraph with the literal attribute (`[literal]`)
 paragraph_with_literal_attribute = { 
-    (&"[literal]" ~ element_attributes)?
+    (&"[literal]" ~ element_attributes)
     ~ paragraph_with_literal_attribute_lines
 }
 
