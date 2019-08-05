@@ -483,10 +483,12 @@ first_paragraph_line = {
 
 other_paragraph_line = { inline_elements }
 
+// NOTICE :
+// original verse_paragraph use ? after element attributes
 verse_paragraph = {
     // admonition paragraph 
-    ((&"[verse]" ~ element_attributes)? ~ admonition_kind ~ ": " ~ inline_elements+)
-    | ((&"[verse]" ~ element_attributes)? ~ inline_elements+)
+    ((&"[verse]" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
+    | ((&"[verse]" ~ element_attributes) ~ inline_elements+)
 }
     
 inline_elements = {
@@ -543,7 +545,7 @@ verbatim_paragraph = {
 }
 
 verbatim_paragraph_line = {
-    !(block_delimiter |blank_line)
+    !(block_delimiter | blank_line)
     ~ verbatim_paragraph_line_element*
     ~ line_break?
     ~ EOL
@@ -987,9 +989,9 @@ listing_block_element = { file_inclusion | listing_block_paragraph }
 
 listing_block_paragraph = { listing_block_paragraph_line+ }
 
-listing_block_paragraph_line = {
+listing_block_paragraph_line = @{
     !listing_block_delimiter
-    ~ (!EOI ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))*)
+    ~ (!EOI ~ WS* ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))*)
     ~ EOL
 }
 
@@ -1269,10 +1271,14 @@ EOL = _{ NEWLINE | EOI }
 
 EOLS = _{ WS* ~ EOL }
 
-CHAR = {
+/*CHAR = {
     !("\"" | "\\") ~ ANY
     | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
     | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
 }
+*/
+
+//CHAR = { ASCII_ALPHANUMERIC | LETTER }
+CHAR = { ANY }
 
 NEWLINE = _{ "\r\n" | "\r" | "\n"}

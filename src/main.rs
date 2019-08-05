@@ -32,14 +32,26 @@ pub fn convert(
 use pest::iterators::Pair;
 
 fn main() {
-    let str = r#"= title
+    // add toc to str will destroy the ast
+    let str = r#"
+= title
 == second title
 content line
-[source, c]
+[source, go]
 ----
-int main() {
+package main
+
+func main() {
+    fmt.Println("hello world")
 }
 ----
+
+image::trie.png[]
+
+* 单个节点代表一个字母
+* 如果需要对字符串进行匹配
+* 只要从根节点开始依次匹配即可
+
 "#.to_string();
     convert(str);
 }
