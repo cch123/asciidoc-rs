@@ -189,7 +189,7 @@ element_attribute = {
 masquerade_attribute = { quote_attributes | verse_attributes }
 
 element_id = {
-    "[[" ~ ID ~ "]]" ~ EOLS 
+    "[[" ~ ID ~ "]]" ~ EOLS
     | "[#" ~ ID ~ "]" ~ EOLS
 }
 
@@ -475,7 +475,7 @@ paragraph_lines = {
     ~ other_paragraph_line*
 }
 
-first_paragraph_line = {
+first_paragraph_line = @{
     !(labeled_list_item_term ~ labeled_list_item_separator)
     ~ simple_word ~ inline_element* ~ line_break? ~ EOL
 }
@@ -490,7 +490,7 @@ verse_paragraph = {
     | ((&"[verse" ~ element_attributes) ~ inline_elements+)
 }
     
-inline_elements = {
+inline_elements = @{
     !(EOI | blank_line | element_attributes)
     ~ (
         single_line_comment

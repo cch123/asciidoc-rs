@@ -115,32 +115,9 @@ ____
 * Untracked file in git repository
 
 
-[horizontal]
-CPU:: The brain of the computer.
-Hard drive:: Permanent storage for operating system and/or user files.
-RAM:: Temporarily stores information the CPU uses during operation.
-
-[qanda]
-What is Asciidoctor?::
-  An implementation of the AsciiDoc processor in Ruby.
-What is the answer to the Ultimate Question?:: 42
-
-
-
-> I hold it that a little rebellion now and then is a good thing,
-> and as necessary in the political world as storms in the physical.
-> -- Thomas Jefferson, Papers of Thomas Jefferson: Volume 11
-
 .After landing the cloaked Klingon bird of prey in Golden Gate park:
 [quote, Captain James T. Kirk, Star Trek IV: The Voyage Home]
 Everybody remember where we parked.
-
-[, James Baldwin]
-""
-Not everything that is faced can be changed.
-But nothing can be changed until it is faced.
-""
-
 
 [verse, Carl Sandburg, Fog]
 ____
@@ -181,6 +158,34 @@ ____
 ----
 System.out.println("Hello *bold* text").
 ----
+*/
+
+/*
+[horizontal]
+CPU:: The brain of the computer.
+Hard drive:: Permanent storage for operating system and/or user files.
+RAM:: Temporarily stores information the CPU uses during operation.
+
+
+
+[qanda]
+What is Asciidoctor?::
+  An implementation of the AsciiDoc processor in Ruby.
+What is the answer to the Ultimate Question?:: 42
+
+
+
+
+> I hold it that a little rebellion now and then is a good thing,
+> and as necessary in the political world as storms in the physical.
+> -- Thomas Jefferson, Papers of Thomas Jefferson: Volume 11
+
+[, James Baldwin]
+""
+Not everything that is faced can be changed.
+But nothing can be changed until it is faced.
+""
+
 */
 
 // 其它的 limitation 可以了解这里
