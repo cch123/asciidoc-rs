@@ -491,7 +491,7 @@ verse_paragraph = {
 }
     
 inline_elements = {
-    !(EOI | blank_line )
+    !(EOI | blank_line | element_attributes)
     ~ (
         single_line_comment
         | (!block_delimiter ~ inline_element+ ~ line_break? ~ EOL)
