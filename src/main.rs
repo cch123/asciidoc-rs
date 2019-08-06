@@ -57,6 +57,43 @@ image::trie.png[]
 3. first level list
 4. first level list
 
+[TIP]
+Use abc to do some thing
+to know the limit
+
+limitw
+
+
+[TIP]
+====
+dancing with eyes
+====
+
+[quote,Rūmī]
+____
+Patience is the key to joy.
+____
+
+
+http://baidu.com[fsdfasdf]
+
+. dafsdf
+. dasfsd
+. adfasdf
+
+
+[width="100%",options="header,footer"]
+|====================
+| 3 | 3 |  x
+| 3 |1  |  xx
+|1  |3  |  x
+| z | 3 |  z
+|====================
+
+fdasfadsf~323~
+
+zxcvxcv^dsafsdf^
+
 "#.to_string();
     convert(str);
 }

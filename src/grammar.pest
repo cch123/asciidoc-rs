@@ -486,8 +486,8 @@ other_paragraph_line = { inline_elements }
 // original verse_paragraph use ? after element attributes
 verse_paragraph = {
     // admonition paragraph 
-    ((&"[verse]" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
-    | ((&"[verse]" ~ element_attributes) ~ inline_elements+)
+    ((&"[verse" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
+    | ((&"[verse" ~ element_attributes) ~ inline_elements+)
 }
     
 inline_elements = {
@@ -1123,7 +1123,7 @@ table = {
 
 table_cell_separator = { "|" ~ WS* }
 
-table_delimiter = { "|===" ~ EOLS }
+table_delimiter = { "|==="~ "="* ~ EOLS }
         
 // table line header is a line followed by a blankline
 table_line_header = {
