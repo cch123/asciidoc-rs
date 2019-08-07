@@ -1,4 +1,5 @@
 #![recursion_limit = "1024"]
+pub mod ast;
 
 extern crate pest;
 #[macro_use]
@@ -21,9 +22,7 @@ pub struct ParseError {
     pub expected: String,
 }
 
-pub fn convert(
-    query: String
-) {
+pub fn convert(query: String) {
     let x = query.as_str();
     let parse_result = ExprParser::parse(Rule::pre_flight_document, x);
     println!("{:#?}", parse_result);
@@ -131,7 +130,8 @@ and then moves on.
 ____
 
 
-"#.to_string();
+"#
+    .to_string();
     convert(str);
 }
 
