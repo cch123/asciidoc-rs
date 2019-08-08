@@ -11,6 +11,7 @@ extern crate serde_json;
 //use pest::error::Error;
 use pest::Parser;
 use pest::iterators::Pair;
+use std::num::ParseIntError;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -32,36 +33,203 @@ pub fn convert(query: String) {
     }
 }
 
+pub fn document_blocks(elem : Pair<Rule>) {
+    println!("document blocks");
+    for i in elem.into_inner() {
+        match i.as_rule() {
+            Rule::document_header => {
+                document_header(i.into_inner().next().unwrap());
+            },
+            Rule::document_block => {
+                document_block(i.into_inner().next().unwrap());
+            },
+            _ => println!("skip in document block"),
+        }
+    }
+}
+
+pub fn simple_paragraph(ast: Pair<Rule>) {
+    let mut c = ast.into_inner();
+    for elem in c {
+        match elem.as_rule() {
+            Rule::element_attributes => println!("simple para : elem attr"),
+            Rule::first_paragraph_line => println!("simple para : first line"),
+            Rule::other_paragraph_line => println!("simple para : other line"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn document_header(elem: Pair<Rule>) {
+    println!("document header");
+}
+
+/*
+    element_attributes?
+    ~ "="{1,6}
+    ~ title_elements ~ inline_element_id* ~ EOL
+*/
+pub fn section(ast: Pair<Rule>) {
+    println!("section {:?}", ast);
+    let mut c = ast.into_inner();
+    for elem in c {
+        match elem.as_rule() {
+            Rule::element_attributes => println!("section : elem attr"),
+            Rule::title_elements => println!("section : title elems"),
+            Rule::inline_element_id => println!("section : inline elem id"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn delimited_block(ast: Pair<Rule>) {
+    let mut elem = ast.into_inner().next().unwrap();
+    match elem.as_rule() {
+        Rule::fenced_block => {
+            println!("del blo : fence")
+        },
+        Rule::listing_block => {
+            println!("del blo : listing blo")
+        },
+        Rule::example_block => {
+            println!("del blo : examp blo")
+        },
+        Rule::verse_block => {
+            println!("del blo : verse blo")
+        },
+        Rule::quote_block => {
+            println!("del blo : quo blo")
+        },
+        Rule::sidebar_block => {
+            println!("del blo : sidebar blo")
+        },
+        Rule::single_line_comment => {
+            println!("del blo : sing lin cmt")
+        },
+        Rule::table => {
+            println!("del blo : tab")
+        },
+        Rule::comment_block => {
+            println!("del blo : cmt blo")
+        },
+        _ => unreachable!(),
+    }
+}
+
+/*
+file_inclusion = {
+    "include::" ~ file_location ~ file_include_attributes ~ EOLS
+}
+*/
+pub fn file_inclusion(ast: Pair<Rule>) {
+    let mut elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::file_location => {
+                println!("file inc : file loc");
+            },
+            Rule::file_include_attributes => {
+                println!("file inc : file inc attr");
+            },
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+// NOTICE :
+// original verse_paragraph use ? after element attributes
+verse_paragraph = {
+    // admonition paragraph
+    ((&"[verse" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
+    | ((&"[verse" ~ element_attributes) ~ inline_elements+)
+}
+*/
+pub fn verse_paragraph(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::element_attributes => {
+                println!("verse para : elem attr")
+            },
+            Rule::admonition_kind => {
+                println!("verse para : admo kind")
+            },
+            Rule::inline_elements => {
+                println!("verse para : inline elem")
+            },
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn document_block(elem: Pair<Rule>) {
+    match elem.as_rule() {
+        Rule::simple_paragraph => {
+            simple_paragraph(elem);
+        },
+        Rule::section => {
+            section(elem);
+        },
+        Rule::delimited_block => {
+            delimited_block(elem);
+        },
+        Rule::file_inclusion => {
+            file_inclusion(elem);
+        },
+        Rule::verse_paragraph => {
+            verse_paragraph(elem);
+        },
+        Rule::image_block => {
+            println!("image block")
+        },
+        Rule::list_item => {
+            println!("list item")
+        },
+        Rule::blank_line => {
+            println!("blank line")
+        },
+        Rule::literal_block => {
+            println!("literal blo")
+        },
+        Rule::document_attribute_declaration => {
+            println!("document attri decl")
+        },
+        Rule::document_attribute_reset => {
+            println!("doc attr reset")
+        },
+        Rule::table_of_contents_macro => {
+            println!("toc macro")
+        },
+        Rule::user_macro_block => {
+            println!("user macro")
+        },
+        Rule::paragraph => {
+            println!("para")
+        },
+        _ => unreachable!(),
+    }
+}
+
 pub fn pre_flight_document(ast: Pair<Rule>) {
     // println!("{:#?}", ast);
     match ast.as_rule() {
         Rule::pre_flight_document => {
             println!("top match");
             let mut c = ast.into_inner();
-            for doc_elem in c.next() {
-                match doc_elem.as_rule() {
+            for elem in c {
+                match elem.as_rule() {
                     //~ front_matter*
                     Rule::front_matter => {
                         println!("front matter");
                     },
                     //~ document_block
                     Rule::document_blocks => {
-                        println!("document blocks");
-                        for docblock_inner in doc_elem.into_inner() {
-                            match docblock_inner.as_rule() {
-                                Rule::document_header => println!("document header"),
-                                Rule::document_block => println!("document block"),
-                                _ => println!("skip in document block"),
-                            }
-                        }
+                        document_blocks(elem);
                     },
                     _ => println!("skip"),
                 }
             }
-            /*
-            match c.next().unwrap().as_rule() {
-            }
-            */
         },
         _ =>  unreachable!(),
     }
