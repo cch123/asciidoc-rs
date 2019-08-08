@@ -10,6 +10,7 @@ extern crate serde_json;
 
 //use pest::error::Error;
 use pest::Parser;
+use pest::iterators::Pair;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -25,10 +26,46 @@ pub struct ParseError {
 pub fn convert(query: String) {
     let x = query.as_str();
     let parse_result = ExprParser::parse(Rule::pre_flight_document, x);
-    println!("{:#?}", parse_result);
+    match parse_result {
+        Ok(mut top_ast) => pre_flight_document(top_ast.next().unwrap()),
+        Err(e) => println!("{:?}", e),
+    }
 }
 
-//use pest::iterators::Pair;
+pub fn pre_flight_document(ast: Pair<Rule>) {
+    // println!("{:#?}", ast);
+    match ast.as_rule() {
+        Rule::pre_flight_document => {
+            println!("top match");
+            let mut c = ast.into_inner();
+            for doc_elem in c.next() {
+                match doc_elem.as_rule() {
+                    //~ front_matter*
+                    Rule::front_matter => {
+                        println!("front matter");
+                    },
+                    //~ document_block
+                    Rule::document_blocks => {
+                        println!("document blocks");
+                        for docblock_inner in doc_elem.into_inner() {
+                            match docblock_inner.as_rule() {
+                                Rule::document_header => println!("document header"),
+                                Rule::document_block => println!("document block"),
+                                _ => println!("skip in document block"),
+                            }
+                        }
+                    },
+                    _ => println!("skip"),
+                }
+            }
+            /*
+            match c.next().unwrap().as_rule() {
+            }
+            */
+        },
+        _ =>  unreachable!(),
+    }
+}
 
 fn main() {
     // add toc to str will destroy the ast

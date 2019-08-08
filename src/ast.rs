@@ -29,21 +29,52 @@ pub struct DocumentHeader {
 }
 
 pub enum DocumentBlock {
-    SimpleParagraph { content: String },
-    Section { content: String },
-    DelimitedBlock { content: String },
-    FileInclusion { content: String },
-    VerseParagraph { content: String },
-    ImageBlock { content: String },
-    ListItem { content: String },
-    BlankLine { content: String },
-    LiteralBlock { content: String },
-    DocumentAttributeDeclaration { content: String },
-    DocumentAttributeReset { content: String },
-    TableOfContentsMacro { content: String },
-    UserMacroBlock { content: String },
-    Paragraph { content: String },
+    SimpleParagraph {
+        element_attributes: Option<ElementAttributes>,
+        first_paragraph_line: String,
+        other_paragraph_line: Vec<InlineElements>,
+    },
+    Section(String),
+    DelimitedBlock(String),
+    FileInclusion(String),
+    VerseParagraph(String),
+    ImageBlock(String),
+    ListItem(String),
+    BlankLine(String),
+    LiteralBlock(String),
+    DocumentAttributeDeclaration(String),
+    DocumentAttributeReset(String),
+    TableOfContentsMacro(String),
+    UserMacroBlock(String),
+    Paragraph(String),
 }
+
+// Rust 枚举就是牛逼
+pub enum InlineElements {
+    InlineElements { inline_elements: Vec<InlineElement> },
+    SingleLineComment(String),
+}
+
+pub enum InlineElement {
+    SimpleWord(String),
+    Spaces(String),
+    InlineImage(String),
+    Link(String),
+    PassThrough(String),
+    InlineFootnote(String),
+    InlineUserMacro(String),
+    QuotedText(String),
+    CrossReference(String),
+    DocumentAttributeSubstitution(String),
+    InlineElementId(String),
+    OtherWord(String),
+}
+
+pub struct ElementAttributes {
+    element_attributes: Vec<ElementAttribute>,
+}
+
+pub struct ElementAttribute(String);
 
 pub struct FrontMatter {
     yaml_front_matter: YamlFrontMatter,
