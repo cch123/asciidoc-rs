@@ -9,8 +9,8 @@ extern crate serde_json;
 //use pest::prec_climber::{Assoc, Operator, PrecClimber};
 
 //use pest::error::Error;
-use pest::Parser;
 use pest::iterators::Pair;
+use pest::{Parser, RuleType};
 use std::num::ParseIntError;
 
 #[derive(Parser)]
@@ -33,16 +33,16 @@ pub fn convert(query: String) {
     }
 }
 
-pub fn document_blocks(elem : Pair<Rule>) {
+pub fn document_blocks(elem: Pair<Rule>) {
     println!("document blocks");
     for i in elem.into_inner() {
         match i.as_rule() {
             Rule::document_header => {
                 document_header(i.into_inner().next().unwrap());
-            },
+            }
             Rule::document_block => {
                 document_block(i.into_inner().next().unwrap());
-            },
+            }
             _ => println!("skip in document block"),
         }
     }
@@ -85,33 +85,15 @@ pub fn section(ast: Pair<Rule>) {
 pub fn delimited_block(ast: Pair<Rule>) {
     let mut elem = ast.into_inner().next().unwrap();
     match elem.as_rule() {
-        Rule::fenced_block => {
-            println!("del blo : fence")
-        },
-        Rule::listing_block => {
-            println!("del blo : listing blo")
-        },
-        Rule::example_block => {
-            println!("del blo : examp blo")
-        },
-        Rule::verse_block => {
-            println!("del blo : verse blo")
-        },
-        Rule::quote_block => {
-            println!("del blo : quo blo")
-        },
-        Rule::sidebar_block => {
-            println!("del blo : sidebar blo")
-        },
-        Rule::single_line_comment => {
-            println!("del blo : sing lin cmt")
-        },
-        Rule::table => {
-            println!("del blo : tab")
-        },
-        Rule::comment_block => {
-            println!("del blo : cmt blo")
-        },
+        Rule::fenced_block => println!("del blo : fence"),
+        Rule::listing_block => println!("del blo : listing blo"),
+        Rule::example_block => println!("del blo : examp blo"),
+        Rule::verse_block => println!("del blo : verse blo"),
+        Rule::quote_block => println!("del blo : quo blo"),
+        Rule::sidebar_block => println!("del blo : sidebar blo"),
+        Rule::single_line_comment => println!("del blo : sing lin cmt"),
+        Rule::table => println!("del blo : tab"),
+        Rule::comment_block => println!("del blo : cmt blo"),
         _ => unreachable!(),
     }
 }
@@ -127,10 +109,10 @@ pub fn file_inclusion(ast: Pair<Rule>) {
         match e.as_rule() {
             Rule::file_location => {
                 println!("file inc : file loc");
-            },
+            }
             Rule::file_include_attributes => {
                 println!("file inc : file inc attr");
-            },
+            }
             _ => unreachable!(),
         }
     }
@@ -149,15 +131,124 @@ pub fn verse_paragraph(ast: Pair<Rule>) {
     let elems = ast.into_inner();
     for elem in elems {
         match elem.as_rule() {
-            Rule::element_attributes => {
-                println!("verse para : elem attr")
-            },
-            Rule::admonition_kind => {
-                println!("verse para : admo kind")
-            },
-            Rule::inline_elements => {
-                println!("verse para : inline elem")
-            },
+            Rule::element_attributes => println!("verse para : elem attr"),
+            Rule::admonition_kind => println!("verse para : admo kind"),
+            Rule::inline_elements => println!("verse para : inline elem"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+image_block =  {
+    element_attributes?
+    ~ "image::"
+    ~ URL
+    ~ image_attributes
+    ~ EOLS
+}
+*/
+pub fn image_block(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::element_attributes => println!("img blo : ele attr"),
+            Rule::URL => println!("img blo : url"),
+            Rule::image_attributes => println!("img blo : img attr"),
+            _ => unreachable!(),
+        }
+    }
+}
+// list_item = { ordered_list_item | unordered_list_item | labeled_list_item | continued_list_item_element }
+pub fn list_item(ast: Pair<Rule>) {
+    let elem = ast.into_inner().next().unwrap();
+    match elem.as_rule() {
+        Rule::ordered_list_item => println!("list item : olist"),
+        Rule::unordered_list_item => println!("list item : ulist"),
+        Rule::labeled_list_item => println!("list item : llist"),
+        Rule::continued_list_item_element => println!("list item : clist"),
+        _ => unreachable!(),
+    }
+}
+
+pub fn blank_line(ast: Pair<Rule>) {
+    // do nothing
+}
+
+pub fn literal_block(ast: Pair<Rule>) {
+    let elem = ast.into_inner().next().unwrap();
+    match elem.as_rule() {
+        Rule::paragraph_with_literal_attribute => println!("lit blo : pla"),
+        Rule::paragraph_with_headingspaces => println!("lit blo : ph"),
+        Rule::paragraph_with_literal_block_delimiter => println!("lit blo plbd"),
+        _ => unreachable!(),
+    }
+}
+
+/*
+document_attribute_declaration = {
+    ":" ~ document_attribute_name
+    ~ ":" ~ (WS+ ~ document_attribute_value)?
+    ~ EOLS
+}
+*/
+
+pub fn document_attribute_declaration(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::document_attribute_name => println!("dad : dan"),
+            Rule::document_attribute_value => println!("dad : dav"),
+            _ => unreachable!()
+        }
+    }
+}
+
+/*
+document_attribute_reset = {
+    ":!" ~ document_attribute_name ~ ":" ~ EOLS
+    | ":" ~ document_attribute_name ~ "!:" ~ EOLS
+}
+*/
+pub fn document_attribute_reset(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::document_attribute_name => println!("doc attr reset : doc attr name"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+// table_of_contents_macro = { "toc::[]" ~ EOL }
+pub fn table_of_contents_macro(ast: Pair<Rule>) {
+    // do nothing currently
+}
+
+/*
+user_macro_block = {
+    user_macro_name ~ "::" ~ user_macro_value ~ user_macro_attributes
+}
+*/
+pub fn user_macro_block(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::user_macro_name => println!("umb : umn"),
+            Rule::user_macro_value => println!("umb : umv"),
+            Rule::user_macro_attributes => println!("umb : uma"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn paragraph(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::element_attributes => println!("para : ela"),
+            Rule::admonition_kind => println!("para : ak"),
+            Rule::inline_elements => println!("para : ie"),
             _ => unreachable!(),
         }
     }
@@ -165,48 +256,20 @@ pub fn verse_paragraph(ast: Pair<Rule>) {
 
 pub fn document_block(elem: Pair<Rule>) {
     match elem.as_rule() {
-        Rule::simple_paragraph => {
-            simple_paragraph(elem);
-        },
-        Rule::section => {
-            section(elem);
-        },
-        Rule::delimited_block => {
-            delimited_block(elem);
-        },
-        Rule::file_inclusion => {
-            file_inclusion(elem);
-        },
-        Rule::verse_paragraph => {
-            verse_paragraph(elem);
-        },
-        Rule::image_block => {
-            println!("image block")
-        },
-        Rule::list_item => {
-            println!("list item")
-        },
-        Rule::blank_line => {
-            println!("blank line")
-        },
-        Rule::literal_block => {
-            println!("literal blo")
-        },
-        Rule::document_attribute_declaration => {
-            println!("document attri decl")
-        },
-        Rule::document_attribute_reset => {
-            println!("doc attr reset")
-        },
-        Rule::table_of_contents_macro => {
-            println!("toc macro")
-        },
-        Rule::user_macro_block => {
-            println!("user macro")
-        },
-        Rule::paragraph => {
-            println!("para")
-        },
+        Rule::simple_paragraph => simple_paragraph(elem),
+        Rule::section => section(elem),
+        Rule::delimited_block => delimited_block(elem),
+        Rule::file_inclusion => file_inclusion(elem),
+        Rule::verse_paragraph => verse_paragraph(elem),
+        Rule::image_block => image_block(elem),
+        Rule::list_item => list_item(elem),
+        Rule::blank_line => blank_line(elem),
+        Rule::literal_block => literal_block(elem),
+        Rule::document_attribute_declaration => document_attribute_declaration(elem),
+        Rule::document_attribute_reset => document_attribute_reset(elem),
+        Rule::table_of_contents_macro => table_of_contents_macro(elem),
+        Rule::user_macro_block => user_macro_block(elem),
+        Rule::paragraph => paragraph(elem),
         _ => unreachable!(),
     }
 }
@@ -222,16 +285,16 @@ pub fn pre_flight_document(ast: Pair<Rule>) {
                     //~ front_matter*
                     Rule::front_matter => {
                         println!("front matter");
-                    },
+                    }
                     //~ document_block
                     Rule::document_blocks => {
                         document_blocks(elem);
-                    },
+                    }
                     _ => println!("skip"),
                 }
             }
-        },
-        _ =>  unreachable!(),
+        }
+        _ => unreachable!(),
     }
 }
 
