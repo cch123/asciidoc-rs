@@ -11,8 +11,8 @@ extern crate serde_json;
 //use pest::error::Error;
 use pest::iterators::Pair;
 use pest::{Parser, RuleType};
-use std::num::ParseIntError;
 use std::hint::unreachable_unchecked;
+use std::num::ParseIntError;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -59,7 +59,6 @@ pub fn element_attributes(ast: Pair<Rule>) {
         }
     }
 }
-
 
 /*
 first_paragraph_line = @{
@@ -410,19 +409,33 @@ pub fn document_block(elem: Pair<Rule>) {
     }
 }
 
+pub fn front_matter(ast: Pair<Rule>) {
+    let elem = ast.into_inner().next().unwrap();
+    match elem.as_rule() {
+        Rule::yaml_front_matter => yaml_front_matter(elem),
+        _ => unreachable!(),
+    }
+}
+
+pub fn yaml_front_matter(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::yaml_front_matter_token => println!("token in yml front matter"), // do nothing
+            Rule::yaml_front_matter_content => println!("yaml front matter content"),
+            _ => unreachable!(),
+        }
+    }
+}
 
 pub fn pre_flight_document(ast: Pair<Rule>) {
     let mut c = ast.into_inner();
     for elem in c {
         match elem.as_rule() {
             //~ front_matter*
-            Rule::front_matter => {
-                println!("front matter");
-            }
+            Rule::front_matter => front_matter(elem),
             //~ document_block
-            Rule::document_blocks => {
-                document_blocks(elem);
-            }
+            Rule::document_blocks => document_blocks(elem),
             _ => println!("skip"),
         }
     }
@@ -431,9 +444,7 @@ pub fn pre_flight_document(ast: Pair<Rule>) {
 pub fn walk_tree(ast: Pair<Rule>) {
     println!("top match");
     match ast.as_rule() {
-        Rule::pre_flight_document => {
-            pre_flight_document(ast);
-        }
+        Rule::pre_flight_document => pre_flight_document(ast),
         _ => unreachable!(),
     }
 }

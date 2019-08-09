@@ -76,7 +76,7 @@ yaml_front_matter = {
 yaml_front_matter_token  = { "---" ~ EOLS }
 
 yaml_front_matter_content = {
-    ((!yaml_front_matter_token ~ CHAR)+)*
+    ((!yaml_front_matter_token ~ ANY)+)*
 }
 
 // ------------------------------------------
@@ -109,11 +109,11 @@ document_author = {
 
 // "<" marks the beginning of the author email, and ";" is the authors separator
 document_author_name = @{
-    (ASCII_ALPHANUMERIC+ | (!("<" | ";" | NEWLINE ) ~ CHAR))+
+    (ASCII_ALPHANUMERIC+ | (!("<" | ";" | NEWLINE ) ~ ANY))+
 }
 
 document_author_email = @{
-    "<" ~ (ASCII_ALPHANUMERIC+ | (! (">" | EOL ) ~ CHAR))+ ~ ">"
+    "<" ~ (ASCII_ALPHANUMERIC+ | (! (">" | EOL ) ~ ANY))+ ~ ">"
 }
 
 // see http://asciidoctor.org/docs/user-manual/#revision-number-date-and-remark
@@ -130,11 +130,11 @@ document_revision_number = @{
 }
 
 document_revision_date = @{
-    (ASCII_ALPHANUMERIC+ | spaces | (!(EOL |":") ~ CHAR))+
+    (ASCII_ALPHANUMERIC+ | spaces | (!(EOL |":") ~ ANY))+
 }
 
 document_revision_remark = @{
-    (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))+
+    (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))+
 }
 
 // ------------------------------------------
@@ -153,7 +153,7 @@ document_attribute_name = {
     ( ASCII_ALPHANUMERIC+ | "_") ~ (ASCII_ALPHANUMERIC+ | "-")*
 }
 
-document_attribute_value = { (!NEWLINE ~ CHAR)+ }
+document_attribute_value = { (!NEWLINE ~ ANY)+ }
 
 document_attribute_reset = {
     ":!" ~ document_attribute_name ~ ":" ~ EOLS
@@ -197,11 +197,11 @@ inline_element_id = { "[[" ~ ID ~ "]]" ~ WS* }
 
 // a title attached to an element, such as a image_block
 // a title starts with a single "." followed by the value, without space in-between
-element_title = { "." ~ ASCII_ALPHANUMERIC+ ~ (ASCII_ALPHANUMERIC+ | spaces | (!NEWLINE ~ CHAR))*  ~ EOL }
+element_title = { "." ~ ASCII_ALPHANUMERIC+ ~ (ASCII_ALPHANUMERIC+ | spaces | (!NEWLINE ~ ANY))*  ~ EOL }
 
 // a role attached to an element, such as a image_block
 // a role starts is wrapped in "[. ]" 
-element_role = { "[." ~ ASCII_ALPHANUMERIC+ ~ (ASCII_ALPHANUMERIC+ | spaces | (!( NEWLINE | "]" ) ~ CHAR))* ~ "]" ~ EOLS }
+element_role = { "[." ~ ASCII_ALPHANUMERIC+ ~ (ASCII_ALPHANUMERIC+ | spaces | (!( NEWLINE | "]" ) ~ ANY))* ~ "]" ~ EOLS }
 
 literal_attribute = { "[literal]" ~ WS* ~ NEWLINE }
 
@@ -230,7 +230,7 @@ attribute_value = {
     (ASCII_ALPHANUMERIC+ | spaces | other_attribute_char)+ ~ !"="
 }
 
-other_attribute_char = { (!(WS |"=" |"," |"]") ~ CHAR) }
+other_attribute_char = { (!(WS |"=" |"," |"]") ~ ANY) }
 
 horizontal_layout = { "[horizontal]" ~ EOLS }
 
@@ -248,7 +248,7 @@ verse_attributes = {
     ~ "]" ~ EOLS
 }
 
-quote_attribute = { (ASCII_ALPHANUMERIC+ | spaces | (! ("," |"]" | EOL) ~  CHAR))* }
+quote_attribute = { (ASCII_ALPHANUMERIC+ | spaces | (! ("," |"]" | EOL) ~  ANY))* }
 
 inline_attributes = { "[" ~ generic_attribute* ~ "]" }
 
@@ -297,7 +297,7 @@ inline_user_macro = {
 
 user_macro_name = { (ASCII_ALPHANUMERIC+ | "_" | "-")+ }
 
-user_macro_value = { (ASCII_ALPHANUMERIC+ | (!(":" |"[" |EOL ) ~ CHAR))* }
+user_macro_value = { (ASCII_ALPHANUMERIC+ | (!(":" |"[" |EOL ) ~ ANY))* }
 
 user_macro_attributes = { "[" ~ generic_attribute* ~ "]" }
 
@@ -349,7 +349,7 @@ singleline_quoted_range = {
 }
 
 undefined_line_range = {
-    (!("]" |"," |WS) ~ CHAR)*
+    (!("]" |"," |WS) ~ ANY)*
 }
 
 // ------------------------------------------
@@ -429,7 +429,7 @@ labeled_list_item = {
 }
 
 labeled_list_item_term = {
-    (ASCII_ALPHANUMERIC+ | spaces | (!(NEWLINE |"::") ~ CHAR))+
+    (ASCII_ALPHANUMERIC+ | spaces | (!(NEWLINE |"::") ~ ANY))+
 }
 
 labeled_list_item_separator = { 
@@ -550,7 +550,7 @@ verbatim_paragraph_line = {
     ~ EOL
 }
 
-verbatim_paragraph_line_element = { ((!EOL |line_break) ~ CHAR)+ }
+verbatim_paragraph_line_element = { ((!EOL |line_break) ~ ANY)+ }
 
 // ----------------------------------------------------------------------------
 // Explicit line breaks
@@ -609,7 +609,7 @@ double_quote_bold_text_element = {
     | nondouble_quote_bold_text
 }
 
-nondouble_quote_bold_text = { (CHAR) ~ (!("**" |WS |"^" |"~" |NEWLINE) ~ CHAR)* } 
+nondouble_quote_bold_text = { (ANY) ~ (!("**" |WS |"^" |"~" |NEWLINE) ~ ANY)* }
 
 single_quote_bold_text = {
     !("\\" |"**") ~ "*" ~ single_quote_bold_text_content ~ "*"
@@ -618,7 +618,7 @@ single_quote_bold_text = {
 
 single_quote_bold_text_content = {
     !WS ~ single_quote_bold_text_element
-    ~ (!("*" ~ !CHAR) ~ WS* ~ single_quote_bold_text_element)*
+    ~ (!("*" ~ !ANY) ~ WS* ~ single_quote_bold_text_element)*
 }
 
 single_quote_bold_text_element = { !NEWLINE ~
@@ -633,7 +633,7 @@ single_quote_bold_text_element = { !NEWLINE ~
     | nonsingle_quote_bold_text
 }
 
-nonsingle_quote_bold_text = { (CHAR) ~ (!("*" |WS |"^" |"~" |NEWLINE) ~ CHAR)* }
+nonsingle_quote_bold_text = { (ANY) ~ (!("*" |WS |"^" |"~" |NEWLINE) ~ ANY)* }
 
 escaped_bold_text = { 
     two_or_more_backslashes ~ "**" ~ double_quote_bold_text_content ~ "**"
@@ -670,7 +670,7 @@ double_quote_italic_text_element = {
 }
 
 nondouble_quote_italic_text = {
-    (CHAR) ~ (!("__" |"^" |"~" |NEWLINE ) ~ CHAR)* 
+    (ANY) ~ (!("__" |"^" |"~" |NEWLINE ) ~ ANY)*
 }
 
 single_quote_italic_text = {
@@ -680,7 +680,7 @@ single_quote_italic_text = {
 
 single_quote_italic_text_content = {
     !WS ~ single_quote_italic_text_element
-    ~ (!("_" ~ !CHAR) ~ WS* ~ single_quote_italic_text_element)*
+    ~ (!("_" ~ !ANY) ~ WS* ~ single_quote_italic_text_element)*
 }
 
 single_quote_italic_text_element = {
@@ -697,7 +697,7 @@ single_quote_italic_text_element = {
 }
 
 nonsingle_quote_italic_text = {
-    (CHAR) ~ (!("_" |WS |"^" |"~" |NEWLINE) ~ CHAR)* 
+    (ANY) ~ (!("_" |WS |"^" |"~" |NEWLINE) ~ ANY)*
 }
 
 escaped_italic_text = { 
@@ -733,7 +733,7 @@ double_quote_monospace_text_element = { !NEWLINE
 }
 
 nondouble_quote_monospace_text = {
-    (CHAR) ~ (!("``" |WS |"^" |"~" |NEWLINE) ~ CHAR)*
+    (ANY) ~ (!("``" |WS |"^" |"~" |NEWLINE) ~ ANY)*
 }
 
 single_quote_monospace_text = {
@@ -743,7 +743,7 @@ single_quote_monospace_text = {
 
 single_quote_monospace_text_content = {
     !WS ~ single_quote_monospace_text_element
-    ~ (!("`" ~ !CHAR) ~ WS* ~ single_quote_monospace_text_element)*
+    ~ (!("`" ~ !ANY) ~ WS* ~ single_quote_monospace_text_element)*
 }
 
 single_quote_monospace_text_element = {
@@ -760,7 +760,7 @@ single_quote_monospace_text_element = {
 }
 
 nonsingle_quote_monospace_text = {
-    (CHAR) ~ (!(WS |"`" |"^" |"~" |NEWLINE) ~ CHAR)*
+    (ANY) ~ (!(WS |"`" |"^" |"~" |NEWLINE) ~ ANY)*
 }
 
 escaped_monospace_text = { 
@@ -775,7 +775,7 @@ subscript_text = {
 
 subscript_text_element = { quoted_text | nonsubscript_text }
 
-nonsubscript_text = { (!(NEWLINE |WS |"~" ) ~ CHAR)+ }
+nonsubscript_text = { (!(NEWLINE |WS |"~" ) ~ ANY)+ }
 
 escaped_subscript_text = {
     one_or_more_backslashes ~ "~" ~ subscript_text_element ~ "~"
@@ -789,7 +789,7 @@ superscript_text = {
 
 superscript_text_element = { quoted_text | nonsuperscript_text }
 
-nonsuperscript_text = { (!(NEWLINE |WS |"^") ~ CHAR)+ }
+nonsuperscript_text = { (!(NEWLINE |WS |"^") ~ ANY)+ }
 
 escaped_superscript_text = {
     one_or_more_backslashes ~ "^"
@@ -807,12 +807,12 @@ single_plus_passthrough = {
     single_plus_passthrough_prefix
     ~ single_plus_passthrough_content
     ~ single_plus_passthrough_prefix
-    ~ !CHAR
+    ~ !ANY
 }
 
 single_plus_passthrough_content = {
-    !(single_plus_passthrough_prefix | WS | NEWLINE) ~ CHAR ~ (!(WS+ ~ single_plus_passthrough_prefix) ~ !(single_plus_passthrough_prefix |NEWLINE) ~ CHAR)*
-    | !(WS | NEWLINE | single_plus_passthrough_prefix) ~ CHAR
+    !(single_plus_passthrough_prefix | WS | NEWLINE) ~ ANY ~ (!(WS+ ~ single_plus_passthrough_prefix) ~ !(single_plus_passthrough_prefix |NEWLINE) ~ ANY)*
+    | !(WS | NEWLINE | single_plus_passthrough_prefix) ~ ANY
 } 
 
 triple_plus_passthrough_prefix = { "+++" }
@@ -820,13 +820,13 @@ triple_plus_passthrough_prefix = { "+++" }
 triple_plus_passthrough = {
     triple_plus_passthrough_prefix
     ~ triple_plus_passthrough_content
-    ~ triple_plus_passthrough_prefix ~ !CHAR
+    ~ triple_plus_passthrough_prefix ~ !ANY
 }
 
 triple_plus_passthrough_content = {
      // spaces and newlines are also allowed in the first or last position of the content and elsewhere too
-     (!triple_plus_passthrough_prefix ~ CHAR)+ // 这里原本是 *，但是理论上和下面规则有相容关系
-     | (!(WS |NEWLINE |triple_plus_passthrough_prefix) ~ CHAR)?
+     (!triple_plus_passthrough_prefix ~ ANY)+ // 这里原本是 *，但是理论上和下面规则有相容关系
+     | (!(WS |NEWLINE |triple_plus_passthrough_prefix) ~ ANY)?
 }
 
 passthrough_macro = {
@@ -834,7 +834,7 @@ passthrough_macro = {
     | "pass:q[" ~ (quoted_text | passthrough_macro_character*) ~ "]"
 }
 
-passthrough_macro_character = { ASCII_ALPHANUMERIC+ | spaces | (!"]" ~ CHAR) }
+passthrough_macro_character = { ASCII_ALPHANUMERIC+ | spaces | (!"]" ~ ANY) }
 
 // ------------------------------------------
 // Cross References
@@ -844,7 +844,7 @@ cross_reference = {
     | "<<" ~ ID ~ ">>"
 }
 
-cross_reference_label = { (ASCII_ALPHANUMERIC+ | spaces | (!">>" ~ CHAR))+ }
+cross_reference_label = { (ASCII_ALPHANUMERIC+ | spaces | (!">>" ~ ANY))+ }
 
 // ------------------------------------------
 // Links
@@ -873,7 +873,7 @@ link_attributes = {
 link_text_attribute = {
     (
         !("=" |"," |"]")
-        ~ (quoted_text | simple_word | spaces | (!quoted_text_prefix ~ CHAR))
+        ~ (quoted_text | simple_word | spaces | (!quoted_text_prefix ~ ANY))
     )+
     ~ &(!"=") 
 }
@@ -918,7 +918,7 @@ inline_footnote = {
 }
 
 footnote_ref = {
-    (ASCII_ALPHANUMERIC+ | spaces | (!("," |"]" |EOL) ~ CHAR))*
+    (ASCII_ALPHANUMERIC+ | spaces | (!("," |"]" |EOL) ~ ANY))*
 }
 
 footnote_content = {
@@ -990,7 +990,7 @@ listing_block_paragraph = { listing_block_paragraph_line+ }
 
 listing_block_paragraph_line = @{
     !listing_block_delimiter
-    ~ (!EOI ~ WS* ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))*)
+    ~ (!EOI ~ WS* ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))*)
     ~ EOL
 }
 
@@ -1060,9 +1060,9 @@ verse_block = {
     ~ (quote_block_delimiter | EOI)
 }
 
-verse_block_element = { versefile_include | blank_line | verse_block_paragraph }
+verse_block_element = { verse_file_include | blank_line | verse_block_paragraph }
 
-versefile_include = { !quote_block_delimiter ~ file_inclusion }
+verse_file_include = { !quote_block_delimiter ~ file_inclusion }
 
 // blocks content
 verse_block_paragraph = { verse_block_paragraph_line+ }
@@ -1074,17 +1074,19 @@ verse_block_paragraph_line = {
 
 verse_block_paragraph_line_element = {
     !(EOL |line_break)
-    ~ spaces 
-    | inline_image 
-    | link 
-    | passthrough 
-    | inline_footnote 
-    | inline_user_macro 
-    | quoted_text 
-    | cross_reference 
-    | document_attribute_substitution 
-    | inline_element_id 
-    | other_word
+    ~ (
+        spaces
+        | inline_image
+        | link
+        | passthrough
+        | inline_footnote
+        | inline_user_macro
+        | quoted_text
+        | cross_reference
+        | document_attribute_substitution
+        | inline_element_id
+        | other_word
+    )
 }
 
 // -------------------------------------------------------------------------------------
@@ -1121,9 +1123,9 @@ table = {
     ~ (table_delimiter | EOI)
 }
 
-table_cell_separator = { "|" ~ WS* }
+table_cell_separator = _{ "|" ~ WS* }
 
-table_delimiter = { "|==="~ "="* ~ EOLS }
+table_delimiter = _{ "|==="~ "="* ~ EOLS }
         
 // table line header is a line followed by a blankline
 table_line_header = {
@@ -1149,7 +1151,7 @@ comment_block = {
 }
 
 comment_block_line = {
-    (ASCII_ALPHANUMERIC+ | spaces | (!(comment_block_delimiter | EOL) ~ CHAR))* ~ EOL
+    (ASCII_ALPHANUMERIC+ | spaces | (!(comment_block_delimiter | EOL) ~ ANY))* ~ EOL
 }
 
 single_line_comment = {
@@ -1160,7 +1162,7 @@ single_line_comment = {
     ~ EOL
 }
 
-single_line_comment_content = { (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))* }
+single_line_comment_content = { (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))* }
 
 // -------------------------------------------------------------------------------------
 // Literal_blocks (see http://asciidoctor.org/docs/user-manual/#literal-text-and-blocks)
@@ -1178,7 +1180,7 @@ paragraph_with_headingspaces = {
 // first line MUST start with one (or more) space. Stop when reaching a blank line
 paragraph_with_headingspaces_lines = { 
     (WS ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ASCII_ALPHANUMERIC))+ ) ~ EOL // do not include the trailing 'EOL' on the first line
-    ~ (!blank_line ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))+ ~ EOL)*
+    ~ (!blank_line ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))+ ~ EOL)*
 }
 
 // paragraph with the literal block delimiter (`....`)
@@ -1195,7 +1197,7 @@ paragraph_with_literal_block_delimiter_lines = {
 }
 
 paragraph_with_literal_block_delimiter_line = {         
-    (ASCII_ALPHANUMERIC+ | spaces | (!(literal_block_delimiter | EOL) ~ CHAR))* ~ EOL
+    (ASCII_ALPHANUMERIC+ | spaces | (!(literal_block_delimiter | EOL) ~ ANY))* ~ EOL
 }
 
 // paragraph with the literal attribute (`[literal]`)
@@ -1210,7 +1212,7 @@ paragraph_with_literal_attribute_lines = {
 }
 
 paragraph_with_literal_attribute_line = {
-    !blank_line ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))+ ~ EOL
+    !blank_line ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))+ ~ EOL
 }
 
 // ------------------------------------------
@@ -1233,7 +1235,7 @@ other_word = {
     ASCII_ALPHANUMERIC+
     | quoted_text_prefix
     | parenthesis
-    | (!(NEWLINE |WS |dot |quoted_text_prefix | "=") ~ CHAR ~ dot?)+
+    | (!(NEWLINE |WS |dot |quoted_text_prefix | "=") ~ ANY ~ dot?)+
     | "."+
 }
 
@@ -1245,16 +1247,16 @@ file_location = {
 }
 
 location = {
-    URL_SCHEME ~ (FILENAME | document_attribute_substitution | !(EOL |"[") ~ CHAR)+
+    URL_SCHEME ~ (FILENAME | document_attribute_substitution | !(EOL |"[") ~ ANY)+
 }
 
 FILENAME = { (ASCII_ALPHANUMERIC+ | "." | "_" | "/" | "-" )+ }
 
-URL = {(ASCII_ALPHANUMERIC+ | (!(NEWLINE |WS |"[" |"]") ~ CHAR))+ }
+URL = {(ASCII_ALPHANUMERIC+ | (!(NEWLINE |WS |"[" |"]") ~ ANY))+ }
 
 URL_SCHEME = { "http://" | "https://" | "ftp://" | "irc://" | "mailto:" }
 
-ID = { ASCII_ALPHANUMERIC+ | (!(NEWLINE |WS |"[" |"]" |"<<" |">>" |",") ~ CHAR)+ }
+ID = { ASCII_ALPHANUMERIC+ | (!(NEWLINE |WS |"[" |"]" |"<<" |">>" |",") ~ ANY)+ }
 
 WS = _{ " " | "\t" }
 
@@ -1262,14 +1264,14 @@ EOL = _{ NEWLINE | EOI }
 
 EOLS = _{ WS* ~ EOL }
 
-/*CHAR = {
+/*ANY = {
     !("\"" | "\\") ~ ANY
     | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
     | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
 }
 */
 
-//CHAR = { ASCII_ALPHANUMERIC | LETTER }
+//ANY = { ASCII_ALPHANUMERIC | LETTER }
 CHAR = { ANY }
 
 NEWLINE = _{ "\r\n" | "\r" | "\n"}
