@@ -12,6 +12,7 @@ extern crate serde_json;
 use pest::iterators::Pair;
 use pest::{Parser, RuleType};
 use std::num::ParseIntError;
+use std::hint::unreachable_unchecked;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -28,7 +29,7 @@ pub fn convert(query: String) {
     let x = query.as_str();
     let parse_result = ExprParser::parse(Rule::pre_flight_document, x);
     match parse_result {
-        Ok(mut top_ast) => pre_flight_document(top_ast.next().unwrap()),
+        Ok(mut top_ast) => walk_tree(top_ast.next().unwrap()),
         Err(e) => println!("{:?}", e),
     }
 }
@@ -48,13 +49,70 @@ pub fn document_blocks(elem: Pair<Rule>) {
     }
 }
 
+// element_attributes = { element_attribute+ }
+pub fn element_attributes(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::element_attribute => println!("elem attr"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+
+/*
+first_paragraph_line = @{
+    !(labeled_list_item_term ~ labeled_list_item_separator)
+    ~ simple_word ~ inline_element* ~ line_break? ~ EOL
+}
+*/
+pub fn first_paragraph_line(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::simple_word => println!("simple word"),
+            Rule::inline_element => println!("inline ele 1"),
+            Rule::line_break => println!("line break"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+inline_elements = @{
+        single_line_comment
+        | (!block_delimiter ~ inline_element+ ~ line_break? ~ EOL)
+}
+*/
+pub fn inline_elements(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::single_line_comment => println!("single_line cmt"),
+            Rule::inline_element => println!("inline ele"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn other_paragraph_line(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::inline_elements => inline_elements(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
 pub fn simple_paragraph(ast: Pair<Rule>) {
     let mut c = ast.into_inner();
     for elem in c {
         match elem.as_rule() {
-            Rule::element_attributes => println!("simple para : elem attr"),
-            Rule::first_paragraph_line => println!("simple para : first line"),
-            Rule::other_paragraph_line => println!("simple para : other line"),
+            Rule::element_attributes => element_attributes(elem),
+            Rule::first_paragraph_line => first_paragraph_line(elem),
+            Rule::other_paragraph_line => other_paragraph_line(elem),
             _ => unreachable!(),
         }
     }
@@ -352,25 +410,29 @@ pub fn document_block(elem: Pair<Rule>) {
     }
 }
 
+
 pub fn pre_flight_document(ast: Pair<Rule>) {
-    // println!("{:#?}", ast);
+    let mut c = ast.into_inner();
+    for elem in c {
+        match elem.as_rule() {
+            //~ front_matter*
+            Rule::front_matter => {
+                println!("front matter");
+            }
+            //~ document_block
+            Rule::document_blocks => {
+                document_blocks(elem);
+            }
+            _ => println!("skip"),
+        }
+    }
+}
+
+pub fn walk_tree(ast: Pair<Rule>) {
+    println!("top match");
     match ast.as_rule() {
         Rule::pre_flight_document => {
-            println!("top match");
-            let mut c = ast.into_inner();
-            for elem in c {
-                match elem.as_rule() {
-                    //~ front_matter*
-                    Rule::front_matter => {
-                        println!("front matter");
-                    }
-                    //~ document_block
-                    Rule::document_blocks => {
-                        document_blocks(elem);
-                    }
-                    _ => println!("skip"),
-                }
-            }
+            pre_flight_document(ast);
         }
         _ => unreachable!(),
     }
