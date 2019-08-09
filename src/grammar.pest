@@ -108,11 +108,11 @@ document_author = {
 }
 
 // "<" marks the beginning of the author email, and ";" is the authors separator
-document_author_name = {
+document_author_name = @{
     (ASCII_ALPHANUMERIC+ | (!("<" | ";" | NEWLINE ) ~ CHAR))+
 }
 
-document_author_email = {
+document_author_email = @{
     "<" ~ (ASCII_ALPHANUMERIC+ | (! (">" | EOL ) ~ CHAR))+ ~ ">"
 }
 
@@ -125,15 +125,15 @@ document_revision = {
     ~ EOL
 }
 // Document_revisionNumber MUST start with a `v` or MAY start with a `v` but MUST end with a `,`
-document_revision_number = {
+document_revision_number = @{
     ASCII_DIGIT
 }
 
-document_revision_date = {
+document_revision_date = @{
     (ASCII_ALPHANUMERIC+ | spaces | (!(EOL |":") ~ CHAR))+
 }
 
-document_revision_remark = {
+document_revision_remark = @{
     (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ CHAR))+
 }
 

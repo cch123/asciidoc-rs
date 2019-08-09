@@ -60,8 +60,87 @@ pub fn simple_paragraph(ast: Pair<Rule>) {
     }
 }
 
-pub fn document_header(elem: Pair<Rule>) {
-    println!("document header");
+/*
+document_header = {
+    "=" ~ WS+ ~ title_elements ~ inline_element_id* ~ EOL
+    ~ document_authors?
+    ~ document_revision?
+}
+*/
+pub fn document_header(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::title_elements => title_elements(elem),
+            Rule::inline_element_id => inline_element_id(elem),
+            Rule::document_authors => document_authors(elem),
+            Rule::document_revision => document_revision(elem),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+document_revision = {
+    WS* ~ !(":"|"=") ~
+    ((document_revision_number ~ ","? ~ document_revision_date? ~ ":"? ~ document_revision_remark?)
+    | (document_revision_date ~ ":"? ~ document_revision_remark?))
+    ~ EOL
+}
+*/
+pub fn document_revision(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::document_revision_number => println!("dv : drn"),
+            Rule::document_revision_date => println!("dv : drd"),
+            Rule::document_revision_remark => println!("dv : drr"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+document_authors = {
+    WS* ~ !"=" ~
+    (document_authors_inline_form
+    | document_authors_attribute_form)
+}
+*/
+pub fn document_authors(ast: Pair<Rule>) {
+    let elem = ast.into_inner().next().unwrap();
+    match elem.as_rule() {
+        Rule::document_authors_inline_form => println!("da : daif"),
+        Rule::document_authors_attribute_form => println!("da: daaf"),
+        _ => unreachable!(),
+    }
+}
+
+/*
+inline_element_id = { "[[" ~ ID ~ "]]" ~ WS* }
+*/
+pub fn inline_element_id(ast: Pair<Rule>) {
+    let elem = ast.into_inner().next().unwrap();
+    match elem.as_rule() {
+        Rule::ID => println!("iei : id"),
+        _ => unreachable!(),
+    }
+}
+
+/*
+title_elements = {
+    (!(NEWLINE | inline_element_id) ~ WS* ~ title_element)+
+}
+*/
+pub fn title_elements(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for elem in elems {
+        match elem.as_rule() {
+            Rule::inline_element_id => println!("tes : iei"),
+            Rule::title_element => println!("tes : te"),
+            _ => unreachable!(),
+        }
+    }
 }
 
 /*
@@ -70,7 +149,6 @@ pub fn document_header(elem: Pair<Rule>) {
     ~ title_elements ~ inline_element_id* ~ EOL
 */
 pub fn section(ast: Pair<Rule>) {
-    println!("section {:?}", ast);
     let mut c = ast.into_inner();
     for elem in c {
         match elem.as_rule() {
@@ -199,7 +277,7 @@ pub fn document_attribute_declaration(ast: Pair<Rule>) {
         match elem.as_rule() {
             Rule::document_attribute_name => println!("dad : dan"),
             Rule::document_attribute_value => println!("dad : dav"),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
