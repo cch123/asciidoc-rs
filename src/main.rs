@@ -520,10 +520,51 @@ pub fn other_word(ast:Pair<Rule>) {
     println!("other word : {}", ast.as_str());
 }
 
-// FIXME
-pub fn quote_text(ast: Pair<Rule>) {
-    println!("quote text")
+/*
+quoted_text = {
+    bold_text
+    | italic_text
+    | monospace_text
+    | subscript_text
+    | superscript_text
+    | escaped_bold_text
+    | escaped_italic_text
+    | escaped_monospace_text
+    | escaped_subscript_text
+    | escaped_superscript_text
+    | subscript_or_superscript_prefix
 }
+*/
+pub fn quote_text(ast: Pair<Rule>) {
+    let e = ast.into_inner().next().unwrap();
+    match e.as_rule() {
+        Rule::bold_text => bold_text(e),
+        Rule::italic_text => italic_text(e),
+        Rule::monospace_text => monospace_text(e),
+        Rule::subscript_text => subscript_text(e),
+        Rule::superscript_text => superscript_text(e),
+        Rule::escaped_bold_text => escaped_bold_text(e),
+        Rule::escaped_italic_text => escaped_italic_text(e),
+        Rule::escaped_monospace_text => escaped_monospace_text(e),
+        Rule::escaped_subscript_text => escaped_subscript_text(e),
+        Rule::escaped_superscript_text => escaped_superscript_text(e),
+        Rule::subscript_or_superscript_prefix => subscript_or_superscript_prefix(e),
+        _ => unreachable!(),
+    }
+}
+
+// FIXME
+pub fn bold_text(ast: Pair<Rule>) { }
+pub fn italic_text(ast: Pair<Rule>) { }
+pub fn monospace_text(ast: Pair<Rule>) { }
+pub fn subscript_text(ast: Pair<Rule>) { }
+pub fn superscript_text(ast: Pair<Rule>) { }
+pub fn escaped_bold_text(ast: Pair<Rule>) { }
+pub fn escaped_italic_text(ast: Pair<Rule>) { }
+pub fn escaped_monospace_text(ast: Pair<Rule>) {}
+pub fn escaped_subscript_text(ast: Pair<Rule>) {}
+pub fn escaped_superscript_text(ast: Pair<Rule>) {}
+pub fn subscript_or_superscript_prefix(ast: Pair<Rule>) {}
 
 // FIXME
 pub fn cross_reference(ast: Pair<Rule>) {
@@ -594,16 +635,263 @@ pub fn inline_image(ast: Pair<Rule>) {
     }
 }
 
-// TODO
-pub fn quote_block(ast: Pair<Rule>) {}
-// TODO
-pub fn sidebar_block(ast: Pair<Rule>) {}
-// TODO
-pub fn single_line_comment(ast: Pair<Rule>) {}
-// TODO
-pub fn table(ast: Pair<Rule>) {}
-// TODO
-pub fn comment_block(ast: Pair<Rule>) {}
+/*
+quote_block = {
+    element_attributes?
+    ~ quote_block_delimiter
+    ~ quote_block_element*
+    ~ (quote_block_delimiter | EOI)
+}
+*/
+pub fn quote_block(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::element_attributes => element_attributes(e),
+            Rule::quote_block_delimiter => {}, // do nothing
+            Rule::quote_block_element => quote_block_element(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+quote_block_element = {
+}
+*/
+pub fn quote_block_element(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::blank_line => blank_line(e),
+            Rule::file_inclusion => file_inclusion(e),
+            Rule::image_block => image_block(e),
+            Rule::list_item => list_item(e),
+            Rule::fenced_block => fenced_block(e),
+            Rule::listing_block => listing_block(e),
+            Rule::example_block => example_block(e),
+            Rule::comment_block => comment_block(e),
+            Rule::single_line_comment => single_line_comment(e),
+            Rule::quote_block => quote_block(e),
+            Rule::sidebar_block => sidebar_block(e),
+            Rule::table => table(e),
+            Rule::literal_block => literal_block(e),
+            Rule::document_attribute_declaration => document_attribute_declaration(e),
+            Rule::document_attribute_reset => document_attribute_reset(e),
+            Rule::table_of_contents_macro => table_of_contents_macro(e),
+            Rule::quote_block_paragraph => quote_block_paragraph(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn quote_block_paragraph(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::inline_elements => inline_elements(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+sidebar_block = {
+    element_attributes? ~ sidebar_block_delimiter
+    ~ sidebar_block_content*
+    ~ (sidebar_block_delimiter | EOI)
+}
+*/
+pub fn sidebar_block(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::element_attributes => element_attributes(e),
+            Rule::sidebar_block_delimiter => {}, // do nothing
+            Rule::sidebar_block_content => sidebar_block_content(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+// sidebar_block_content = {
+// blank_line
+// | file_inclusion
+// | list_item
+// | non_sidebar_block
+// | sidebar_block_paragraph
+// }
+pub fn sidebar_block_content(ast: Pair<Rule>) {
+    let e = ast.into_inner().next().unwrap();
+    match e.as_rule() {
+        Rule::blank_line => blank_line(e),
+        Rule::file_inclusion => file_inclusion(e),
+        Rule::list_item => list_item(e),
+        Rule::non_sidebar_block => non_sidebar_block(e),
+        Rule::sidebar_block_paragraph => sidebar_block_paragraph(e),
+        _ => unreachable!(),
+    }
+}
+
+// non_sidebar_block = { !sidebar_block ~ delimited_block }
+pub fn non_sidebar_block(ast: Pair<Rule>) {
+    let e = ast.into_inner().next().unwrap();
+    match e.as_rule() {
+        Rule::delimited_block => delimited_block(e),
+        _ => unreachable!(),
+    }
+}
+
+pub fn sidebar_block_paragraph(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::sidebar_block_paragraph_line => sidebar_block_paragraph_line(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn sidebar_block_paragraph_line(ast: Pair<Rule>) {
+    let e = ast.into_inner().next().unwrap();
+    match e.as_rule() {
+        Rule::inline_elements => inline_elements(e),
+        _ => unreachable!(),
+    }
+}
+
+/*
+single_line_comment = {
+    !comment_block_delimiter
+    ~ WS*
+    ~ "//"
+    ~ single_line_comment_content
+    ~ EOL
+}
+*/
+pub fn single_line_comment(ast: Pair<Rule>) {
+    let e = ast.into_inner().next().unwrap();
+    match e.as_rule() {
+        // 这里感觉直接返回文本就可以了
+        Rule::single_line_comment_content => println!("single line comment content"),
+        _ => unreachable!(),
+    }
+}
+
+/*
+table = {
+    element_attributes? ~ table_delimiter
+    ~ table_line_header?
+    ~ table_line*
+    ~ (table_delimiter | EOI)
+
+*/
+pub fn table(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::element_attributes => element_attributes(e),
+            Rule::table_delimiter =>  {}, // do nothing
+            Rule::table_line_header => table_line_header(e),
+            Rule::table_line => table_line(e),
+            _ => unreachable!(),
+        }
+    }
+}
+// table_line = { !table_delimiter ~ table_cell+ ~ EOL ~ blank_line* }
+pub fn table_line(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::table_cell => table_cell(e),
+            Rule::blank_line => blank_line(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+table_line_header = {
+    !table_delimiter ~ table_cell+ ~ EOL ~ blank_line
+}
+*/
+pub fn table_line_header(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::table_cell => table_cell(e),
+            Rule::blank_line => blank_line(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn table_cell(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::inline_element => inline_element(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+inline_element = {
+    simple_word
+    | spaces
+    | inline_image
+    | link
+    | passthrough
+    | inline_footnote
+    | inline_user_macro
+    | quoted_text
+    | cross_reference
+    | document_attribute_substitution
+    | inline_element_id
+    | other_word)
+*/
+pub fn inline_element(ast: Pair<Rule>) {
+    let e = ast.into_inner().next().unwrap();
+    match e.as_rule() {
+        Rule::simple_word => println!("simple word"),
+        Rule::spaces => println!("spaces"),
+        Rule::inline_image => inline_image(e),
+        Rule::link => link(e),
+        Rule::passthrough => passthrough(e),
+        Rule::inline_footnote => inline_footnote(e),
+        Rule::inline_user_macro => inline_user_macro(e),
+        Rule::quoted_text => quote_text(e),
+        Rule::cross_reference => cross_reference(e),
+        Rule::document_attribute_substitution => document_attribute_substitution(e),
+        Rule::inline_element_id => inline_element_id(e),
+        Rule::other_word => other_word(e),
+        _ => unreachable!(),
+    }
+}
+
+/*
+comment_block = {
+    comment_block_delimiter ~ WS* ~ NEWLINE
+    ~ comment_block_line*
+    ~ ((comment_block_delimiter ~ EOLS) | EOI)
+}
+*/
+pub fn comment_block(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::comment_block_delimiter => {}, // do nothing
+            Rule::NEWLINE => {}, // do nothing?
+            Rule::comment_block_line => comment_block_line(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn comment_block_line(ast:Pair<Rule>) {
+    // return string
+}
 
 /*
 file_inclusion = {
