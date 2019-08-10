@@ -1055,7 +1055,7 @@ quote_block_paragraph = { inline_elements+ }
 // verse_block_delimiter: see Quote_block_delimiter
 
 verse_block = {
-    &"[verse]" ~ element_attributes
+    &"[verse" ~ element_attributes
     ~ quote_block_delimiter ~ verse_block_element*
     ~ (quote_block_delimiter | EOI)
 }
@@ -1240,7 +1240,7 @@ other_word = {
 }
 
 // spaces will not be eate
-spaces = _{ (" " | "\t")+ }
+spaces = { (" " | "\t")+ }
 
 file_location = {
     (FILENAME | document_attribute_substitution)+
