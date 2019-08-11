@@ -35,10 +35,12 @@ pub fn convert(query: String) {
 }
 
 pub fn document_blocks(ast: Pair<Rule>) {
+    println!("doc blocks {:?} ", ast.as_str());
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
             Rule::document_header => {
+                println!("doc header : {:?}", e.as_str());
                 document_header(e);
             }
             Rule::document_block => {
@@ -55,6 +57,7 @@ pub fn document_blocks(ast: Pair<Rule>) {
 }
 
 pub fn preamble(ast: Pair<Rule>) {
+    println!("preamble {:?}", ast.as_str());
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
@@ -1066,6 +1069,7 @@ pub fn paragraph(ast: Pair<Rule>) {
 
 pub fn document_block(ast: Pair<Rule>) {
     let elem = ast.into_inner().next().unwrap();
+    println!("doc block : {:?}", elem.as_rule());
     match elem.as_rule() {
         Rule::simple_paragraph => simple_paragraph(elem),
         Rule::section => section(elem),
@@ -1129,7 +1133,6 @@ fn main() {
     // add toc to str will destroy the ast
     let str = r#"
 = title
-:tobc:
 
 the preamble part
 == second title
