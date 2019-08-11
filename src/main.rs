@@ -44,7 +44,22 @@ pub fn document_blocks(ast: Pair<Rule>) {
             Rule::document_block => {
                 document_block(e);
             }
+            Rule::preamble => {
+                println!("preamble start");
+                preamble(e);
+                println!("preamble end");
+            },
             _ => println!("skip in document block"),
+        }
+    }
+}
+
+pub fn preamble(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::document_block => document_block(e),
+            _ => unreachable!(),
         }
     }
 }
@@ -1114,6 +1129,9 @@ fn main() {
     // add toc to str will destroy the ast
     let str = r#"
 = title
+:tobc:
+
+the preamble part
 == second title
 content line
 [source, go]

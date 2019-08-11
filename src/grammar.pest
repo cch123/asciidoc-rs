@@ -20,7 +20,12 @@ pre_flight_document_within_delimited_block = {
 // ------------------------------------------
 document_blocks = {
     document_header?
+    ~ preamble?
     ~ document_block*
+}
+
+preamble = {
+    ((!"==" ~ document_block))*
 }
 
 document_block = {
