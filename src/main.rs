@@ -29,8 +29,13 @@ pub fn convert(query: String) {
     let x = query.as_str();
     let parse_result = ExprParser::parse(Rule::pre_flight_document, x);
     match parse_result {
-        Ok(mut top_ast) => walk_tree(top_ast.next().unwrap()),
-        Err(e) => println!("{:?}", e),
+        Ok(mut top_ast) => {
+            //walk_tree(top_ast.next().unwrap());
+            dbg!(top_ast);
+        },
+        Err(e) => {
+            dbg!(e);
+        },
     }
 }
 
@@ -43,8 +48,8 @@ pub fn document_blocks(ast: Pair<Rule>) {
                 println!("doc header : {:?}", e.as_str());
                 document_header(e);
             }
-            Rule::document_block => {
-                document_block(e);
+            Rule::sections => {
+                sections(e);
             }
             Rule::preamble => {
                 println!("preamble start");
@@ -61,7 +66,7 @@ pub fn preamble(ast: Pair<Rule>) {
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::document_block => document_block(e),
+            Rule::sections => sections(e),
             _ => unreachable!(),
         }
     }
@@ -257,7 +262,7 @@ pub fn title_elements(ast: Pair<Rule>) {
     ~ "="{1,6}
     ~ title_elements ~ inline_element_id* ~ EOL
 */
-pub fn section(ast: Pair<Rule>) {
+pub fn section_header(ast: Pair<Rule>) {
     let mut c = ast.into_inner();
     for elem in c {
         match elem.as_rule() {
@@ -1067,12 +1072,21 @@ pub fn paragraph(ast: Pair<Rule>) {
     }
 }
 
-pub fn document_block(ast: Pair<Rule>) {
+pub fn sections(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::section => section(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn section(ast: Pair<Rule>) {
     let elem = ast.into_inner().next().unwrap();
     println!("doc block : {:?}", elem.as_rule());
     match elem.as_rule() {
         Rule::simple_paragraph => simple_paragraph(elem),
-        Rule::section => section(elem),
         Rule::delimited_block => delimited_block(elem),
         Rule::file_inclusion => file_inclusion(elem),
         Rule::verse_paragraph => verse_paragraph(elem),
@@ -1133,10 +1147,9 @@ fn main() {
     // add toc to str will destroy the ast
     let str = r#"
 = title
-
-the preamble part
 == second title
 content line
+
 [source, go]
 ----
 package main
@@ -1144,18 +1157,80 @@ package main
 func main() {
     fmt.Println("hello world")
 }
+
 ----
 
-image::trie.png[]
-
+== second title 2
 * 单个节点代表一个字母
 * 如果需要对字符串进行匹配
 * 只要从根节点开始依次匹配即可
 
+=== third title
+== secomd
+
 1. first level list
 2. first level list
 3. first level list
-4. first level list
+"#
+    .to_string();
+    convert(str);
+}
+
+// markdown 风格的 quote 暂时还不支持
+/*
+> > What's new?
+>
+> I've got Markdown in my AsciiDoc!
+>
+> > Like what?
+>
+> * Blockquotes
+> * Headings
+> * Fenced code blocks
+>
+> > Is there more?
+>
+> Yep. AsciiDoc and Markdown share a lot of common syntax already.
+*/
+
+// 这种也不支持
+/*
+[source,java,subs="verbatim,quotes"]
+----
+System.out.println("Hello *bold* text").
+----
+*/
+
+/*
+[horizontal]
+CPU:: The brain of the computer.
+Hard drive:: Permanent storage for operating system and/or user files.
+RAM:: Temporarily stores information the CPU uses during operation.
+
+
+
+[qanda]
+What is Asciidoctor?::
+  An implementation of the AsciiDoc processor in Ruby.
+What is the answer to the Ultimate Question?:: 42
+
+
+
+
+> I hold it that a little rebellion now and then is a good thing,
+> and as necessary in the political world as storms in the physical.
+> -- Thomas Jefferson, Papers of Thomas Jefferson: Volume 11
+
+[, James Baldwin]
+""
+Not everything that is faced can be changed.
+But nothing can be changed until it is faced.
+""
+
+
+// 其它的 limitation 可以了解这里
+// https://github.com/bytesparadise/libasciidoc/blob/master/LIMITATIONS.adoc
+image::trie.png[]
 
 [TIP]
 Use abc to do some thing
@@ -1230,64 +1305,4 @@ on silent haunches
 and then moves on.
 ____
 
-
-"#
-    .to_string();
-    convert(str);
-}
-
-// markdown 风格的 quote 暂时还不支持
-/*
-> > What's new?
->
-> I've got Markdown in my AsciiDoc!
->
-> > Like what?
->
-> * Blockquotes
-> * Headings
-> * Fenced code blocks
->
-> > Is there more?
->
-> Yep. AsciiDoc and Markdown share a lot of common syntax already.
 */
-
-// 这种也不支持
-/*
-[source,java,subs="verbatim,quotes"]
-----
-System.out.println("Hello *bold* text").
-----
-*/
-
-/*
-[horizontal]
-CPU:: The brain of the computer.
-Hard drive:: Permanent storage for operating system and/or user files.
-RAM:: Temporarily stores information the CPU uses during operation.
-
-
-
-[qanda]
-What is Asciidoctor?::
-  An implementation of the AsciiDoc processor in Ruby.
-What is the answer to the Ultimate Question?:: 42
-
-
-
-
-> I hold it that a little rebellion now and then is a good thing,
-> and as necessary in the political world as storms in the physical.
-> -- Thomas Jefferson, Papers of Thomas Jefferson: Volume 11
-
-[, James Baldwin]
-""
-Not everything that is faced can be changed.
-But nothing can be changed until it is faced.
-""
-
-*/
-
-// 其它的 limitation 可以了解这里
-// https://github.com/bytesparadise/libasciidoc/blob/master/LIMITATIONS.adoc

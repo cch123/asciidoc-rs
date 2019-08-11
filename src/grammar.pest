@@ -3,9 +3,10 @@
 // ---------------------------------------------------
 pre_flight_document = {
     SOI 
-    ~ EOLS?
+    ~ EOLS
     ~ front_matter*
-    ~ document_blocks
+    //~ EOLS*
+    ~ document_blocks*
     ~ EOI
 }
 
@@ -20,16 +21,25 @@ pre_flight_document_within_delimited_block = {
 // Document blocks
 // ------------------------------------------
 document_blocks = {
-    document_header?
-    ~ preamble?
-    ~ document_block*
-}
-
-preamble = {
-    (!"=" ~ document_block)*
+    document_block+
 }
 
 document_block = {
+    document_header?
+    //~ preamble
+    ~ sections
+}
+
+preamble = {
+    (!("="|EOI) ~ section_body)+
+}
+
+sections = {
+    section+
+}
+
+/*
+sections = {
     !EOI
     ~ (
         simple_paragraph
@@ -48,6 +58,7 @@ document_block = {
         | paragraph
     )
 }
+*/
 
 document_blocks_within_delimited_block = {
     document_block_within_delimited_block*
@@ -89,11 +100,10 @@ yaml_front_matter_content = {
 // Document Header and Metadata
 // ------------------------------------------
 document_header = {
-    "=" ~ WS+ ~ title_elements ~ inline_element_id* ~ EOL
+    "=" ~ WS{1,} ~ title_elements ~ inline_element_id* ~ EOL
     ~ document_authors?
     ~ document_revision?
 }
-
 
 document_authors = {
     WS* ~ !"=" ~
@@ -261,10 +271,42 @@ inline_attributes = { "[" ~ generic_attribute* ~ "]" }
 // ------------------------------------------
 // Sections
 // ------------------------------------------
-section = { 
+/*section = {
     element_attributes?
     ~ "="{1,6}
     ~ title_elements ~ inline_element_id* ~ EOL
+}
+*/
+section = {
+    section_header ~ section_body*
+}
+
+section_header = {
+    element_attributes?
+    ~ "="{2,6}
+    ~ title_elements ~ inline_element_id* ~ EOL
+}
+
+section_body = {
+    // 理论上 section 是支持内嵌的
+    // 例如 == section 2 then === section 3
+    // 但问题是在语法定义上，理论上是下一级的 level < 上一级，才能被嵌入进去
+    // 不能有 === section 3 内部嵌入了 == section 2 的情况
+    // 在语法上不是很好表达这个意思，需要再考虑考虑
+    // section 
+    paragraph
+    | simple_paragraph
+    | delimited_block
+    | file_inclusion
+    //| verse_paragraph // must be before image_block
+    | image_block
+    //| list_item
+    | blank_line // must be before Literal_block
+    //| literal_block
+    //| document_attribute_declaration
+    //| document_attribute_reset
+    //| table_of_contents_macro
+    //| user_macro_block
 }
 
 title_elements = {
@@ -386,7 +428,7 @@ list_paragraph_line = {
 list_item_continuation = { "+" ~ EOLS }
 
 continued_list_item_element = {
-    blank_line* ~ list_item_continuation ~ document_block
+    blank_line* ~ list_item_continuation ~ sections
 }
 
 // ------------------------------------------
@@ -471,7 +513,7 @@ paragraph = {
 // a paragraph whose first line begins with a word surrounded by spaces
 simple_paragraph = {
     element_attributes?
-    ~ !"[literal]"
+    ~ !"[literal"
     ~ first_paragraph_line
     ~ other_paragraph_line*
 }
@@ -935,16 +977,15 @@ footnote_content = {
 // delimited_blocks
 // ------------------------------------------------------------------------------------
 delimited_block = {
-    !ASCII_ALPHANUMERIC
-    ~ (fenced_block
+    fenced_block
     | listing_block
     | example_block
     | verse_block
     | quote_block
     | sidebar_block
-    | single_line_comment
     | table
-    | comment_block)
+    | comment_block
+    | single_line_comment
 }
 
 block_delimiter = {
@@ -1161,8 +1202,7 @@ comment_block_line = {
 }
 
 single_line_comment = {
-    !comment_block_delimiter
-    ~ WS*
+    WS*
     ~ "//"
     ~ single_line_comment_content
     ~ EOL
@@ -1208,7 +1248,7 @@ paragraph_with_literal_block_delimiter_line = {
 
 // paragraph with the literal attribute (`[literal]`)
 paragraph_with_literal_attribute = { 
-    (&"[literal]" ~ element_attributes)
+    (&"[literal" ~ element_attributes)
     ~ paragraph_with_literal_attribute_lines
 }
 
