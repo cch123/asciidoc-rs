@@ -302,7 +302,7 @@ section_body = {
     | image_block
     //| list_item
     | blank_line // must be before Literal_block
-    //| literal_block
+    | literal_block
     //| document_attribute_declaration
     //| document_attribute_reset
     //| table_of_contents_macro
@@ -1213,9 +1213,13 @@ single_line_comment_content = { (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))* }
 // -------------------------------------------------------------------------------------
 // Literal_blocks (see http://asciidoctor.org/docs/user-manual/#literal-text-and-blocks)
 // -------------------------------------------------------------------------------------
-literal_block = { paragraph_with_literal_attribute | paragraph_with_headingspaces | paragraph_with_literal_block_delimiter }
+literal_block = {
+    paragraph_with_literal_attribute
+    | paragraph_with_headingspaces
+    | paragraph_with_literal_block_delimiter
+}
 
-literal_block_delimiter = { "...." }
+literal_block_delimiter = { "...." ~ EOLS}
 
 // paragraph indented with one or more spaces on the first line
 paragraph_with_headingspaces = {
@@ -1234,7 +1238,7 @@ paragraph_with_literal_block_delimiter = {
     element_attributes?
     ~ literal_block_delimiter ~ WS* ~ NEWLINE
     ~ paragraph_with_literal_block_delimiter_lines
-    ~ (literal_block_delimiter ~ EOLS) | EOI
+    ~ ((literal_block_delimiter ~ EOLS) | EOI)
 }
 
 // include all lines until delimiter is reached
@@ -1258,7 +1262,8 @@ paragraph_with_literal_attribute_lines = {
 }
 
 paragraph_with_literal_attribute_line = {
-    !blank_line ~ (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))+ ~ EOL
+    !blank_line ~
+    (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))+ ~ EOL
 }
 
 // ------------------------------------------
