@@ -34,8 +34,8 @@ pub fn convert(query: &str) {
     let parse_result = ExprParser::parse(Rule::pre_flight_document, query);
     match parse_result {
         Ok(mut top_ast) => {
-            walk_tree(top_ast.next().unwrap());
-            //dbg!(top_ast);
+            //walk_tree(top_ast.next().unwrap());
+            dbg!(top_ast);
         }
         Err(e) => {
             dbg!(e);

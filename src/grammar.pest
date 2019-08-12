@@ -297,10 +297,10 @@ section_body = {
     // 不能有 === section 3 内部嵌入了 == section 2 的情况
     // 在语法上不是很好表达这个意思，需要再考虑考虑
     // section 
-    simple_paragraph
+    verse_paragraph // must be before image_block
+    | simple_paragraph
     | delimited_block
     | file_inclusion
-    | verse_paragraph // must be before image_block
     | image_block
     | list_items
     | blank_line // must be before Literal_block
