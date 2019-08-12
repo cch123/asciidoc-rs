@@ -3,7 +3,7 @@
 // ---------------------------------------------------
 pre_flight_document = {
     SOI 
-    ~ EOLS
+    //~ EOLS
     ~ front_matter*
     //~ EOLS*
     ~ document_blocks*

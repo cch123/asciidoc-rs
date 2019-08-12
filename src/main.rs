@@ -30,9 +30,8 @@ pub struct ParseError {
     pub expected: String,
 }
 
-pub fn convert(query: String) {
-    let x = query.as_str();
-    let parse_result = ExprParser::parse(Rule::pre_flight_document, x);
+pub fn convert(query: &str) {
+    let parse_result = ExprParser::parse(Rule::pre_flight_document, query);
     match parse_result {
         Ok(mut top_ast) => {
             //walk_tree(top_ast.next().unwrap());
@@ -1149,15 +1148,14 @@ pub fn walk_tree(ast: Pair<Rule>) {
 }
 
 fn main() -> Result<(), std::io::Error>{
-    //println!("{:?}", env::args().nth(1));
-    let path  = (env::args().nth(1)).unwrap();//.unwrap();
-    //let path  = (env::args().nth(1))?;//.unwrap();//.unwrap();
+    let path  = (env::args().nth(1)).unwrap();
     let mut buffer = String::new();
     File::open(Path::new(path.as_str()))?.read_to_string(&mut buffer)?;
     println!("original input is {}", buffer);
-    convert(buffer.to_string());
+    convert(buffer.trim());
     // add toc to str will destroy the ast
     return Ok(());
+    /*
     let str = r#"
 = title
 == second title
@@ -1197,6 +1195,7 @@ ____
 "#
     .to_string();
     //convert(str);
+    */
 }
 
 // markdown 风格的 quote 暂时还不支持
