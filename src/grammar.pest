@@ -298,6 +298,11 @@ section_body = {
     // 在语法上不是很好表达这个意思，需要再考虑考虑
     // section 
     verse_paragraph // must be before image_block
+    | source_paragraph
+    | table_of_contents_macro
+    | document_attribute_declaration
+    | document_attribute_reset
+    | user_macro_block
     | simple_paragraph
     | delimited_block
     | file_inclusion
@@ -306,10 +311,6 @@ section_body = {
     | blank_line // must be before Literal_block
     | literal_block
     | paragraph
-    //| document_attribute_declaration
-    //| document_attribute_reset
-    //| table_of_contents_macro
-    //| user_macro_block
 }
 
 title_elements = {
@@ -539,6 +540,12 @@ verse_paragraph = {
     // admonition paragraph 
     ((&"[verse" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
     | ((&"[verse" ~ element_attributes) ~ inline_elements+)
+}
+
+source_paragraph = {
+    // admonition paragraph
+    ((&"[source" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
+    | ((&"[source" ~ element_attributes) ~ inline_elements+)
 }
     
 inline_elements = @{

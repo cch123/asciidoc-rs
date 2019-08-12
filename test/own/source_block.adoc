@@ -1,9 +1,4 @@
 
-= title
-== second title
-
-content line
-
 [source,go]
 ----
 package main
@@ -15,10 +10,9 @@ func main() {
 }
 ----
 
-== title 2
 
-[source,java,subs="verbatim,quotes"]
-----
-System.out.println("Hello *bold* text").
-----
+[source,go]
+package main
+func main()
 
+here is out normal para
