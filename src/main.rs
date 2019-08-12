@@ -34,8 +34,8 @@ pub fn convert(query: &str) {
     let parse_result = ExprParser::parse(Rule::pre_flight_document, query);
     match parse_result {
         Ok(mut top_ast) => {
-            //walk_tree(top_ast.next().unwrap());
-            dbg!(top_ast);
+            walk_tree(top_ast.next().unwrap());
+            //dbg!(top_ast);
         }
         Err(e) => {
             dbg!(e);
@@ -44,23 +44,26 @@ pub fn convert(query: &str) {
 }
 
 pub fn document_blocks(ast: Pair<Rule>) {
-    println!("doc blocks {:?} ", ast.as_str());
+    // println!("doc blocks {:?} ", ast.as_str());
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::document_header => {
-                println!("doc header : {:?}", e.as_str());
-                document_header(e);
+            Rule::document_block => {
+                document_block(e);
             }
-            Rule::sections => {
-                sections(e);
-            }
-            Rule::preamble => {
-                println!("preamble start");
-                preamble(e);
-                println!("preamble end");
-            }
-            _ => println!("skip in document block"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn document_block(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::document_header => document_header(e),
+            Rule::preamble => preamble(e),
+            Rule::sections => sections(e),
+            _ => unreachable!(),
         }
     }
 }
@@ -70,7 +73,46 @@ pub fn preamble(ast: Pair<Rule>) {
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::sections => sections(e),
+            Rule::section_body => section_body(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+    simple_paragraph
+    | delimited_block
+    | file_inclusion
+    | verse_paragraph // must be before image_block
+    | image_block
+    | list_items
+    | blank_line // must be before Literal_block
+    | literal_block
+    | paragrap
+*/
+pub fn section_body(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::simple_paragraph => simple_paragraph(e),
+            Rule::delimited_block => delimited_block(e),
+            Rule::file_inclusion => file_inclusion(e),
+            Rule::verse_paragraph => verse_paragraph(e), // must be before image_block
+            Rule::image_block => image_block(e),
+            Rule::list_items => list_items(e),
+            Rule::blank_line => blank_line(e), // must be before Literal_block
+            Rule::literal_block => literal_block(e),
+            Rule::paragraph => paragraph(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn list_items(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::list_item => list_item(e),
             _ => unreachable!(),
         }
     }
@@ -167,7 +209,7 @@ pub fn other_paragraph_line(ast: Pair<Rule>) {
 }
 
 pub fn simple_paragraph(ast: Pair<Rule>) {
-    let mut c = ast.into_inner();
+    let c = ast.into_inner();
     for elem in c {
         match elem.as_rule() {
             Rule::element_attributes => element_attributes(elem),
@@ -254,8 +296,8 @@ pub fn title_elements(ast: Pair<Rule>) {
     let elems = ast.into_inner();
     for elem in elems {
         match elem.as_rule() {
-            Rule::inline_element_id => println!("tes : iei"),
-            Rule::title_element => println!("tes : te"),
+            Rule::inline_element_id => println!("title elem, inline elem id : {}", elem.as_str()),
+            Rule::title_element => println!("tltle elem : {}", elem.as_str()),
             _ => unreachable!(),
         }
     }
@@ -267,7 +309,7 @@ pub fn title_elements(ast: Pair<Rule>) {
     ~ title_elements ~ inline_element_id* ~ EOL
 */
 pub fn section_header(ast: Pair<Rule>) {
-    let mut c = ast.into_inner();
+    let c = ast.into_inner();
     for elem in c {
         match elem.as_rule() {
             Rule::element_attributes => element_attributes(elem),
@@ -279,7 +321,7 @@ pub fn section_header(ast: Pair<Rule>) {
 }
 
 pub fn delimited_block(ast: Pair<Rule>) {
-    let mut elem = ast.into_inner().next().unwrap();
+    let elem = ast.into_inner().next().unwrap();
     match elem.as_rule() {
         Rule::fenced_block => fenced_block(elem),
         Rule::listing_block => listing_block(elem),
@@ -925,7 +967,7 @@ file_inclusion = {
 }
 */
 pub fn file_inclusion(ast: Pair<Rule>) {
-    let mut elems = ast.into_inner();
+    let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
             Rule::file_location => {
@@ -1086,23 +1128,13 @@ pub fn sections(ast: Pair<Rule>) {
 }
 
 pub fn section(ast: Pair<Rule>) {
-    let elem = ast.into_inner().next().unwrap();
-    println!("doc block : {:?}", elem.as_rule());
-    match elem.as_rule() {
-        Rule::simple_paragraph => simple_paragraph(elem),
-        Rule::delimited_block => delimited_block(elem),
-        Rule::file_inclusion => file_inclusion(elem),
-        Rule::verse_paragraph => verse_paragraph(elem),
-        Rule::image_block => image_block(elem),
-        Rule::list_item => list_item(elem),
-        Rule::blank_line => blank_line(elem),
-        Rule::literal_block => literal_block(elem),
-        Rule::document_attribute_declaration => document_attribute_declaration(elem),
-        Rule::document_attribute_reset => document_attribute_reset(elem),
-        Rule::table_of_contents_macro => table_of_contents_macro(elem),
-        Rule::user_macro_block => user_macro_block(elem),
-        Rule::paragraph => paragraph(elem),
-        _ => unreachable!(),
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::section_header => section_header(e),
+            Rule::section_body => section_body(e),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -1126,14 +1158,15 @@ pub fn yaml_front_matter(ast: Pair<Rule>) {
 }
 
 pub fn pre_flight_document(ast: Pair<Rule>) {
-    let mut c = ast.into_inner();
+    let c = ast.into_inner();
     for elem in c {
         match elem.as_rule() {
             //~ front_matter*
             Rule::front_matter => front_matter(elem),
             //~ document_block
             Rule::document_blocks => document_blocks(elem),
-            _ => println!("skip"),
+            Rule::EOI => {}
+            _ => unreachable!(),
         }
     }
 }
@@ -1159,7 +1192,7 @@ fn main() -> Result<(), i32> {
         .read_to_string(&mut buffer)
         .or(Err(-1))?;
 
-    println!("original input is {}", buffer);
+    //println!("original input is {}", buffer);
     convert(buffer.as_str());
     // add toc to str will destroy the ast
     return Ok(());

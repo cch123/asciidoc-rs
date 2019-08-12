@@ -300,7 +300,7 @@ section_body = {
     simple_paragraph
     | delimited_block
     | file_inclusion
-    //| verse_paragraph // must be before image_block
+    | verse_paragraph // must be before image_block
     | image_block
     | list_items
     | blank_line // must be before Literal_block
@@ -1329,3 +1329,4 @@ EOLS = _{ WS* ~ EOL }
 CHAR = { ANY }
 
 NEWLINE = _{ "\r\n" | "\r" | "\n"}
+
