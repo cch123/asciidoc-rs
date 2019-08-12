@@ -299,6 +299,7 @@ section_body = {
     // section 
     verse_paragraph // must be before image_block
     | source_paragraph
+    | listing_paragraph
     | table_of_contents_macro
     | document_attribute_declaration
     | document_attribute_reset
@@ -538,14 +539,20 @@ other_paragraph_line = { inline_elements }
 // original verse_paragraph use ? after element attributes
 verse_paragraph = {
     // admonition paragraph 
-    ((&"[verse" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
-    | ((&"[verse" ~ element_attributes) ~ inline_elements+)
+    //((&"[verse" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
+    (&"[verse" ~ element_attributes) ~ inline_elements+
 }
 
 source_paragraph = {
     // admonition paragraph
-    ((&"[source" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
-    | ((&"[source" ~ element_attributes) ~ inline_elements+)
+    //((&"[source" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
+    (&"[source" ~ element_attributes) ~ inline_elements+
+}
+
+listing_paragraph = {
+    // admonition paragraph
+    //((&"[listing" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
+    (&"[listing" ~ element_attributes) ~ inline_elements+
 }
     
 inline_elements = @{

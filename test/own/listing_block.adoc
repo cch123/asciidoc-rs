@@ -1,0 +1,18 @@
+----
+This is an example of a _listing block_.
+The content inside is displayed as <pre> text.
+----
+
+[listing]
+This is an example of a paragraph styled with `listing`.
+Notice that the monospace markup is preserved in the output.
+
+.app.rb
+[source,ruby]
+----
+require 'sinatra'
+
+get '/hi' do
+  "Hello World!"
+end
+----
