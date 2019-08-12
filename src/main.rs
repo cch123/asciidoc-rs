@@ -36,10 +36,10 @@ pub fn convert(query: &str) {
         Ok(mut top_ast) => {
             //walk_tree(top_ast.next().unwrap());
             dbg!(top_ast);
-        },
+        }
         Err(e) => {
             dbg!(e);
-        },
+        }
     }
 }
 
@@ -59,7 +59,7 @@ pub fn document_blocks(ast: Pair<Rule>) {
                 println!("preamble start");
                 preamble(e);
                 println!("preamble end");
-            },
+            }
             _ => println!("skip in document block"),
         }
     }
@@ -363,7 +363,7 @@ pub fn listing_block(ast: Pair<Rule>) {
     for e in elems {
         match e.as_rule() {
             Rule::element_attributes => element_attributes(e),
-            Rule::listing_block_delimiter => {},// do nothing
+            Rule::listing_block_delimiter => {} // do nothing
             Rule::listing_block_element => listing_block_element(e),
             _ => unreachable!(),
         }
@@ -407,7 +407,7 @@ pub fn example_block(ast: Pair<Rule>) {
     for e in elems {
         match e.as_rule() {
             Rule::element_attributes => element_attributes(e),
-            Rule::example_block_delimiter => {}, // do nothing
+            Rule::example_block_delimiter => {} // do nothing
             Rule::blank_line => blank_line(e),
             Rule::file_inclusion => file_inclusion(e),
             Rule::list_item => list_item(e),
@@ -450,7 +450,7 @@ pub fn verse_block(ast: Pair<Rule>) {
     for e in elems {
         match e.as_rule() {
             Rule::element_attributes => element_attributes(e),
-            Rule::quote_block_delimiter => {}, // do nothing
+            Rule::quote_block_delimiter => {} // do nothing
             Rule::verse_block_element => verse_block_element(e),
             _ => unreachable!(),
         }
@@ -464,7 +464,7 @@ pub fn verse_block_element(ast: Pair<Rule>) {
         Rule::verse_file_include => verse_file_include(e),
         Rule::blank_line => blank_line(e),
         Rule::verse_block_paragraph => verse_block_paragraph(e),
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -522,7 +522,7 @@ pub fn verse_block_paragraph_line_element(ast: Pair<Rule>) {
     //println!("{:?}", ast);
     let e = ast.into_inner().next().unwrap();
     match e.as_rule() {
-        Rule::spaces => {}, // do nothing
+        Rule::spaces => {} // do nothing
         Rule::inline_image => inline_image(e),
         Rule::link => link(e),
         Rule::passthrough => passthrough(e),
@@ -533,7 +533,7 @@ pub fn verse_block_paragraph_line_element(ast: Pair<Rule>) {
         Rule::document_attribute_substitution => document_attribute_substitution(e),
         Rule::inline_element_id => inline_element_id(e),
         Rule::other_word => other_word(e),
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -543,7 +543,7 @@ pub fn document_attribute_substitution(ast: Pair<Rule>) {
 }
 
 // FIXME
-pub fn other_word(ast:Pair<Rule>) {
+pub fn other_word(ast: Pair<Rule>) {
     println!("other word : {}", ast.as_str());
 }
 
@@ -581,13 +581,13 @@ pub fn quote_text(ast: Pair<Rule>) {
 }
 
 // FIXME
-pub fn bold_text(ast: Pair<Rule>) { }
-pub fn italic_text(ast: Pair<Rule>) { }
-pub fn monospace_text(ast: Pair<Rule>) { }
-pub fn subscript_text(ast: Pair<Rule>) { }
-pub fn superscript_text(ast: Pair<Rule>) { }
-pub fn escaped_bold_text(ast: Pair<Rule>) { }
-pub fn escaped_italic_text(ast: Pair<Rule>) { }
+pub fn bold_text(ast: Pair<Rule>) {}
+pub fn italic_text(ast: Pair<Rule>) {}
+pub fn monospace_text(ast: Pair<Rule>) {}
+pub fn subscript_text(ast: Pair<Rule>) {}
+pub fn superscript_text(ast: Pair<Rule>) {}
+pub fn escaped_bold_text(ast: Pair<Rule>) {}
+pub fn escaped_italic_text(ast: Pair<Rule>) {}
 pub fn escaped_monospace_text(ast: Pair<Rule>) {}
 pub fn escaped_subscript_text(ast: Pair<Rule>) {}
 pub fn escaped_superscript_text(ast: Pair<Rule>) {}
@@ -599,7 +599,7 @@ pub fn cross_reference(ast: Pair<Rule>) {
 }
 
 // FIXME
-pub fn inline_user_macro(ast:Pair<Rule>) {
+pub fn inline_user_macro(ast: Pair<Rule>) {
     println!("inline user macro")
 }
 
@@ -642,7 +642,6 @@ pub fn link(ast: Pair<Rule>) {
     }
 }
 
-
 /*
 inline_image = {
     "image:"
@@ -657,7 +656,7 @@ pub fn inline_image(ast: Pair<Rule>) {
         match e.as_rule() {
             Rule::URL => println!("url"),
             Rule::image_attributes => println!("image attr"),
-            _ => unreachable!( )
+            _ => unreachable!(),
         }
     }
 }
@@ -675,7 +674,7 @@ pub fn quote_block(ast: Pair<Rule>) {
     for e in elems {
         match e.as_rule() {
             Rule::element_attributes => element_attributes(e),
-            Rule::quote_block_delimiter => {}, // do nothing
+            Rule::quote_block_delimiter => {} // do nothing
             Rule::quote_block_element => quote_block_element(e),
             _ => unreachable!(),
         }
@@ -734,7 +733,7 @@ pub fn sidebar_block(ast: Pair<Rule>) {
     for e in elems {
         match e.as_rule() {
             Rule::element_attributes => element_attributes(e),
-            Rule::sidebar_block_delimiter => {}, // do nothing
+            Rule::sidebar_block_delimiter => {} // do nothing
             Rule::sidebar_block_content => sidebar_block_content(e),
             _ => unreachable!(),
         }
@@ -818,7 +817,7 @@ pub fn table(ast: Pair<Rule>) {
     for e in elems {
         match e.as_rule() {
             Rule::element_attributes => element_attributes(e),
-            Rule::table_delimiter =>  {}, // do nothing
+            Rule::table_delimiter => {} // do nothing
             Rule::table_line_header => table_line_header(e),
             Rule::table_line => table_line(e),
             _ => unreachable!(),
@@ -908,15 +907,15 @@ pub fn comment_block(ast: Pair<Rule>) {
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::comment_block_delimiter => {}, // do nothing
-            Rule::NEWLINE => {}, // do nothing?
+            Rule::comment_block_delimiter => {} // do nothing
+            Rule::NEWLINE => {}                 // do nothing?
             Rule::comment_block_line => comment_block_line(e),
             _ => unreachable!(),
         }
     }
 }
 
-pub fn comment_block_line(ast:Pair<Rule>) {
+pub fn comment_block_line(ast: Pair<Rule>) {
     // return string
 }
 
@@ -1147,15 +1146,18 @@ pub fn walk_tree(ast: Pair<Rule>) {
     }
 }
 
-fn main() -> Result<(), std::io::Error> {
+fn main() -> Result<(), i32> {
     if env::args().len() < 2 {
         println!("Please input file name!");
-        return Ok(())
+        return Ok(());
     }
 
-    let path = env::args().nth(1).unwrap();
+    let path = env::args().nth(1).ok_or(-1)?;
     let mut buffer = String::new();
-    File::open(Path::new(path.as_str()))?.read_to_string(&mut buffer)?;
+    File::open(Path::new(path.as_str()))
+        .or(Err(-1))?
+        .read_to_string(&mut buffer)
+        .or(Err(-1))?;
 
     println!("original input is {}", buffer);
     convert(buffer.as_str());
