@@ -26,12 +26,15 @@ document_blocks = {
 
 document_block = {
     document_header?
-    ~ preamble?
-    ~ sections
+    ~ (
+        preamble
+        | sections
+        | (preamble ~ sections)
+    )
 }
 
 preamble = {
-    !("="|EOI) ~ section_body*
+    section_body+
 }
 
 sections = {

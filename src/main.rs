@@ -1147,176 +1147,18 @@ pub fn walk_tree(ast: Pair<Rule>) {
     }
 }
 
-fn main() -> Result<(), std::io::Error>{
-    let path  = (env::args().nth(1)).unwrap();
+fn main() -> Result<(), std::io::Error> {
+    if env::args().len() < 2 {
+        println!("Please input file name!");
+        return Ok(())
+    }
+
+    let path = env::args().nth(1).unwrap();
     let mut buffer = String::new();
     File::open(Path::new(path.as_str()))?.read_to_string(&mut buffer)?;
+
     println!("original input is {}", buffer);
-    convert(buffer.trim());
+    convert(buffer.as_str());
     // add toc to str will destroy the ast
     return Ok(());
-    /*
-    let str = r#"
-= title
-== second title
-content line
-
-[source, go]
-----
-package main
-
-func main() {
-    fmt.Println("hello world")
 }
-
-----
-
-== second title 2
-* 单个节点代表一个字母
-* 如果需要对字符串进行匹配
-* 只要从根节点开始依次匹配即可
-
-=== third title
-== secomd
-
-1. first level list
-2. first level list
-3. first level list
-
-[TIP]
-====
-dancing with eyes
-====
-
-[quote,Rūmī]
-____
-Patience is the key to joy.
-____
-"#
-    .to_string();
-    //convert(str);
-    */
-}
-
-// markdown 风格的 quote 暂时还不支持
-/*
-> > What's new?
->
-> I've got Markdown in my AsciiDoc!
->
-> > Like what?
->
-> * Blockquotes
-> * Headings
-> * Fenced code blocks
->
-> > Is there more?
->
-> Yep. AsciiDoc and Markdown share a lot of common syntax already.
-*/
-
-// 这种也不支持
-/*
-[source,java,subs="verbatim,quotes"]
-----
-System.out.println("Hello *bold* text").
-----
-*/
-
-/*
-[horizontal]
-CPU:: The brain of the computer.
-Hard drive:: Permanent storage for operating system and/or user files.
-RAM:: Temporarily stores information the CPU uses during operation.
-
-
-
-[qanda]
-What is Asciidoctor?::
-  An implementation of the AsciiDoc processor in Ruby.
-What is the answer to the Ultimate Question?:: 42
-
-
-
-
-> I hold it that a little rebellion now and then is a good thing,
-> and as necessary in the political world as storms in the physical.
-> -- Thomas Jefferson, Papers of Thomas Jefferson: Volume 11
-
-[, James Baldwin]
-""
-Not everything that is faced can be changed.
-But nothing can be changed until it is faced.
-""
-
-
-// 其它的 limitation 可以了解这里
-// https://github.com/bytesparadise/libasciidoc/blob/master/LIMITATIONS.adoc
-image::trie.png[]
-
-[TIP]
-Use abc to do some thing
-to know the limit
-
-limitw
-
-
-
-
-
-http://baidu.com[fsdfasdf]
-
-. dafsdf
-. dasfsd
-. adfasdf
-
-
-[width="100%",options="header,footer"]
-|====================
-| 3 | 3 |  x
-| 3 |1  |  xx
-|1  |3  |  x
-| z | 3 |  z
-|====================
-
-fdasfadsf~323~
-
-zxcvxcv^dsafsdf^
-
-.Gettysburg Address
-[#gettysburg]
-[quote, Abraham Lincoln, Address delivered at the dedication of the Cemetery at Gettysburg]
-____
-Four score and seven years ago our fathers brought forth
-on this continent a new nation...
-
-Now we are engaged in a great civil war, testing whether
-that nation, or any nation so conceived and so dedicated,
-can long endure. ...
-____
-
-
-
-
-.After landing the cloaked Klingon bird of prey in Golden Gate park:
-[quote, Captain James T. Kirk, Star Trek IV: The Voyage Home]
-Everybody remember where we parked.
-
-.Possible DefOps manual locations
-* West wood maze
-** Maze heart
-*** Reflection pool
-** Secret exit
-* Untracked file in git repository
-
-[verse, Carl Sandburg, Fog]
-____
-The fog comes
-on little cat feet.
-
-It sits looking
-over harbor and city
-on silent haunches
-and then moves on.
-____
-*/
