@@ -1246,7 +1246,7 @@ paragraph_with_headingspaces_lines = {
 // paragraph with the literal block delimiter (`....`)
 paragraph_with_literal_block_delimiter = {
     element_attributes?
-    ~ literal_block_delimiter ~ WS* ~ NEWLINE
+    ~ literal_block_delimiter
     ~ paragraph_with_literal_block_delimiter_lines
     ~ ((literal_block_delimiter ~ EOLS) | EOI)
 }
