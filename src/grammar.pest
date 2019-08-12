@@ -300,7 +300,7 @@ section_body = {
     | file_inclusion
     //| verse_paragraph // must be before image_block
     | image_block
-    | list_item+
+    | list_items
     | blank_line // must be before Literal_block
     | literal_block
     | paragraph

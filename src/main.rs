@@ -14,6 +14,11 @@ use pest::{Parser, RuleType};
 use std::hint::unreachable_unchecked;
 use std::num::ParseIntError;
 
+use std::env;
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
+
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
 struct ExprParser;
@@ -1143,8 +1148,16 @@ pub fn walk_tree(ast: Pair<Rule>) {
     }
 }
 
-fn main() {
+fn main() -> Result<(), std::io::Error>{
+    //println!("{:?}", env::args().nth(1));
+    let path  = (env::args().nth(1)).unwrap();//.unwrap();
+    //let path  = (env::args().nth(1))?;//.unwrap();//.unwrap();
+    let mut buffer = String::new();
+    File::open(Path::new(path.as_str()))?.read_to_string(&mut buffer)?;
+    println!("original input is {}", buffer);
+    convert(buffer.to_string());
     // add toc to str will destroy the ast
+    return Ok(());
     let str = r#"
 = title
 == second title
@@ -1183,7 +1196,7 @@ Patience is the key to joy.
 ____
 "#
     .to_string();
-    convert(str);
+    //convert(str);
 }
 
 // markdown 风格的 quote 暂时还不支持
