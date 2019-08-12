@@ -1171,6 +1171,16 @@ func main() {
 1. first level list
 2. first level list
 3. first level list
+
+[TIP]
+====
+dancing with eyes
+====
+
+[quote,Rūmī]
+____
+Patience is the key to joy.
+____
 "#
     .to_string();
     convert(str);
@@ -1239,15 +1249,7 @@ to know the limit
 limitw
 
 
-[TIP]
-====
-dancing with eyes
-====
 
-[quote,Rūmī]
-____
-Patience is the key to joy.
-____
 
 
 http://baidu.com[fsdfasdf]
@@ -1282,17 +1284,18 @@ can long endure. ...
 ____
 
 
+
+
+.After landing the cloaked Klingon bird of prey in Golden Gate park:
+[quote, Captain James T. Kirk, Star Trek IV: The Voyage Home]
+Everybody remember where we parked.
+
 .Possible DefOps manual locations
 * West wood maze
 ** Maze heart
 *** Reflection pool
 ** Secret exit
 * Untracked file in git repository
-
-
-.After landing the cloaked Klingon bird of prey in Golden Gate park:
-[quote, Captain James T. Kirk, Star Trek IV: The Voyage Home]
-Everybody remember where we parked.
 
 [verse, Carl Sandburg, Fog]
 ____
@@ -1304,5 +1307,4 @@ over harbor and city
 on silent haunches
 and then moves on.
 ____
-
 */

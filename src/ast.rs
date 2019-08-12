@@ -1,5 +1,5 @@
+/*
 // Document Root
-
 pub enum Doc {
     PreFlightDocument {
         front_matter: Option<FrontMatter>,
@@ -84,3 +84,5 @@ pub struct YamlFrontMatter {
     yaml_front_matter_token: String,
     yaml_front_matter_content: Option<String>,
 }
+
+*/
