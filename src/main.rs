@@ -35,7 +35,7 @@ pub fn convert(query: &str) {
     match parse_result {
         Ok(mut top_ast) => {
             //walk_tree(top_ast.next().unwrap());
-            dbg!(top_ast);
+            println!("{:#?}",top_ast);
         }
         Err(e) => {
             dbg!(e);

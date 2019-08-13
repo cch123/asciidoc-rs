@@ -166,7 +166,8 @@ document_attribute_declaration = {
 } 
 
 // attributeName must be at least one character long, 
-// must begin with a word character (A-Z, a-z, 0-9 or _) and 
+// must begin with a word character (A-Z, a-z, 0-9 or _) and
+
 // must only contain word Word and hyphens ("-").
 document_attribute_name = {
     ( ASCII_ALPHANUMERIC+ | "_") ~ (ASCII_ALPHANUMERIC+ | "-")*
@@ -287,7 +288,8 @@ section = {
 section_header = {
     element_attributes?
     ~ "="{2,6}
-    ~ title_elements ~ inline_element_id* ~ EOL
+    ~ WS+ ~ title_elements ~ inline_element_id*
+    ~ EOL
 }
 
 section_body = {
@@ -314,7 +316,7 @@ section_body = {
     | paragraph
 }
 
-title_elements = {
+title_elements = @{
     (!(NEWLINE | inline_element_id) ~ WS* ~ title_element)+
 }
 
@@ -559,7 +561,7 @@ inline_elements = @{
     !(EOI | blank_line | element_attributes)
     ~ (
         single_line_comment
-        | (!block_delimiter ~ inline_element+ ~ line_break? ~ EOL)
+        | (!(("="+ ~ WS+)|block_delimiter) ~ inline_element+ ~ line_break? ~ EOL)
     )
 }
 
@@ -572,10 +574,11 @@ inline_element = { !(EOL |line_break )
     | inline_footnote 
     | inline_user_macro 
     | quoted_text 
-    | cross_reference 
+    | cross_reference
     | document_attribute_substitution 
     | inline_element_id 
     | other_word)
+    //| ANY) // 需要注意这里的 ANY 到底有没有必要
 }
 
 // special case for re-parsing a group of elements after a document substitution:
@@ -1303,7 +1306,7 @@ other_word = {
     ASCII_ALPHANUMERIC+
     | quoted_text_prefix
     | parenthesis
-    | (!(NEWLINE |WS |dot |quoted_text_prefix | "=") ~ ANY ~ dot?)+
+    | (!(NEWLINE |WS |dot |quoted_text_prefix) ~ ANY ~ dot?)+
     | "."+
 }
 
@@ -1331,16 +1334,6 @@ WS = _{ " " | "\t" }
 EOL = _{ NEWLINE | EOI }
 
 EOLS = _{ WS* ~ EOL }
-
-/*ANY = {
-    !("\"" | "\\") ~ ANY
-    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
-    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
-}
-*/
-
-//ANY = { ASCII_ALPHANUMERIC | LETTER }
-CHAR = { ANY }
 
 NEWLINE = _{ "\r\n" | "\r" | "\n"}
 

@@ -1,0 +1,1 @@
+* Sliding windows: 相当于固定窗口的泛用化，活动窗口由一个固定的窗口长度值 length 和一个固定的活动时间值 period 来确定。如果 period < length，那么窗口之间就会有重叠部分。如果 period = length，那其实就是一个 fixed window。如果 period > length，那你就有一个非常诡异的取样窗口了，这种窗口只处理数据的一部分子集。和 fixed window 差不多，滑动窗口一般也是对齐的，有些用户场景可能基于优化考虑不对齐。
