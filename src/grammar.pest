@@ -275,12 +275,6 @@ inline_attributes = { "[" ~ generic_attribute* ~ "]" }
 // ------------------------------------------
 // Sections
 // ------------------------------------------
-/*section = {
-    element_attributes?
-    ~ "="{1,6}
-    ~ title_elements ~ inline_element_id* ~ EOL
-}
-*/
 section = {
     section_header ~ section_body*
 }
@@ -299,16 +293,19 @@ section_body = {
     // 不能有 === section 3 内部嵌入了 == section 2 的情况
     // 在语法上不是很好表达这个意思，需要再考虑考虑
     // section 
-    verse_paragraph // must be before image_block
-    | source_paragraph
-    | listing_paragraph
+    //verse_paragraph // must be before image_block
+    //source_paragraph
+    //listing_paragraph
+    blank_line // must be before Literal_block
+    | markdown_style_quote
     | table_of_contents_macro
     | document_attribute_declaration
     | document_attribute_reset
     | user_macro_block
-    | blank_line // must be before Literal_block
     | literal_block
-    | simple_paragraph
+    // 感觉 simple paragraph 没什么必要啊
+    // 按说 paragraph 里的语法已经能覆盖大多数情况了
+    //| simple_paragraph // 以空行或者 EOI 结尾的段落
     | delimited_block
     | file_inclusion
     | image_block
@@ -540,20 +537,14 @@ other_paragraph_line = { inline_elements }
 // NOTICE :
 // original verse_paragraph use ? after element attributes
 verse_paragraph = {
-    // admonition paragraph 
-    //((&"[verse" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
     (&"[verse" ~ element_attributes) ~ inline_elements+
 }
 
 source_paragraph = {
-    // admonition paragraph
-    //((&"[source" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
     (&"[source" ~ element_attributes) ~ inline_elements+
 }
 
 listing_paragraph = {
-    // admonition paragraph
-    //((&"[listing" ~ element_attributes) ~ admonition_kind ~ ": " ~ inline_elements+)
     (&"[listing" ~ element_attributes) ~ inline_elements+
 }
     
@@ -1082,6 +1073,10 @@ example_block_paragraph_line = {
 // -------------------------------------------------------------------------------------
 // Quote blocks
 // -------------------------------------------------------------------------------------
+markdown_style_quote = {
+    ((">" ~ WS+ ~ inline_elements) | ">" ~ EOL)+
+}
+
 quote_block_delimiter = { "____" ~ EOLS }// same for verse blocks
 
 quote_block = {

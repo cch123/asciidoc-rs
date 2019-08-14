@@ -34,7 +34,7 @@ pub fn convert(query: &str) {
     let parse_result = ExprParser::parse(Rule::pre_flight_document, query);
     match parse_result {
         Ok(mut top_ast) => {
-            //walk_tree(top_ast.next().unwrap());
+            walk_tree(top_ast.clone().next().unwrap());
             println!("{:#?}",top_ast);
         }
         Err(e) => {
@@ -94,15 +94,43 @@ pub fn section_body(ast: Pair<Rule>) {
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
+            Rule::verse_paragraph => verse_paragraph(e),
+            Rule::source_paragraph => source_paragraph(e),
+            Rule::listing_paragraph => listing_paragraph(e),
+            Rule::table_of_contents_macro => table_of_contents_macro(e),
+            Rule::document_attribute_declaration => document_attribute_declaration(e),
+            Rule::document_attribute_reset => document_attribute_reset(e),
+            Rule::user_macro_block => user_macro_block(e),
+            Rule::blank_line => blank_line(e),
+            Rule::literal_block => literal_block(e),
             Rule::simple_paragraph => simple_paragraph(e),
             Rule::delimited_block => delimited_block(e),
             Rule::file_inclusion => file_inclusion(e),
-            Rule::verse_paragraph => verse_paragraph(e), // must be before image_block
             Rule::image_block => image_block(e),
             Rule::list_items => list_items(e),
-            Rule::blank_line => blank_line(e), // must be before Literal_block
-            Rule::literal_block => literal_block(e),
             Rule::paragraph => paragraph(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn listing_paragraph(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::element_attributes => element_attributes(e),
+            Rule::inline_elements => inline_elements(e),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn source_paragraph(ast: Pair<Rule>) {
+    let elems = ast.into_inner();
+    for e in elems {
+        match e.as_rule() {
+            Rule::element_attributes => element_attributes(e),
+            Rule::inline_elements => inline_elements(e),
             _ => unreachable!(),
         }
     }
