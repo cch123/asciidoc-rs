@@ -5,6 +5,9 @@ extern crate pest_derive;
 pub mod parse;
 use parse::*;
 
+pub mod tpl;
+use tpl::*;
+
 use pest::iterators::Pair;
 use pest::{Parser, RuleType};
 use std::env;
