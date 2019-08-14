@@ -534,7 +534,7 @@ inline_elements = @{
     !(EOI | blank_line | element_attributes)
     ~ (
         single_line_comment
-        | (!(("="+ ~ WS+)|block_delimiter) ~ inline_element+ ~ line_break? ~ EOL)
+        | (!(("="{1,6} ~ WS+)|block_delimiter) ~ inline_element+ ~ line_break? ~ EOL)
     )
 }
 
