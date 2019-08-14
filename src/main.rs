@@ -10,7 +10,6 @@ use pest::{Parser, RuleType};
 use std::env;
 use std::fs::File;
 use std::io::Read;
-use std::num::ParseIntError;
 use std::path::Path;
 
 fn main() -> Result<(), i32> {

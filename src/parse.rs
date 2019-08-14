@@ -2,12 +2,6 @@ extern crate pest;
 
 use pest::iterators::Pair;
 use pest::{Parser, RuleType};
-use std::num::ParseIntError;
-
-use std::env;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]

@@ -3,9 +3,7 @@
 // ---------------------------------------------------
 pre_flight_document = {
     SOI 
-    //~ EOLS
     ~ front_matter*
-    //~ EOLS*
     ~ document_blocks*
     ~ EOI
 }
@@ -40,28 +38,6 @@ preamble = {
 sections = {
     section+
 }
-
-/*
-sections = {
-    !EOI
-    ~ (
-        simple_paragraph
-        | section
-        | delimited_block
-        | file_inclusion
-        | verse_paragraph // must be before image_block
-        | image_block
-        | list_item
-        | blank_line // must be before Literal_block
-        | literal_block
-        | document_attribute_declaration
-        | document_attribute_reset
-        | table_of_contents_macro
-        | user_macro_block
-        | paragraph
-    )
-}
-*/
 
 document_blocks_within_delimited_block = {
     document_block_within_delimited_block*
