@@ -1,0 +1,157 @@
+= Go 语言在业界的应用情况
+
+== 在滴滴
+
+=== 业务平台
+
+2018 gopherchina 公开数据:
+
+* 1500+ 模块
+* 1800+ gopher
+* 2000+ 台机器(仅中台)
+
+目前肯定是比这个多的。其中包括订单服务、用户信息系统、主流程服务、分单服务、运营系统、业务网关服务、数据特征服务、机器学习接入服务、地图服务、外卖服务等等。
+
+目前核心业务所有新服务要求都必须用 Go，存量不一定迁移得了。
+
+=== 基础架构
+
+基础架构涉及面较广，这里只举例部分服务：长连接网关服务、falcon 监控服务、私有云服务。
+
+滴滴的相关公开分享：
+
+https://github.com/gopherchina/conference/blob/master/2018/1.1%20%E5%9F%BA%E4%BA%8EGo%E6%9E%84%E5%BB%BA%E6%BB%B4%E6%BB%B4%E6%A0%B8%E5%BF%83%E4%B8%9A%E5%8A%A1%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%AE%9E%E8%B7%B5.pdf[18年中台部门的分享]
+
+https://github.com/gopherchina/conference/blob/master/2019/1.1%20%E5%A4%A7%E5%9E%8B%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A1%86%E6%9E%B6%E8%AE%BE%E8%AE%A1%E5%AE%9E%E8%B7%B5%20-%20%E6%9D%9C%E6%AC%A2.pdf[19年外卖平台的web框架分享]
+
+== 在小米
+
+商城服务、运维平台、云平台、MySQL Proxy、DB SQL 审计优化、service mesh dashboard、监控系统。
+
+https://github.com/gopherchina/conference/blob/master/2016/2.5%20%E9%AB%98%E6%AD%A5%E5%8F%8C%20Go%E5%9C%A8%E5%B0%8F%E7%B1%B3%E5%95%86%E5%9F%8E%E8%BF%90%E7%BB%B4%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%BA%94%E7%94%A8%E4%B8%8E%E5%AE%9E%E8%B7%B5.pdf[小米的分享]
+
+== 在美团
+
+主要是云平台，美团的业务系统大多是 Java。
+
+== 在阿里
+
+蚂蚁的 mesh 模块、蚂蚁 tsdb proxy、阿里的 chaos 工程工具(chaosblade)、私有云。阿里云应该也有一些 Go 相关的服务。
+
+主要也是基础架构。
+
+据内部人士说，阿里业务部门不太可能拥抱 Go，毕竟 Java 根深蒂固，基础设施基本也是围绕 Java 来构建的。
+
+https://github.com/gopherchina/conference/blob/master/2018/1.6%20Golang%E5%9C%A8%E9%98%BF%E9%87%8C%E5%B7%B4%E5%B7%B4%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9FSigma%E4%B8%AD%E7%9A%84%E5%AE%9E%E8%B7%B5.pdf[阿里的调度系统分享]
+
+== 在百度
+
+比较有名的 BFE，后来出来说的比较少。
+
+据说一些原来使用 C++ 的部门新系统是用 Go 写的。手百应该已经在用了。
+
+== 在腾讯
+
+腾讯新闻部门的某些服务、腾讯云上的基础服务，腾讯一些之前使用 PHP 的业务线目前也在尝试切换到 Go。
+
+gopherchina 2019 上有 tars-go 这个 rpc 框架的分享。
+
+https://github.com/gopherchina/conference/blob/master/2019/2.3%20%E9%AB%98%E6%80%A7%E8%83%BD%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A1%86%E6%9E%B6TarsGo%E7%9A%84%E8%85%BE%E8%AE%AF%E5%AE%9E%E8%B7%B5%20-%20%E9%99%88%E6%98%8E%E6%9D%B0.pdf[这里]
+
+腾讯基本是小公司联盟式，各个部门各自为政，没有统一的技术栈。
+
+== 头条
+
+头条的新服务都是 Go，以前曾经有 py，如果不出预料的话，和滴滴应该差不多吧，存量服务是不可能彻底都换语言的。
+
+基础部门也有不少 Go。没有和内部人交流过，但从外部观察来看，也是类似腾讯。。。
+
+中台相关的业务都是 Go。
+
+== Grab
+
+东南亚最大的超级 App，比国内公司好的是，基本上他们统一了公司的技术栈，所以很省心。大家全是 Go。
+
+据说内部代码管理很完善，上线有测试覆盖率要求。
+
+https://github.com/gopherchina/conference/blob/master/2017/2.1%20Go%E6%89%93%E9%80%A0%E4%BA%BF%E7%BA%A7%E5%AE%9E%E6%97%B6%E5%88%86%E5%B8%83%E5%BC%8F%E5%B9%B3%E5%8F%B0.pdf[Grab 的分享]
+
+== 社区里的明星项目
+
+=== tidb
+
+国人的骄傲，数据库界的新星。
+
+=== kubernetes
+
+未来的基础设施。
+
+=== moby
+
+docker 马甲
+
+=== hugo
+
+静态网页生成器
+
+=== gogs
+
+类似 gitlab 之类的东西。
+
+=== gin
+
+Go 社区星星最多的 Web 框架。
+
+=== etcd
+
+92 年的 p9。。
+
+=== caddy
+
+http 2 server
+
+=== delve
+
+debug 不能没有它，当然有时候也不太灵，还是得靠日志。
+
+=== fasthttp
+
+当你想优化你的 http server 的时候，很有可能需要它。
+
+=== db 相关
+
+sqlx、upper/db、gorm 等。
+
+== 结论
+
+从基础架构到业务，理论上 Go 都可以胜任。延迟敏感的网关除外。
+
+== 优势
+
+语言本身的入门门槛不高，招聘 Java/PHP/C/C++ 程序员，经过短期培训(一周左右)都可以快速胜任，写出来的代码不会太差。
+
+=== 相比 php
+
+自带性能优化工具，pprof 相当好用，而且越来越好用了。新版本集成了火焰图，可以无脑优化。
+
+和其它强类型语言一样，Go 项目中需要对接口入、出参做类型限定，推崇使用 struct/class 进行参数传递，一般不使用 interface 或 map[string]interface。但因为语言本身类型系统较弱，个别情况并不能很好表达(enum type)。所以偶尔还是被逼要用 interface。
+
+整体上来讲，恰当分层的 Go 项目会比 PHP 项目好维护很多。也更容易重构。
+
+性能也比 PHP 要好得多。
+
+=== 相比 java
+
+没有 JVM，启动占用资源很少。
+
+劣势，轮子还是少一些。缺少类似 mybatis 这样完善的 SQL 绑定框架。语法糖少。和 swagger 之类的文档框架结合起来使用只能把文档写在注释里，不是很方便。
+
+缺少外包的 OO 系统，在一些用继承来表达比较自然的场景下，用 Go 要稍微费一点劲。
+
+缺少像 spring 这样的保姆框架，需要自己组装轮子。
+
+没有泛型，写一些通用库代码比较麻烦。业务相关的代码还好。
+
+== 让我们把重点放在问答环节吧！
+
+Q & A

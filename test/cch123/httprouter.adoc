@@ -1,0 +1,340 @@
+:toc:
+
+= http router
+
+== http router 是什么
+
+从功能上来讲，就是 URI -> handler 函数的映射。
+
+[ditaa,file="url_to_handler.png"]
+----
+                                                 +------------------------------------------------------+
+                                                 |func sayhello(wr http.ResponseWriter, r #http.Request)|
++------------------------------+                 |{                                                     |
+|/superstar/jay/albums/#:id    |---------------->|    io.WriteString(wr, "fantasy")                     |
++------------------------------+                 |}                                                     |
+|/superstar/cxk/skills         |--------+        +------------------------------------------------------+
++------------------------------+        |                                                                
+                                        |                                                                
+                                        |                                                                
+                                        |        +------------------------------------------------------+
+                                        |        |func sayhello(wr http.ResponseWriter, r #http.Request)|
+                                        |        |{                                                     |
+                                        +------->|    io.WriteString(wr, "sing dance rap basketball")   |
+                                                 |}                                                     |
+                                                 +------------------------------------------------------+
+----
+
+== http router 构造
+
+=== 普通的 trie
+
+image::trie.png[]
+
+* 单个节点代表一个字母
+* 如果需要对字符串进行匹配
+* 只要从根节点开始依次匹配即可
+
+普通的 trie 有什么缺点呢？
+
+[quote,Wikipedia, 最长的英文单词]
+____
+在主要的英文字典中，最长的单词是 pneumonoultramicroscopicsilicovolcanoconiosis，由45个字母组成，意思是一种肺部疾病（由于吸入超显微硅酸盐及石英尘所引起的）肺尘埃沉着病”，通称火山矽肺病。其中，pneumo-表示“肺”，ultra-表示“超”，microscopic意为“微观”，silico-表示“硅”，volcano指“火山”，coni-意思是“尘”，-osis为表示疾病的后缀。后来研究者认为这是一个大骗局。
+____
+
+* 树的深度和路由字符串长度正相关
+* 占用较多的内存
+* 字符串越长，匹配越慢(类似链表结构，在内存中存储不连续的数据)
+
+=== radix tree
+
+[quote,Wikipedia]
+____
+In computer science, a radix tree (also radix trie or compact prefix tree) is a data structure that represents a space-optimized trie (prefix tree) in which each node that is the only child is merged with its parent. The result is that the number of children of every internal node is at most the radix r of the radix tree, where r is a positive integer and a power x of 2, having x ≥ 1. Unlike regular tries, edges can be labeled with sequences of elements as well as single elements. This makes radix trees much more efficient for small sets (especially if the strings are long) and for sets of strings that share long prefixes.
+____
+
+在 http 路由的场景下 一棵 radix tree 是不够用的 为什么呢?
+
+==== restful 风格路由
+
+
+[ditaa,file="entries.png"]
+----
+                      +--------------------+                      
+                      |   /user/#id/info   |                      
+                      +--------------------+                      
+                                 |                                
+                                 |                                
+                                 |                                
+       +------------+------------+------------+------------+      
+       |            |            |            |            |      
+       |            |            |            |            |      
+       v            v            v            v            v      
++------------+------------+------------+------------+------------+
+|   DELETE   |    PUT     |   PATCH    |    POST    |    GET     |
++------------+------------+------------+------------+------------+
+----
+
+同一个 URI 会提供多个 HTTP 方法，以对“资源”进行创建、更新、删除、获取。如果我们只有一棵树，显然是没有办法支持的。
+
+怎么解决这个问题呢？
+
+=== 多棵 radix tree
+
+GET 一棵，PUT 一棵，POST 一棵，以此类推：
+
+[ditaa,file="radix_tree.png"]
+----
+      +-----+            +------+           +-------+    
+      | PUT |            | POST |           | PATCH |    
+      +-----+            +------+           +-------+    
+         |                   |                  |        
+         |                   |                  |        
+         |                   |                  |        
+         |                   |                  |        
+         v                   v                  v        
+  +------------+      +------------+     +------------+  
+  | /bilibili  |      | /bilibili  |     | /bilibili  |  
+  +------------+      +------------+     +------------+  
+         |                   |                  |        
+         |                   |                  |        
+   +-----+---+          +----+---+          +---+----+   
+   |         |          |        |          |        |   
+   v         v          v        v          v        v   
++-----+   +-----+    +-----+  +-----+    +-----+  +-----+
+| /22 |   | /33 |    | /33 |  | /44 |    | /55 |  | /44 |
++-----+   +-----+    +-----+  +-----+    +-----+  +-----+
+----
+
+== httprouter 中的一些概念
+
+=== node
+
+就是 httprouter 树中的节点。
+
+=== nType
+
+就是 node type，有几种枚举值：
+
+* static                   // 非根节点的普通字符串节点
+* root                     // 根节点
+* param(wildcard)          // 参数节点，例如 :id
+* catchAll                 // 通配符节点，例如 *anyway
+
+=== path
+
+到达节点时，所经过的字符串路径。
+
+image::path.png[]
+
+=== indices
+
+子节点索引，当子节点为非参数类型，即本节点的 wildChild 为 false 时，会将每个子节点的首字母放在该索引数组。说是数组，实际上是个 string。
+
+image::indices.png[]
+
+如果子节点为参数节点时，indices 应该是个空字符串。
+
+image::indices2.png[]
+
+=== wildChild
+
+如果一个节点的子节点中有 param(wildcard) 节点，那么该节点的 wildChild 字段即为 true。
+
+=== catchAll
+
+以 `*` 结尾的路由，即为 catchAll。在静态文件服务上，catchAll 用的比较多。后面的部分一般用来描述文件路径。如：/software/downloads/monodraw-latest.dmg。
+
+得到后缀之后，就可以知道文件路径了。当然，现在的服务端文件系统可能是虚拟目录。看具体的实现了。
+
+== httprouter 中 radix tree 的构造过程
+
+假设我们先后插入三条路由，这些路由都用相同的 http method(GET)
+
+=== 第一条路由
+
+插入 /marketplace_listing/plans/
+
+image::node_insert1.png[]
+
+=== 第二条路由
+
+插入 /marketplace_listing/plans/:id/acounts
+
+image::node_insert2.png[]
+
+=== 第三条路由
+
+插入 /search
+
+image::node_insert3.png[]
+
+在根节点上发生了边的分裂。
+
+== 路由冲突
+
+路由发生冲突，主要是 static 节点、param 节点、catchAll 节点之间冲突，例如：
+
+=== 一个例子
+
+[source,c]
+----
+conflict:
+GET /user/info/:name
+GET /user/:id
+----
+
+为什么会冲突呢？因为 param 节点和普通字符串节点是没有办法共存的。例如输入路由字符串为：`/user/info`，在 `/user/:id` 规则中，info 会被解释为 :id 的值。
+
+[source,c]
+----
+no conflict:
+GET /user/info/:name
+POST /user/:id
+----
+
+两个路由的 HTTP Method(GET/POST) 不同，因此会在不同的 radix tree 上。
+
+=== 所有情况
+
+* 在插入 wildcard 节点时，父节点的 children 数组非空且 wildChild 被设置为 false。例如：GET /user/getAll 和 GET /user/:id/getAddr，或者 GET /user/*aaa和 GET /user/:id。
+* 在插入 wildcard 节点时，父节点的 children 数组非空且 wildChild 被设置为 true，但该父节点的 wildcard 子节点要插入的 wildcard 名字不一样。例如： GET /user/:id/info 和 GET /user/:name/info。
+* 在插入 catchAll 节点时，父节点的 children 非空。例如： GET /src/abc 和 GET /src/*filename，或者 GET /src/:id 和 GET /src/*filename。
+* 在插入 static 节点时，父节点的 wildChild 字段被设置为 true。
+* 在插入 static 节点时，父节点的 children 非空，且子节点 nType 为 catchAll。
+
+很好理解，能看懂下面这张图就行：
+
+
+[ditaa,file="exclusive.png"]
+----
+
+                       +----------+                         
+                       | catchAll |                         
+                       +----------+                         
+                             ^                              
+   exclusive                 |                 exclusive    
+     +-----------------------+-----------------------+      
+     |                                               |      
+     |                                               |      
+     v                                               v      
++--------+                                     +----------+ 
+| static |                                     |   param  | 
++--------+                                     +----------+ 
+     ^                                               ^      
+     |                     exclusive                 |      
+     +-----------------------------------------------+      
+----
+
+即同一个节点，其子节点的情况只可能是：
+
+* 一个 wildcard 节点
+* 一个 catchAll 节点
+* 一个或多个 static 节点
+
+== 路由功能扩展
+
+上面我们看到，httprouter 中只有 static/param/checkAll 这三种节点。有一部分人认为功能不够强大。
+
+我们可以思考如何对标准的 httprouter 功能进行扩展。
+
+目前 param 节点和 static 节点无法共存，如果我们想让 param 和 static 可以共存的话呢？
+
+* /cars/{id : \d+}
+* /cars/f1
+
+上面这两条路由显然是可以共存的，我们可以先匹配 /cars/f1，不匹配的情况下再去尝试匹配 /cars/{id: \d+}，都不匹配，则 404。
+
+想实现这个功能也不难，可以自行尝试。
+
+== 路由库性能相关的评测
+
+https://github.com/julienschmidt/go-http-routing-benchmark
+
+https://github.com/julienschmidt/go-http-routing-benchmark/pull/82
+
+https://github.com/smallnest/go-web-framework-benchmark
+
+https://www.reddit.com/r/golang/comments/71i2oh/how_are_various_routers_are_faster_than_each_other/
+
+image::benchmark_latency.png[]
+
+[TIP]
+====
+路由的性能对我们的线上项目有多大影响呢?
+====
+
+== 其它路由项目
+
+上面的 benchmark 里有，简单扫了扫代码，功能其实都差不多。
+
+== 注意事项
+
+httprouter 在路径中的 param 节点不能超过 255，这个结论怎么得到的呢？可以看看代码。
+
+== 拓展阅读：RESTFul 和 GraphQL 之争
+
+https://www.howtographql.com/basics/1-graphql-is-the-better-rest/
+
+看看就行了。该 post 一把梭的时候连 RESTFul 都不用，更不用说 GraphQL 了。
+
+对于有些公司的人来说，RESTFul 都接不利索(比如 Go 标准库中的 http client，用 PUT/PATCH 之类的方法就很不方便，开源的 http client 各种 bug)。
+
+== Go 夜读调查问卷
+
+image::survay.png[]
+
+[quote, reddit]
+____
+Please do not obsess over routers. Their difference in speed, if any, is negligible compared to the network and disk IO of a standard web app. Just pick one and move on.
+____
+
+分享过程中有同学问的没有回答的两个问题：
+
+[TIP]
+====
+httprouter 是不是不支持 /:hashcode 这种路由？
+====
+
+是支持的，必须以 / 开头才行
+
+[TIP]
+====
+这些路由的 zero garbage 和 0 alloc 是咋实现的？
+====
+
+zero garbage 指进程不在堆上分配内存。http router 实现了全静态路由时，匹配过程 0 alloc，这里的 0 次分配其实就是没有堆内存分配(栈上的肯定还是有的，但栈上分配内存不影响 GC)。
+
+但 httprouter 在路由中含有参数时，会额外分配一个 Params 的 slice，提供给用户的 handler 来使用。所以可以看到，带参数的路由在 httprouter 的 benchmark 中有 alloc：
+
+[source,c]
+----
+BenchmarkHttpRouter_Param           20000000        139 ns/op          33 B/op        1 allocs/op
+----
+
+下面是 gin 的 benchmark：
+
+[source,c]
+----
+BenchmarkGin_Param                      20000000               113 ns/op               0 B/op          0 allocs/op
+
+----
+
+Gin 用的也是 httprouter，但是为什么这里却是 0 alloc 呢？答案很弱智，sync.Pool：
+
+https://github.com/gin-gonic/gin/issues/249
+
+[source,c]
+----
+// Engine is the framework's instance, it contains the muxer, middleware and configuration settings.
+// Create an instance of Engine, by using New() or Default()
+type Engine struct {
+	RouterGroup
+
+      // ....
+	pool             sync.Pool
+      // ....
+}
+----
+
+感兴趣的同学可以自己追一下代码。

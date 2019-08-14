@@ -1,0 +1,169 @@
+= Books
+:sectnums:
+:toc: left
+:toclevels: 2
+//:data-uri:
+
+:toc!:
+
+== General
+
+* http://www.nature.com
+* http://lifehacker.com/
+* http://www.ibm.com/developerworks/
+* http://www.slashdot.org
+* http://thedailywtf.com/
+* http://www.linuxtoday.com/
+
+== Mathematics
+
+* http://www.math.wisc.edu/~keisler/calc.html[Elementary Calculus: An Infinitesimal Approach]
+
+== Computer Science
+
+Sites::
+
+    * http://queue.acm.org/
+    * http://www.infoq.com/
+    ** http://www.infoq.com/news/2016/01/VS-64-bit
+    ** http://www.infoq.com/presentations/jvm-tuning-2015?utm_campaign=rightbar_v2&utm_source=infoq&utm_medium=presentations_link&utm_content=link_text
+    ** http://www.infoq.com/presentations/java-big-data-tuning?utm_campaign=rightbar_v2&utm_source=infoq&utm_medium=presentations_link&utm_content=link_text
+
+Testing::
+    * http://www.infoq.com/presentations/testing-web-services-soap-rest
+    
+
+Authors::
+  * http://www.paulgraham.com/articles.html
+
+Text Books::
+
+  * http://homes.cs.washington.edu/~lazowska/qsp/[Quantitative System Performance: Computer System Analysis Using Queueing Network Models]
+  
+  * http://www.cs.wustl.edu/~jain/books/perfbook.htm
+
+== Systems Performance
+
+=== MIT 6.172 Performance Engineering of Software Systems, Fall 2010
+
+* http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2010/index.htm
+
+* http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2010/calender/
+
+* https://www.youtube.com/playlist?list=D2AE32F507F10481&feature=viewall
+
+==== Lec 1 | Matrix multiply: A case study
+
+https://www.youtube.com/watch?v=JzpkXLH9zLQ&list=PLD2AE32F507F10481&index=1[Lec 1 | MIT 6.172 Performance Engineering of Software Systems, Fall 2010]
+
+==== Lec 2 | Bit hacks
+
+https://www.youtube.com/watch?v=xc9DDSbf0NQ&list=PLD2AE32F507F10481&index=2[Lec 2 | MIT 6.172 Performance Engineering of Software Systems, Fall 2010]
+
+----
+x,y = 10,20
+print x,y
+x = x ^ y
+y = x ^ y
+x = x ^ y
+print x,y
+----
+
+----
+x,y = 10,20
+print x,y
+x = x + y
+y = x - y
+x = x - y
+print x,y
+----
+
+https://en.wikipedia.org/wiki/XOR_swap_algorithm
+
+http://www.cs.umd.edu/class/sum2003/cmsc311/Notes/BitOp/xor.html
+
+*   **Inclusive or**: A or B or both.
+*   **Exclusive or**: Either A or B but not both.
+
+http://graphics.stanford.edu/~seander/bithacks.html
+
+==== Lec 3 | Basic performance engineering
+
+https://www.youtube.com/watch?v=2fjZhoifOiM[Lec 3 | MIT 6.172 Performance Engineering of Software Systems, Fall 2010]
+
+* https://tfetimes.com/wp-content/uploads/2015/04/ProgrammingPearls2nd.pdf[Programming Pearls, John Bentley]
+
+==== Lec 4 | Computer architecture and performance engineering
+
+https://www.youtube.com/watch?v=8dTMUigqBHM&index=4&list=PLD2AE32F507F10481[Lec 4 | MIT 6.172 Performance Engineering of Software Systems, Fall 2010]
+
+* TBD
+
+==== Industry mentor overview | Industry mentor (MITPOSSE) overview
+
+https://www.youtube.com/watch?v=nukI0huUEiM&list=PLD2AE32F507F10481&index=5[Industry mentor overview | MIT 6.172 Performance Engineering of Software Systems, Fall 2010]
+
+* TBD
+
+==== Lec 5 | Performance Engineering with Profiling Tools
+
+* https://www.youtube.com/watch?v=7a89iFEEpTo&list=PLD2AE32F507F10481&index=6
+
+==== Lec 6 | C to assembler
+
+==== Lec 7 | Memory systems and performance engineering
+
+==== Lec 8 | Cache-efficient algorithms
+
+==== Lec 9 | Cache-efficient algorithms II
+
+==== Lec 10 | Dynamic storage allocation
+
+==== Lec 11 | What compilers can and cannot do
+
+==== Lec 12 | Multicore programming
+
+==== Lec 13 | Parallelism and performance
+
+==== Lec 14 | Analysis of multithreaded algorithms
+
+==== Lec 15 | Nondeterministic programming
+
+==== Lec 16 | Synchronizing without locks
+
+==== Lec 17 | Performance issues in parallelization
+
+==== Lec 18 | Primer on ray tracing techniques
+
+==== Lec 19 | Cache-oblivious B-tree (TokuDB)
+
+==== Lec 20 | Distributed systems
+
+==== Lec 21 | Quiz 2 review
+
+==== Lec 22 | Final project competition and student feedback
+
+== Systems Security
+
+=== Computer Systems Security
+
+http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/
+
+==== Lecture 1: Introduction, Threat Models
+
+* http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/video-lectures/lecture-1-introduction-threat-models
+
+== Computer Science
+
+All::
+
+  * http://www.hongkiat.com/blog/free-online-courses/
+  * https://www.coursera.org/
+  * http://ocw.mit.edu/courses/find-by-topic/
+  * https://www.edx.org/
+
+OCW::
+
+  * https://www.youtube.com/playlist?list=PLUl4u3cNGP61Oq3tWYp6V_F-5jb5L2iHb[MIT 6.006 Introduction to Algorithms, Fall 2011]
+  * http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-046j-introduction-to-algorithms-sma-5503-fall-2005/video-lectures/[Introduction to Algorithms (SMA 5503)]
+  * http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-001-structure-and-interpretation-of-computer-programs-spring-2005/video-lectures/[Structure and Interpretation of Computer Programs]

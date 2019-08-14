@@ -1,0 +1,301 @@
+= 流式计算概述
+
+我们日常开发的系统，可以按照发起请求 -> 收到响应的时间分为三类：
+
+[quote,Designing Data-intensive applications]
+____
+Services (online systems)
+
+服务等待用户请求或指令到达。当收到请求或指令时，服务试图尽可能快地处理它，并发回一个响应。响应时间通常是服务性能的主要衡量指标。而可用性同样非常重要(如果客户端无法访问服务，用户可能会收到一个报错信息)。
+
+Batch processing systems (offline systems)
+
+批处理系统接收大量输入数据，运行一个作业来处理数据，并产生输出数据。作业往往需要执行一段时间(从几分钟到几天)，所以用户通常不会等待作业完成。相反，批量作业通常会定期运行(例如每天一次)。批处理作业的主要性能衡量标准通常是吞吐量(处理一定大小的输入数据集所需的时间)。
+
+Stream processing systems (near-real-time systems)
+
+流处理系统介于在线与离线/批处理之间(所以有时称为近实时或近线处理)。与批处理系统类似，流处理系统处理输入并产生输出(而不是响应请求)。但是，流式作业在事件发生后不久即可对事件进行处理，而批处理作业则使用固定的一组输入数据进行操作。这种差异使得流处理系统比批处理系统具有更低的延迟。**流处理是在批处理的基础上进行的。**
+____
+
+map reduce 基本原理：
+
+[source,c]
+----
+map(k1,v1) ->list(k2,v2)
+reduce(k2,list(v2)) ->list(v2)
+----
+
+可以借鉴其思想实现自己的 map reduce 框架：
+
+[quote, pingcap talent-plan]
+----
+https://github.com/pingcap/talent-plan/tree/master/tidb/mapreduce
+----
+
+更详细的说明可以自行阅读 Google 的 map reduce 论文
+
+map reduce 并不是分布式系统的专利：
+[source,shell]
+----
+cat /var/log/nginx/access.log |
+      awk '{print $7}' |
+      sort             | <1>
+      uniq -c          |
+      sort -r -n       |
+      head -n 5
+----
+
+<1>  sort 工具就会进行外部排序，和 map reduce 过程非常相似。
+
+map reduce api 过于底层，如今离线系统基本不需要再写 map reduce 脚本了。比如我们可以直接写 hive SQL。
+
+== 在 hadoop/hive 生态上兴起的 lambda/kappa 架构
+
+.lambda architecture
+image::lambda-arch.png[]
+
+lambda 架构之前非常流行，甚至现在在我们这里也非常流行。问题也是显而易见的：
+
+* 在线离线技术栈不同
+* 两套代码，两倍人力
+* 一个月开发，两个月对数据
+
+twitter 尝试解决这个问题，推出了
+https://github.com/twitter/summingbird[summingbird]
+。一套代码编译出在线部分和离线部分。然而功能上只能支持在线/离线交集，且较为复杂，没有流行起来。
+
+.kappa architecture
+image::kappa-arch.png[]
+
+来自这里：
+https://www.oreilly.com/ideas/questioning-the-lambda-architecture[Questioning the Lambda Architecture]
+
+
+
+== 半路杀出个 Spark
+
+[quote, internet]
+____
+在 2014 年 11 月 5 日举行的 Daytona Gray Sort 100TB Benchmark 竞赛中，Databricks 用构建于 206 个运算节点之上的 Spark 运算框架在 23 分钟内完成 100TB 数据的排序，一举击败了该赛事 2013 年的冠军— Yahoo 团队建立在 2100 个运算节点之上的 Hadoop MapReduce 集群，该集群耗时 72 分钟排序了 102.5TB 的数据。换句话说，Spark 用了十分之一的资源在三分之一的时间里完成了 Hadoop 做的事情。
+____
+
+Spark 大量使用内存而非磁盘来存储中间结果，比傻用磁盘的 hadoop 快几十倍是正常的。
+
+除了性能优化之外，Spark 还做了一些抽象，这里面最重要的便是 RDD：
+
+[quote, 百科]
+____
+RDD(Resilient Distributed Datasets) ，弹性分布式数据集， 是分布式内存的一个抽象概念，RDD 提供了一种高度受限的共享内存模型，即 RDD 是只读的记录分区的集合，只能通过在其他 RDD 执行确定的转换操作（如 map、join 和 group by）而创建，然而这些限制使得实现容错的开销很低。对开发者而言，RDD 可以看作是 Spark 的一个对象，它本身运行于内存中，如读文件是一个 RDD，对文件计算是一个 RDD，结果集也是一个 RDD ，不同的分片、 数据之间的依赖 、key-value 类型的 map 数据都可以看做 RDD。
+____
+
+[quote, spark]
+____
+Spark 中每个 transform 的返回值都是 RDD，也就是 transform 是那些真正转换了RDD的操作，而 Action 操作会返回结果或把RDD数据写到存储系统中。Spark 在遇到 Transformations 操作时只会记录需要这样的操作，并不会去执行，需要等到有 Actions 操作的时候才会真正启动计算过程进行计算。
+____
+
+类似于函数式编程中的惰性求值。什么是惰性求值？举个例子：
+
+[source,c]
+----
+let rhs = rhs.replace("\'", "\"");
+let r_vec: Vec<&str> = rhs
+    .trim_left_matches("(")
+    .trim_right_matches(")")
+    .split(",")
+    .map(|v| v.trim())
+    .collect();
+----
+
+别看函数调用多，编译器甚至可以对中间某些可以进行合并的操作主动合并，去掉冗余操作，甚至可能比手写的过程式代码性能要好。
+
+http://homepage.cs.latrobe.edu.au/zhe/ZhenHeSparkRDDAPIExamples.html[RDD 操作大全]
+
+鉴于 Spark 已经日薄西山，为了给自己减负，我们就可以不用学习了。开心。
+
+Spark 没风光几年，就被新兴的流式计算框架降维打击了。
+
+== 新兴流式计算框架 Flink
+
+Flink 在业务上解决了哪些痛点呢？来看看 Flink 官方文档中阐述的三种应用场景:
+
+=== 事件驱动型应用
+.event driven apps
+image::usecases-eventdrivenapps.png[]
+
+如：
+
+* 司机实时成交率
+* 司机实时在线时长
+* 司机实时反作弊
+* 实时疲劳驾驶检查
+
+=== 数据分析应用
+
+.analytics
+image::usecases-analytics.png[]
+
+如：
+
+* 实时 xx/yy/zz 大盘
+* 司机实时组织化收入大盘
+* 司机实时平均 iph
+
+=== 数据管道应用
+
+.data pipelines
+image::usecases-datapipelines.png[]
+
+如：
+
+* 异步写入的 order feature system 中的所有订单特征
+* 电子商务中的实时查询索引构建
+
+可见本组拥有所有流式计算相关的业务场景。
+
+== 流式计算的一些概念
+
+=== bounded/unbounded
+
+有界，无界。在离线脚本开始运行时，可以认为某天的数据已经是完整的了，这便是“有界”。
+
+而实际上业务并不是这样的。在司机实时成交率计算中，订单在判责结束后，可能会过很久(1-3天)，司机对结果进行申诉。申诉通过后，需要修改计算结果。纯粹的离线系统无法适应这样的场景。
+
+源源不断流入的业务领域事件，往往是不会停止的。离线系统只是强行划界而已。
+
+=== idempotent
+
+幂等性。如一个接口相同的多次调用会得到相同的计算结果。
+
+* incrby 是幂等的么？
+* update order set order_status = finished where order_id = 434453 是幂等的么
+
+=== event time vs processing time
+
+* event time : 事件实际发生的时间
+* processing time : 事件到达后端系统的时间
+
+processing time 一般都是有序的(废话)。而 event time 则不一定。流式计算系统一定程度上解决了 event time 乱序的问题。通过什么来解决的呢？
+
+=== window && trigger && evictor
+
+.window
+image::window.jpg[]
+
+具体含义可以参考 https://blog.csdn.net/u4110122855/article/details/81360381[这里]。
+
+在某个 window 结束之后，可以触发 trigger。
+
+在Trigger触发之后，在窗口被处理之前，Evictor（如果有Evictor的话）会用来剔除窗口中不需要的元素，相当于一个filter。
+
+=== watermark
+
+似乎在论文里叫 barrier...
+
+.有序事件和 watermark
+image::stream_watermark_in_order.svg[]
+
+.乱序事件和 watermark
+image::stream_watermark_out_of_order.svg[]
+
+.并行数据流和 watermark
+image::parallel_streams_watermarks.svg[]
+
+可以参考 
+https://blog.csdn.net/Jiny_li/article/details/86516762[这里].
+
+[TIP]
+====
+window 和 watermark 是啥关系？
+====
+
+== lateness
+
+可能某些特定的元素会违背水印的条件，也就是说即使是Watermark(t)已经发生了，但是还会有许多时间戳t'<=t的事件发生。事实上，在真实的设置中，某些元素可以任意延迟，因此指定一个时间，在这个时间内所有在一个特定事件时间戳的事件都会发生是不可能的。
+
+延迟事件到达后可以选择丢弃，还是更新之前的结果。
+
+== exactly-once
+
+有且只有一次。并不是那么简单的。
+
+https://flink.apache.org/features/2018/03/01/end-to-end-exactly-once-apache-flink.html[end-to-end exactly once]
+
+== 流式计算理论基石
+
+=== millwheel paper
+
+[quote, millwheel paper]
+____
+MillWheel is a framework for building low-latency data-processing applications that is widely used at Google. Users specify a directed computation graph and application code for individual nodes, and the system manages persistent state and the continuous flow of records, all within the envelope of the framework’s fault-tolerance guarantees.
+____
+
+重点：用户指定有方向的计算图、每个节点的应用代码。系统负责状态持久化，和数据的流动，框架保证容错。
+
+=== distributed snapshot
+
+leslie lamport 在 80 年代发表的论文，有很多不说人话的地方。主要解决的是一致性的问题。
+
+简单来讲，如果在系统内部流动的数据是金额，并且没有外部转入，或者数据转出到外部。每次采集到的快照，能够保证全局总额是不变的。
+
+.distributed snapshot
+image::lamport_snapshot.png[]
+
+重点：所有节点和边均有状态。每个节点负责记录自己的状态，以及那些“入边”的状态。所谓的状态，其实就是某种值。
+
+有理论支持，流式计算系统才能证明自己的快照从理论上来讲是“正确”的。
+
+=== lightweight distributed snapshot
+
+对用户代码进行分析，判断计算图是否有环，分别采用两种算法注入 barrier 并采集全局的 snapshot。
+
+.无环图快照算法
+image::flink_acyclic_snapshot.png[]
+
+.有环图快照算法
+image::cyclic_snapshot-1.png[]
+
+=== The Dataflow Model paper
+
+这一篇的内容在新书 《Streaming Systems》大多有讲，不用读这个。去读书就好。
+
+== 流式计算领域的混战
+
+Spark vs Flink vs Beam。
+
+Spark 的理论是，流处理是批处理的特殊情况。
+
+Flink 的理论是，批处理是流处理的特殊情况。
+
+Beam 的理论是，我全都要：
+
+.Beam Architecture
+image::beam_architecture.png[]
+
+支持多语言，再翻译成对应的执行任务：
+
+.Beam Runtime
+image::beam-runtime.jpg[]
+
+Pulsar vs Kafka。
+
+没时间调研，就不展开说了。
+
+== 课后问题
+
+[WARNING]
+====
+流式计算框架是怎么保证最终一致的？
+====
+
+[WARNING]
+====
+window、watermark、trigger 是如何协作的
+====
+
+image::coop.jpg[]
+
+
+[WARNING]
+====
+window、watermark、trigger 是如何协作的
+====

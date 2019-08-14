@@ -1,0 +1,325 @@
+:toc:
+:toclevels: 4
+:toc: left
+
+= Streaming 101
+
+== 预习题
+
+判断对错:
+
+[TIP]
+Fixed window 是 Sliding window 的特殊情况
+
+[TIP]
+有了基于 event time 的 Window 我们就能完美地解决 window 内的数据完整性问题了
+
+[TIP]
+Session 指的是一个用户在平台上所有行为的集合，可以包含很长时间的数据(月、年)
+
+== 背景
+
+https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101[Streaming 101] 和 https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-102[Streaming 102] 是作者原先发表在出版社 oreily 网站上的两篇文章。
+
+Streaming 101 部分覆盖了一些基本的背景信息，在深入流式计算细节之前，澄清了一些名词概念，这些是大家经常谈论的批处理和流处理中可能经常遇到的概念。
+
+Streaming 102 部分主要讲 Dataflow Model，这部分主要讲的是统一的批+流处理模型，这套模型也是 Google Cloud Dataflow 中使用的模型。并辅以实例进行说明。在这之后会对世面上的批处理和流式系统进行简单的语义上的比较。
+
+== 商业/业务需求(Business Requirements)
+
+1. 低延迟(low latency)
+2. 大规模、无界处理(massive, unbounded processing)
+3. 方便对资源使用量进行评估(easily predication of resouce consumption)
+
+Streaming 101 讨论的话题聚焦在: 名词(terminology)，能力(capabilities)，时间定义域(time domain)
+
+为什么聚焦在这三个方面呢？
+
+名词 : 在数据处理领域，有很多词都被滥用了，所以在 Streaming 101 中需要进行澄清和范围收敛，这样才能更方便地讨论 Dataflow Model 和后续的理论部分。
+
+能力 : 因为 storm 之类的先行框架的问题，导致大众夸大了流式系统的缺点。作者想要端正数据处理系统的创建者的心态，让他们接受这些观点，以使其能够构建出满足现代数据用户的需求的系统，继续前行。
+
+时间定义域 : 作者会介绍数据处理中最重要的两个时间定义域，展示两者之间的关系，并指出两个定义域各自的一些技术困难。
+
+== 名词(terminology)
+
+=== 什么是 Streaming
+
+[quote, Streaming 101]
+____
+a type of data processing engine that is designed with infinite data sets in mind. 
+____
+
+在将 streaming 限定在数据处理引擎之前，业界对 Streaming 的定义是模糊不清的。
+
+[quote, Streaming 101, ]
+____
+问题的关键之处在于很多东西本来应该用它们是什么(what)来定义(e.g. 无界数据处理，近似结构. etc)，却被用口语化的，这些功能是如何实现(how)的来定义了(i.e. 通过流式执行引擎)。缺乏精确的名词定义，导致 streaming 本身的含义被发散了，人们认为流式系统就只能满足那些计算”近似“、"预测结果"的系统。
+
+而实际上现今设计良好的流式计算系统，和批处理系统一样，从技术上能够生产出正确、一致、可重复的结果。
+____
+
+因此作者将 Streaming 限定在非常有限的范围上，即:
+
+[quote, Streaming 101]
+____
+a type of data processing engine that is designed with infinite data sets. Nothing more.
+____
+
+嗯，就是限定成了专门处理无限数据集的数据处理引擎。
+
+=== Unbounded data
+
+有很多人把一直增长，且无限的数据集称为 "streaming data"。然而称数据为 streaming 或是 batch 都很有问题，因为上面提到的，streaming 和 batch 实际上说的是处理这些数据的 **执行引擎** 特性。我们区分这两种类型的数据集最好的方法是看它们的有穷性(finiteness)，所以需要一个更好的词汇来描述这种区别。我这里想纠正这种流式数据(streaming data) 为无界数据(unbounded data)，而称那些有穷的批式数据(batch data)为有界数据(bounded data)。
+
+=== Unbounded data processing
+
+一种对数据持续进行处理的模式，操作对象就是前面提到的无界数据。
+
+因为批处理框架在业界出现较早，因此早先处理无界数据大多是依靠反复地在无界数据上执行批处理任务来达成计算的。
+
+实际上流式执行引擎反过来甚至完全有能力在有界的数据上执行类似批式处理引擎的工作。
+
+=== Low-latency, approximate, and/or speculative results:
+
+这是业界常说的流式执行引擎的一些特性。
+
+批处理引擎没有被设计为低延迟、获取近似结果的引擎，是历史因素使然。当然，批处理完全能够胜任生产近似结果的任务。
+
+所以用这些特点来描述流式引擎也是不精确的。这三个特点是因为历史发展导致的，而不是流式引擎本身的特性。
+
+== 能力(capabilities)
+
+流式引擎的缺点实际上是言过其实的。长期以来人们对流式系统的认识局限在提供低延迟、不精确、预测结果等功能领域，然后通过额外的批处理系统来提供最终一致的结果，例如: http://nathanmarz.com/blog/how-to-beat-the-cap-theorem.html[Lambda Architecture]。
+
+[quote, Streaming 101]
+____
+the basic idea is that you run a streaming system alongside a batch system, both performing essentially the same calculation. The streaming system gives you low-latency, inaccurate results (either because of the use of an approximation algorithm, or because the streaming system itself does not provide correctness), and some time later a batch system rolls along and provides you with correct output. Originally proposed by Twitter’s Nathan Marz (creator of Storm), it ended up being quite successful because it was, in fact, a fantastic idea for the time;
+____
+
+在那个时代，流式引擎在正确性上令人失望。批处理引擎又过于笨重(慢)。二者互补正好可以实现用户想要的准实时和准确特性。不幸的是，维护 Lambda 系统极其麻烦: 你需要构建、部署、维护两套独立的 pipeline，然后在最终把两个 pipeline 的结果 merge 起来。
+
+之后人们努力了很多年，寻找 Lambda Architecture 以外的解决方案，作者也认为 Lambda 架构非常讨厌，并且非常同意: https://www.oreilly.com/ideas/questioning-the-lambda-architecture[Questioning the Lambda Architecture] 文中的观点。该文作者提出了 Kappa 架构，只使用一套代码做 pipeline，不用部署两套系统，只是需要依赖 Kafka 之类的 MQ 的重放功能。相比 Lambda Architecture 已经是巨大的进步了。
+
+作者认为 Kappa 架构之上，应该再进一步，我们需要更精确的流式执行引擎。也就是 Flink 之类的 all-streaming-all-the-time 一揽子解决方案。这样理论上从技术上再也不需要批处理引擎了。
+
+为了消灭批处理引擎，流式引擎需要达到两点要求:
+
+=== 正确性(Correctness)
+
+保证正确才能使流式执行引擎与批处理系统对等。
+
+核心是: 正确性需要有持久化存储来保证。
+
+流式系统需要能够随时间推移不断 checkpoint 持久化的状态。
+
+这个状态需要在机器挂了的时候也依然能保证一致性。Spark Streaming 刚出现在大数据领域的公众视野时，简直是一致性的一座灯塔照亮了黑暗的流式世界。
+
+在 Spark 之后，相关的领域工具已经进步了很多。但依然有大量的流式系统不保证强一致性；作者表示不敢相信，这些 at-most-once 的处理到底有什么卵用。
+
+只有强一致才能保证 exactly-once 的处理，而 exactly-once 是正确性的保证。而正确性是流式引擎超越批处理最大的前提。
+
+作者强烈建议避开不保证强一致状态的任何流式系统。批处理系统不要求你做任何验证就可以产生正确的结果；不要去使用那些达不到标准的垃圾系统。
+
+如果想要知道在流式系统中如何达成强一致的目标，作者建议阅读 MillWheel 和 Spark Streaming 的论文。两篇论文都花了不少时间来探讨一致性。并给出了优质的相关信息。
+
+=== 时间诊断工具(Tools for reasoning about time)
+
+时间诊断工具使流式系统超越批处理系统。
+
+对于处理无界、无序，难以预测延迟的数据来说，好的工具是必须的。
+
+现代的数据系统基本都具备这种特性，存量的批处理系统和很多以前的流式系统没有必要的工具来处理它们带来的复杂性。
+
+== 时间定义域(time domain)
+
+=== Event Time
+
+事件实际发生的时间。
+
+=== Processing Time
+
+事件被系统观测到的时间。
+
+=== 两种时间不一致的原因
+
+* 共享资源限制，网络拥塞、网络分区，或者在非托管环境共享 CPU
+* 软件原因，分布式系统逻辑问题，竞争问题，等等
+* 数据本身的特点，比如 key 的分布，吞吐量的变化，以及乱序的程度(比如飞机着陆后所有人掏出手机，取消发行模式时大量的数据交互)
+
+如果将真实世界的 event time 和 processing time 绘制出来，那么一定是类似下图的样子:
+
+.The X-axis represents event time completeness in the system, i.e. the time X in event time up to which all data with event times less than X have been observed. The Y-axis represents the progress of processing time, i.e. normal clock time as observed by the data processing system as it executes.
+image::skew.jpg[]
+
+如果关注 event time，那么你就不能只依赖 processing time 对数据进行分析。
+
+不幸的是，现在大多数存量系统就是这么操作的。为了处理无界数据集的“无限”特性，这些系统会对进入的数据进行 window 划分。这种 window 机制是指将数据通过时间范围区分为有限的集合。
+
+不应该使用 processing time 来对数据进行分界。由于 processing time 和 event time 不相关，一些数据会因为分布式系统的延迟进入错误的 processing time window。从而导致最终的结果计算错误。
+
+但不幸的是，即使我们用 event time 来划分 window，也不能得到理想的结果。在无界数据的场景下，乱序和数据延迟会带来 event time 窗口的“完成问题”(completeness problem): 也就是说，我们没有办法确定 processing time 和 event time 之间的对应关系，也就没有办法判断，某个时刻 X 的事件都已经被观测到了。对于真实世界的数据源来说，更没法判断了。
+
+应该设计工具，来支持我们在这些复杂的数据集的不确定性的前提下，完成数据是否已经完整的判断。此外新数据到达时，老的数据可能需要撤销或者更新，我们构建的系统应该能够自己处理这种情况。
+
+== 常见数据处理模式
+
+=== 有界数据处理
+
+处理有界数据很简单直接，对大多数人来说都比较熟悉。
+
+下面的图，从左边进来的数据非常混乱。我们通过数据处理引擎跑一遍(一般是批处理，如果是良好设计的流式引擎，结果是一致的)，比如 MapReduce，在右侧便会产生更好地结构化的数据。
+
+.Bounded data processing with a classic batch engine. A finite pool of unstructured data on the left is run through a data processing engine, resulting in corresponding structured data on the right. Image: Tyler Akidau.
+image::bounded_data_proc_with_classic_batch_engine.jpg[]
+
+=== 无界数据处理
+
+==== 无界数据处理-批式
+
+批处理系统并不是为无界数据设计的，但因为发明的早，被人们用来处理无界数据。
+
+使用时需要将无界数据区分为有界数据集合，然后再处理。
+
+===== Fixed windows
+
+处理无界数据最常见的模式就是把这些无界数据区分成固定大小的 window，并且不断地在区分后的 window 上跑批处理引擎就好了。window 中都是独立、有界的数据。尤其是对于输入数据源是 log 的情况，事件可以被写入到文件，文件名就标记了这些事件所属的窗口。
+
+看起来就像是你已经提前按照 event time 对事件进行了 shuffle，使其进入了正确的 event time window。
+
+事实上大多数系统都需要处理数据的完整性问题: 如果一些事件因为网络分区延迟了怎么办，如果全局收集的事件需要传输到特定位置怎么办，如果你的事件是从移动设备上来的怎么办。这意味着需要进行一些延迟处理，来缓解这种问题。直到你确信所有事件都被收集了，或者在每次对应的 window 来了新事件时，都重新完整地跑一遍整个 batch 任务。
+
+.Unbounded data processing via ad hoc fixed windows with a classic batch engine. An unbounded data set is collected up front into finite, fixed-size windows of bounded data that are then processed via successive runs a of classic batch engine. Image: Tyler Akidau.
+image::unbounded_proc_with_fixed_window_classic_batch_engine.jpg[]
+
+===== Sessions
+
+如果需要更复杂的窗口划分策略，那批处理系统就难做了，比如 sessions。
+
+Sessions 被定义为某个用户一系列的行为，会以一段时间不做任何操作作为终止条件。当用批处理引擎处理 sessions 时，如下图中红色标记的那样。一个 session 被切到了不同的窗口。你也可以增加逻辑把后续的 session 补到前面的窗口，但这样增加了复杂性。
+
+.Unbounded data processing into sessions via ad hoc fixed windows with a classic batch engine. An unbounded data set is collected up front into finite, fixed-size windows of bounded data that are then subdivided into dynamic session windows via successive runs a of classic batch engine. Image: Tyler Akidau.
+image::unbounded_proc_sessions_with_fixed_window_classic_batch_engine.jpg[]
+
+无论哪种模式，传统的批处理引擎来计算 sessions 都不理想。更好的方式应该是按 streaming 的流派来建立 sessions。
+
+==== 无界数据处理-流式
+
+相比基于批处理针对无界数据的特殊定制，流式系统本身就是为无界数据设计的。真实世界中，数据不只是无界，还有下面这些特性:
+
+* event time 是高度无序的，意味着你需要在 pipeline 中支持某种按照时间进行 shuffle 的方法，才能达到按事件发生上下文来进行数据分析的目的
+* 时间延迟的不稳定性，意味着你不能假设在某个时间点 X 之后恒定的时间后的时间点 Y 上，就一定能看到大部分数据
+
+有一些可控的手段帮助我们处理具有这些特点的数据。作者将其分为四大类:
+
+Time-agnostic 时间无关
+Approximation 求近似
+Windowing by processing time 按处理时间分窗口
+Windowing by event time 按事件时间分窗口
+
+===== Time-agnostic
+
+时间无关处理一般使用在那些和时间无关的 case 上，例如，所有的逻辑都是数据驱动的，因为用例都是随着更多数据的到达而变化，所以对于流式引擎来说除了提供基本的数据搬运也没别的需求了。
+
+从原理上来说，所有存在的流式系统都是支持时间无关的处理的。
+
+批处理系统对时间无关的无界数据处理也是很合适的，只要简单的把无界数据切成任意长度的序列或者有界数据集并独立地处理这些数据集就行了。
+
+====== Filtering
+
+时间无关的处理最简单的一种模式是过滤。
+
+比如 Web traffic log，我们想要过滤掉所有不是从特定域名来的访问。只要在每条记录到达的时候检查一下，不符合条件就扔掉就行了。
+
+因为这种类型的处理每次只和当前正在处理的单一元素相关，源数据是无界、乱序或者延迟就都无所谓了。
+
+.Filtering unbounded data. A collection of data (flowing left to right) of varying types is filtered into a homogeneous collection containing a single type.
+image::filtering.jpg[]
+
+====== Inner-joins
+
+当你只关注两个来源中同时存在的数据(交集)时，即为 innter-join(hash-join)。
+
+收到其中一方来的数据时，存储在持久化的状态中；当第二个值也到达时，即把 join 后的结果输出就好。
+
+不过实际上还要处理一些垃圾回收的策略，比如可能一条流中存在数据，而另一条中没有。
+
+.Performing an inner join on unbounded data. Joins are produced when matching elements from both sources are observed.
+image::innter-join.jpg[]
+
+如果想要切换到 outer join 的语义的话，会有我们谈到的数据完整性问题: 当你看到一半的 join 数据时，怎么才能知道另一半会不会到达呢？真相是，没有办法判断，所以需要额外引入 timeout 的概念。而有 timeout 的概念即需要类似后面提到的某种形式的窗口。
+
+===== Approximation algorithms
+
+.Computing approximations on unbounded data. Data are run through a complex algorithm, yielding output data that look more or less like the desired result on the other side. 
+image::approxim.jpg[]
+
+第二个分类是完成一些估算算法，例如近似 Top-N，流式 K-means 等等。系统输入无界源数据提供输出，基本就是想要的内容。估算算法好的一面，是在设计上，其本身就是低成本并且就是为无界数据设计的。不好的一面是算法一般较为复杂，且不容易和其它算法结合，其近似估算限制了其通用性。
+
+===== Windowing by Processing Time
+
+.Windowing into fixed windows by processing time. Data are collected into windows based on the order they arrive in the pipeline. Image: Tyler Akidau.
+image::win_by_processing_time.jpg[]
+
+数据按照到达的时间来区分窗口，例如 fixed window 大小为 5min，只要将 5min 的数据全部缓存就好，当所有数据都到达时，把这些数据发给下游处理。
+
+按 processing time 分窗口有一些优势:
+
+* Simple : 实现简单，不用操心按数据时间 shuffle 的问题。只要把数据 buffer 住，到时间了往下游发就行。
+* Judging window completeness is straightforward : 因为系统对于所有事件所在的窗口时间都有准确的认知，能够完美地判断某个窗口是不是数据已经完整了。这种情况下没必要处理任何迟到的数据。
+* Easy for monitor like system : 对于一些监控类的服务来说，恰好是这种模型。
+
+如果一些状态依赖真实世界的时间顺序，那么 processing time window 就不灵了:
+
+* 用户玩游戏，中途穿越隧道，之后信号恢复。
+
+* 跨大陆版块的服务，光纤断了或者带宽被占满了，之后恢复了。数据中心新到的数据，有的比较实时，有的看起来就过期了。
+
+这两个 case，其实我们都是希望能够按照 event time 来划分 window，并且能处理事件的延时。
+
+===== Windowing by Event Time
+
+当需要按照事件时间，并将其按照发生时间来区分成小块时，需要用到 event time 分窗口。这才是窗口的黄金标准。遗憾的是，大部分市面上的数据处理系统不支持这种模型。尽管某些系统也有优雅的一致性模型，如 Hadoop 和 Spark Streaming，可以成为构建这样的分窗系统的底层支持。
+
+下图将无界源数据划分为小时粒度的固定窗口(fixed window):
+
+.Windowing into fixed windows by event time. Data are collected into windows based on the times they occurred. The white arrows call out example data that arrived in processing time windows that differed from the event time windows to which they belonged. Image: Tyler Akidau.
+image::win_by_event_time.jpg[]
+
+图中的白色实线指向的数据可以重点关注一下。这两条数据到达时，所在的 processing time window 都和其 event time 所对应的 window 不匹配。因此，如果这些数据在用户关心事件发生时间时，被按照 processing time window 来划分了，那么计算结果就不可能正确。只有用 event time 分窗才能得到正确的结果。
+
+
+基于 event time 窗口可以让我们更方便地创建动态大小的窗口，比如 sessions，而不需要按照固定大小来切分数据。按固定大小来切窗口会导致和前面 Unbounded data - batch 类似的问题。
+
+.Windowing into session windows by event time. Data are collected into session windows capturing bursts of activity based on the times that the corresponding events occurred. The white arrows again call out the temporal shuffle necessary to put the data into their correct event-time locations. Image: Tyler Akidau.
+image::win_by_event_time_to_sessions.jpg[]
+
+强大的语义不可能是没有代价的，event time 分窗也不例外。event time 窗口有两个比较大的缺点，都是因为 window 需要比其结束时间而存活更长时间而导致的。
+
+* Buffering: 因为扩展的窗口生命周期，需要缓存更多的数据。幸亏目前持久化存储在所有资源中是最便宜的资源(其它资源是 CPU，网络带宽，RAM)。所以使用良好设计，能保证强一致性的数据处理系统的时候，这个问题基本上不需要太关心。这些系统本身还有内存中的缓存层。还有一些聚合类的计算并不需要把所有的输入都缓存起来(e.g., sum / avg)，可能聚合计算本身以更低的持久化成本来进行增量计算。
+
+* Completeness: 因为没有好办法能让我们知道给定窗口的数据什么时候能全部到达，我们怎么知道什么时候对窗口数据进行物化(materialize)呢？实际上，我们还是没有办法知道。对于大多数输入来说，系统可以给一个相对准确的启发式的评估值，来帮助判断窗口是否已经完成了，比如 MillWheel 论文中的 watermark。如果完全的正确是需要绝对保证(如账单场景)，这种情况下需要 pipeline 的构建方在系统中，提供当窗口已经被物化后，有新的超时数据到达时，这些数据要怎么处理。
+
+====== Windowing Pattern
+
+.Example windowing strategies. Each example is shown for three different keys, highlighting the difference between aligned windows (which apply across all the data) and unaligned windows (which apply across a subset of the data). Image: Tyler Akidau.
+image::win_pattern.jpg[]
+
+* Fixed windows: 固定窗口按照固定时间进行窗口切分，每个窗口都是相同大小，并均匀应用到整个数据集合，这是窗口全对齐的情况。在某些情况下，固定窗口需要按照数据中的子集(e.g. per key)提供不同的大小。这是非对齐窗口大小的情况。
+
+* Sliding windows: 相当于固定窗口的泛用化，活动窗口由一个固定的窗口长度值 length 和一个固定的活动时间值 period 来确定。如果 period < length，那么窗口之间就会有重叠部分。如果 period = length，那其实就是一个 fixed window。如果 period > length，那你就有一个非常诡异的取样窗口了，这种窗口只处理数据的一部分子集。和 fixed window 差不多，滑动窗口一般也是对齐的，有些用户场景可能基于优化考虑不对齐。
+* Sessions: 动态窗口的一种例子，session 是由一个以一段时间 gap timeout 结束的时间序列构成的。Sessions 一般被用来分析用户行为，把一个临时性的有关联的事件划分在一组内(e.g. 用户连续看了哪些视频)。Session 的有意思之处在于其长度没有办法提前定义；只跟实际产生的数据有关系。这其实也是一种非对齐的窗口的例子，因为 sessions 在不同的数据集(e.g. 不同用户)之间都是不相等的。
+
+== Conclusion
+Whew! That was a lot of information. To those of you that have made it this far: you are to be commended! At this point we are roughly halfway through the material I want to cover, so it’s probably reasonable to step back, recap what I’ve covered so far, and let things settle a bit before diving into Part 2. The upside of all this is that Part 1 is the boring post; Part 2 is where the fun really begins.
+
+Recap
+
+To summarize, in this post I’ve:
+
+* Clarified terminology, specifically narrowing the definition of “streaming” to apply to execution engines only, while using more descriptive terms like unbounded data and approximate/speculative results for distinct concepts often categorized under the “streaming” umbrella.
+* Assessed the relative capabilities of well-designed batch and streaming systems, positing that streaming is in fact a strict superset of batch, and that notions like the Lambda Architecture, which are predicated on streaming being inferior to batch, are destined for retirement as streaming systems mature.
+* Proposed two high-level concepts necessary for streaming systems to both catch up to and ultimately surpass batch, those being correctness and tools for reasoning about time, respectively.
+* Established the important differences between event time and processing time, characterized the difficulties those differences impose when analyzing data in the context of when they occurred, and proposed a shift in approach away from notions of completeness and toward simply adapting to changes in data over time.
+* Looked at the major data processing approaches in common use today for bounded and unbounded data, via both batch and streaming engines, roughly categorizing the unbounded approaches into: time-agnostic, approximation, windowing by processing time, and windowing by event time.
+
