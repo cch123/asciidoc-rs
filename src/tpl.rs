@@ -1,4 +1,3 @@
-
 pub fn page_tpl() -> String {
     return r##"
     <!DOCTYPE html>
@@ -441,4 +440,3 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </html>
     "##.to_string();
 }
-

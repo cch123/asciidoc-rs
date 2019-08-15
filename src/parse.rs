@@ -14,43 +14,57 @@ pub struct ParseError {
     pub expected: String,
 }
 
-pub fn document_blocks(ast: Pair<Rule>) {
-    // println!("doc blocks {:?} ", ast.as_str());
+pub fn document_blocks(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
+
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
             Rule::document_block => {
-                document_block(e);
+                result += document_block(e).as_str();
             }
             _ => unreachable!(),
         }
     }
+    result
 }
 
-pub fn document_block(ast: Pair<Rule>) {
+pub fn document_block(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::document_header => document_header(e),
-            Rule::preamble => preamble(e),
-            Rule::sections => sections(e),
+            Rule::document_header => {
+                result += document_header(e).as_str();
+            }
+            Rule::preamble => {
+                result += preamble(e).as_str();
+            }
+            Rule::sections => {
+                sections(e);
+            }
             _ => unreachable!(),
         }
     }
+    result
 }
 
-pub fn preamble(ast: Pair<Rule>) {
-    println!("preamble {:?}", ast.as_str());
+pub fn preamble(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::section_body => section_body(e),
+            Rule::section_body => {
+                result += section_body(e).as_str();
+            }
             _ => unreachable!(),
         }
     }
+    result
 }
 
-pub fn section_body(ast: Pair<Rule>) {
+pub fn section_body(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
@@ -72,6 +86,7 @@ pub fn section_body(ast: Pair<Rule>) {
             _ => unreachable!(),
         }
     }
+    result
 }
 
 pub fn listing_paragraph(ast: Pair<Rule>) {
@@ -179,17 +194,27 @@ pub fn simple_paragraph(ast: Pair<Rule>) {
     }
 }
 
-pub fn document_header(ast: Pair<Rule>) {
+pub fn document_header(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let elems = ast.into_inner();
-    for elem in elems {
-        match elem.as_rule() {
-            Rule::title_elements => title_elements(elem),
-            Rule::inline_element_id => inline_element_id(elem),
-            Rule::document_authors => document_authors(elem),
-            Rule::document_revision => document_revision(elem),
+    for e in elems {
+        match e.as_rule() {
+            Rule::title_elements => {
+                result = result + "<h1>" + e.as_str() + "</h1>" + "\n";
+            }
+            Rule::inline_element_id => {
+                inline_element_id(e);
+            }
+            Rule::document_authors => {
+                document_authors(e);
+            }
+            Rule::document_revision => {
+                document_revision(e);
+            }
             _ => unreachable!(),
         }
     }
+    result
 }
 
 pub fn document_revision(ast: Pair<Rule>) {
@@ -869,7 +894,9 @@ pub fn section(ast: Pair<Rule>) {
     for e in elems {
         match e.as_rule() {
             Rule::section_header => section_header(e),
-            Rule::section_body => section_body(e),
+            Rule::section_body => {
+                section_body(e);
+            }
             _ => unreachable!(),
         }
     }
@@ -894,16 +921,18 @@ pub fn yaml_front_matter(ast: Pair<Rule>) {
     }
 }
 
-pub fn pre_flight_document(ast: Pair<Rule>) {
+pub fn pre_flight_document(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let c = ast.into_inner();
     for elem in c {
         match elem.as_rule() {
             //~ front_matter*
             Rule::front_matter => front_matter(elem),
             //~ document_block
-            Rule::document_blocks => document_blocks(elem),
+            Rule::document_blocks => result += document_blocks(elem).as_str(),
             Rule::EOI => {}
             _ => unreachable!(),
         }
     }
+    result
 }

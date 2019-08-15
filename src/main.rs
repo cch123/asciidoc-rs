@@ -39,9 +39,9 @@ pub fn convert(query: &str) {
     let parse_result = ExprParser::parse(Rule::pre_flight_document, query);
     match parse_result {
         Ok(mut top_ast) => {
-            walk_tree(top_ast.clone().next().unwrap());
+            let result = walk_tree(top_ast.clone().next().unwrap());
             println!("{:#?}", top_ast);
-            //println!("{}", format_pair(top_ast.next().unwrap(), 0, true));
+            println!("the parse result is \n{}", result);
         }
         Err(e) => {
             dbg!(e);
@@ -49,10 +49,12 @@ pub fn convert(query: &str) {
     }
 }
 
-pub fn walk_tree(ast: Pair<Rule>) {
-    println!("top match");
+pub fn walk_tree(ast: Pair<Rule>) -> String {
+    //println!("top match");
+    let mut result = String::new();
     match ast.as_rule() {
-        Rule::pre_flight_document => pre_flight_document(ast),
+        Rule::pre_flight_document => result += pre_flight_document(ast).as_str(),
         _ => unreachable!(),
     }
+    result
 }
