@@ -41,7 +41,7 @@ pub fn document_block(ast: Pair<Rule>) -> String {
                 result += preamble(e).as_str();
             }
             Rule::sections => {
-                sections(e);
+                result += sections(e).as_str();
             }
             _ => unreachable!(),
         }
@@ -257,16 +257,27 @@ pub fn title_elements(ast: Pair<Rule>) {
     }
 }
 
-pub fn section_header(ast: Pair<Rule>) {
-    let c = ast.into_inner();
+pub fn section_header(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
+    let c = ast.clone().into_inner();
     for elem in c {
         match elem.as_rule() {
-            Rule::element_attributes => element_attributes(elem),
-            Rule::title_elements => title_elements(elem),
+            Rule::element_attributes => {
+                element_attributes(elem);
+            }
+            Rule::title_elements => {
+                // 因为 === 规则是静默的
+                // 但是需要知道这里是 level 几的 header
+                // 所以要读外层的字符串
+                let cnt = ast.as_str().chars().take_while(|x| *x == '=').count();
+                let (start_tag, end_tag) = (format!("<h{}>", cnt), format!("</h{}>", cnt));
+                result = result + start_tag.as_str() + elem.as_str() + end_tag.as_str();
+            }
             Rule::inline_element_id => inline_element_id(elem),
             _ => unreachable!(),
         }
     }
+    result
 }
 
 pub fn delimited_block(ast: Pair<Rule>) {
@@ -879,27 +890,35 @@ pub fn paragraph(ast: Pair<Rule>) {
     }
 }
 
-pub fn sections(ast: Pair<Rule>) {
+pub fn sections(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::section => section(e),
+            Rule::section => {
+                result = result + section(e).as_str() + "\n";
+            }
             _ => unreachable!(),
         }
     }
+    result
 }
 
-pub fn section(ast: Pair<Rule>) {
+pub fn section(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::section_header => section_header(e),
+            Rule::section_header => {
+                result += section_header(e).as_str();
+            }
             Rule::section_body => {
                 section_body(e);
             }
             _ => unreachable!(),
         }
     }
+    result
 }
 
 pub fn front_matter(ast: Pair<Rule>) {
