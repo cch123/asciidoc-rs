@@ -1,0 +1,12 @@
+= title
+
+preamble content
+
+== section title
+
+section content
+
+== section title 2
+
+sec 2
+
