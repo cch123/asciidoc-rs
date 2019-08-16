@@ -40,7 +40,7 @@ pub fn convert(query: &str) {
     match parse_result {
         Ok(mut top_ast) => {
             let result = walk_tree(top_ast.clone().next().unwrap());
-            println!("{:#?}", top_ast);
+            //println!("{:#?}", top_ast);
             println!("the parse result is \n{}", result);
         }
         Err(e) => {

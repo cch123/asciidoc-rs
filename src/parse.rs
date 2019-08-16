@@ -41,10 +41,11 @@ pub fn document_block(ast: Pair<Rule>) -> String {
                 result += preamble(e).as_str();
             }
             Rule::sections => {
-                result += "";
                 // TODO, merge sections
                 // build nested section tree
-                sections(e);
+                let b = sections(e);
+                //println!("{:?}", b);
+                result += b.as_str();
             }
             _ => unreachable!(),
         }
@@ -71,21 +72,19 @@ pub fn section_body(ast: Pair<Rule>) -> String {
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
-            Rule::verse_paragraph => verse_paragraph(e),
-            Rule::source_paragraph => source_paragraph(e),
-            Rule::listing_paragraph => listing_paragraph(e),
             Rule::table_of_contents_macro => table_of_contents_macro(e),
             Rule::document_attribute_declaration => document_attribute_declaration(e),
             Rule::document_attribute_reset => document_attribute_reset(e),
             Rule::user_macro_block => user_macro_block(e),
-            Rule::blank_line => blank_line(e),
+            Rule::blank_line => {}
             Rule::literal_block => literal_block(e),
-            Rule::simple_paragraph => simple_paragraph(e),
             Rule::delimited_block => delimited_block(e),
             Rule::file_inclusion => file_inclusion(e),
             Rule::image_block => image_block(e),
             Rule::list_items => list_items(e),
-            Rule::paragraph => paragraph(e),
+            Rule::paragraph => {
+                result = result + "\n" + paragraph(e).as_str();
+            }
             _ => unreachable!(),
         }
     }
@@ -260,8 +259,9 @@ pub fn title_elements(ast: Pair<Rule>) {
     }
 }
 
-pub fn section_header(ast: Pair<Rule>) -> String {
+pub fn section_header(ast: Pair<Rule>) -> SectionHeader {
     let mut result = String::new();
+    let mut level = 0;
     let c = ast.clone().into_inner();
     for elem in c {
         match elem.as_rule() {
@@ -272,15 +272,19 @@ pub fn section_header(ast: Pair<Rule>) -> String {
                 // 因为 === 规则是静默的
                 // 但是需要知道这里是 level 几的 header
                 // 所以要读外层的字符串
-                let cnt = ast.as_str().chars().take_while(|x| *x == '=').count();
-                let (start_tag, end_tag) = (format!("<h{}>", cnt), format!("</h{}>", cnt));
+                level = ast.as_str().chars().take_while(|x| *x == '=').count();
+                let (start_tag, end_tag) = (format!("<h{}>", level), format!("</h{}>", level));
                 result = result + start_tag.as_str() + elem.as_str() + end_tag.as_str();
             }
             Rule::inline_element_id => inline_element_id(elem),
             _ => unreachable!(),
         }
     }
-    result
+
+    SectionHeader {
+        level: level,
+        title: result,
+    }
 }
 
 pub fn delimited_block(ast: Pair<Rule>) {
@@ -881,61 +885,88 @@ pub fn user_macro_block(ast: Pair<Rule>) {
     }
 }
 
-pub fn paragraph(ast: Pair<Rule>) {
+pub fn paragraph(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let elems = ast.into_inner();
     for elem in elems {
         match elem.as_rule() {
             Rule::element_attributes => element_attributes(elem),
             Rule::admonition_kind => println!("para : ak"),
-            Rule::inline_elements => inline_elements(elem),
+            Rule::inline_elements => {
+                //inline_elements(elem)
+                result += elem.as_str();
+            }
             _ => unreachable!(),
         }
     }
+    result = format!(
+        "{}{}{}",
+        r#"<div class="paragraph"><p>"#, result, "</p></div>"
+    );
+    result
 }
 
+pub struct SectionHeader {
+    level: usize,
+    title: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct Section {
-    level: i32,
+    level: usize,
     content: String,
 }
 
-pub fn sections(ast: Pair<Rule>) -> Vec<Section> {
+pub fn sections(ast: Pair<Rule>) -> String {
     let mut section_list = vec![];
+    let mut result = String::new();
 
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
             Rule::section => {
-                section_list.push(section(e));
+                let sec = section(e);
+                section_list.push(sec.clone());
+                result = result + sec.content.as_str() + "\n";
             }
             _ => unreachable!(),
         }
     }
 
-    section_list
+    //section_list
+    result
 }
 
 pub fn section(ast: Pair<Rule>) -> Section {
     let mut result = String::new();
     let elems = ast.into_inner();
-    let (mut section_title, mut section_content) = (String::new(), String::new());
-    //let section_body_list = vec![];
+    let mut body = String::new();
+    let mut header = SectionHeader {
+        level: 0,
+        title: "".to_string(),
+    };
+
+    let mut body_list = vec![];
 
     for e in elems {
         match e.as_rule() {
             Rule::section_header => {
-                section_title = section_header(e);
+                header = section_header(e);
             }
             Rule::section_body => {
-                section_content += section_body(e).as_str();
-                // TODO push section body html to section_body_list
+                body_list.push(section_body(e));
             }
             _ => unreachable!(),
         }
     }
 
     Section {
-        level: 1,
-        content: section_title + section_content.as_str(),
+        level: header.level,
+        content: header.title
+            + "\n"
+            + r#"<div class="section_body">"#
+            + body_list.join("").as_str()
+            + r#"</div>"#
     }
 }
 
