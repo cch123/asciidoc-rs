@@ -41,7 +41,14 @@ pub fn convert(query: &str) {
         Ok(mut top_ast) => {
             let result = walk_tree(top_ast.clone().next().unwrap());
             //println!("{:#?}", top_ast);
-            println!("the parse result is \n{}", result);
+            //println!("the parse result is \n{}", result);
+            println!(
+                "{}",
+                page_tpl()
+                    .replace("{{content}}", result.as_str())
+                    .replace("{{header}}", "")
+                    .replace("{{footer}}", "")
+            );
         }
         Err(e) => {
             dbg!(e);

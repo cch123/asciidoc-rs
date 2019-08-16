@@ -966,7 +966,7 @@ pub fn section(ast: Pair<Rule>) -> Section {
             + "\n"
             + r#"<div class="section_body">"#
             + body_list.join("").as_str()
-            + r#"</div>"#
+            + r#"</div>"#,
     }
 }
 
