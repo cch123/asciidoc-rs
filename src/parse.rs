@@ -41,7 +41,10 @@ pub fn document_block(ast: Pair<Rule>) -> String {
                 result += preamble(e).as_str();
             }
             Rule::sections => {
-                result += sections(e).as_str();
+                result += "";
+                // TODO, merge sections
+                // build nested section tree
+                sections(e);
             }
             _ => unreachable!(),
         }
@@ -890,35 +893,50 @@ pub fn paragraph(ast: Pair<Rule>) {
     }
 }
 
-pub fn sections(ast: Pair<Rule>) -> String {
-    let mut result = String::new();
+pub struct Section {
+    level: i32,
+    content: String,
+}
+
+pub fn sections(ast: Pair<Rule>) -> Vec<Section> {
+    let mut section_list = vec![];
+
     let elems = ast.into_inner();
     for e in elems {
         match e.as_rule() {
             Rule::section => {
-                result = result + section(e).as_str() + "\n";
+                section_list.push(section(e));
             }
             _ => unreachable!(),
         }
     }
-    result
+
+    section_list
 }
 
-pub fn section(ast: Pair<Rule>) -> String {
+pub fn section(ast: Pair<Rule>) -> Section {
     let mut result = String::new();
     let elems = ast.into_inner();
+    let (mut section_title, mut section_content) = (String::new(), String::new());
+    //let section_body_list = vec![];
+
     for e in elems {
         match e.as_rule() {
             Rule::section_header => {
-                result += section_header(e).as_str();
+                section_title = section_header(e);
             }
             Rule::section_body => {
-                section_body(e);
+                section_content += section_body(e).as_str();
+                // TODO push section body html to section_body_list
             }
             _ => unreachable!(),
         }
     }
-    result
+
+    Section {
+        level: 1,
+        content: section_title + section_content.as_str(),
+    }
 }
 
 pub fn front_matter(ast: Pair<Rule>) {
