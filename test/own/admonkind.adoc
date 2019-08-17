@@ -1,6 +1,13 @@
+= Title
+:icons: font
 
-[TIP]
+== section
+
+content line
+
+[WARNING]
 ====
-
 dancing with eyes
 ====
+
+TIP: sdfasdf

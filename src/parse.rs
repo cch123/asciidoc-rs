@@ -2,6 +2,7 @@ extern crate pest;
 
 use pest::iterators::Pair;
 use pest::{Parser, RuleType};
+use std::collections::HashMap;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -17,8 +18,7 @@ pub struct ParseError {
 pub fn document_blocks(ast: Pair<Rule>) -> String {
     let mut result = String::new();
 
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::document_block => {
                 result += document_block(e).as_str();
@@ -31,8 +31,7 @@ pub fn document_blocks(ast: Pair<Rule>) -> String {
 
 pub fn document_block(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::document_header => {
                 result += document_header(e).as_str();
@@ -55,8 +54,7 @@ pub fn document_block(ast: Pair<Rule>) -> String {
 
 pub fn preamble(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::section_body => {
                 result += section_body(e).as_str();
@@ -69,8 +67,7 @@ pub fn preamble(ast: Pair<Rule>) -> String {
 
 pub fn section_body(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::table_of_contents_macro => {
                 table_of_contents_macro(e);
@@ -89,7 +86,7 @@ pub fn section_body(ast: Pair<Rule>) -> String {
                 literal_block(e);
             }
             Rule::delimited_block => {
-                delimited_block(e);
+                result += delimited_block(e).as_str();
             }
             Rule::file_inclusion => {
                 file_inclusion(e);
@@ -105,35 +102,8 @@ pub fn section_body(ast: Pair<Rule>) -> String {
     result
 }
 
-pub fn listing_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
-        match e.as_rule() {
-            Rule::element_attributes => {
-                element_attributes(e);
-            }
-            Rule::inline_elements => inline_elements(e),
-            _ => unreachable!(),
-        }
-    }
-}
-
-pub fn source_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
-        match e.as_rule() {
-            Rule::element_attributes => {
-                element_attributes(e);
-            }
-            Rule::inline_elements => inline_elements(e),
-            _ => unreachable!(),
-        }
-    }
-}
-
 pub fn list_items(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::list_item => list_item(e),
             _ => unreachable!(),
@@ -144,8 +114,7 @@ pub fn list_items(ast: Pair<Rule>) {
 // element_attributes = { element_attribute+ }
 pub fn element_attributes(ast: Pair<Rule>) -> Vec<ElementAttribute> {
     let mut result = vec![];
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attribute => {
                 result.push(element_attribute(e));
@@ -177,7 +146,14 @@ pub fn element_attribute(ast: Pair<Rule>) -> ElementAttribute {
         Rule::element_title => return ElementAttribute::ElementTitle(elem.to_string()),
         Rule::element_role => return ElementAttribute::ElementRole(elem.to_string()),
         Rule::literal_attribute => return ElementAttribute::LiteralAttribute,
-        Rule::source_attributes => return ElementAttribute::SourceAttributes(elem.to_string()),
+        Rule::source_attributes => {
+            let lang_str = if let Some(l) = elem.into_inner().next() {
+                l.as_str()
+            } else {
+                ""
+            };
+            return ElementAttribute::SourceAttributes(lang_str.to_string());
+        }
         Rule::quote_attributes => return ElementAttribute::QuoteAttributes(elem.to_string()),
         Rule::verse_attributes => return ElementAttribute::VerseAttributes(elem.to_string()),
         Rule::admonition_marker_attribute => {
@@ -190,8 +166,7 @@ pub fn element_attribute(ast: Pair<Rule>) -> ElementAttribute {
 }
 
 pub fn first_paragraph_line(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::simple_word => println!("simple word"),
             Rule::inline_element => println!("inline ele 1"),
@@ -202,8 +177,7 @@ pub fn first_paragraph_line(ast: Pair<Rule>) {
 }
 
 pub fn inline_elements(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::single_line_comment => println!("single_line cmt"),
             Rule::inline_element => println!("inline ele"),
@@ -213,8 +187,7 @@ pub fn inline_elements(ast: Pair<Rule>) {
 }
 
 pub fn other_paragraph_line(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::inline_elements => inline_elements(e),
             _ => unreachable!(),
@@ -238,8 +211,7 @@ pub fn simple_paragraph(ast: Pair<Rule>) {
 
 pub fn document_header(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::title_elements => {
                 result = format!("{}{}{}{}\n", result, "<h1>", e.as_str(), "</h1>");
@@ -260,8 +232,7 @@ pub fn document_header(ast: Pair<Rule>) -> String {
 }
 
 pub fn document_revision(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for elem in elems {
+    for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::document_revision_number => println!("dv : drn"),
             Rule::document_revision_date => println!("dv : drd"),
@@ -289,8 +260,7 @@ pub fn inline_element_id(ast: Pair<Rule>) {
 }
 
 pub fn title_elements(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for elem in elems {
+    for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::inline_element_id => println!("title elem, inline elem id : {}", elem.as_str()),
             Rule::title_element => println!("tltle elem : {}", elem.as_str()),
@@ -350,8 +320,7 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
 }
 
 pub fn fenced_block(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 element_attributes(e);
@@ -379,8 +348,7 @@ pub fn fenced_block_content(ast: Pair<Rule>) {
 
 // fenced_block_paragraph = { fenced_block_paragraph_line+ }
 pub fn fenced_block_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::fenced_block_paragraph_line => fenced_block_paragraph_line(e),
             _ => unreachable!(),
@@ -389,8 +357,7 @@ pub fn fenced_block_paragraph(ast: Pair<Rule>) {
 }
 
 pub fn fenced_block_paragraph_line(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::inline_elements => inline_elements(e),
             _ => unreachable!(),
@@ -398,22 +365,54 @@ pub fn fenced_block_paragraph_line(ast: Pair<Rule>) {
     }
 }
 
+fn get_listing_block_tpl(e: ElementAttribute) -> String {
+    match e {
+        ElementAttribute::SourceAttributes(lang) => {
+            return format!(
+                "{}{}#place_holder#{}{}",
+                r#"<pre class="highlight">"#,
+                format!(r#"<code class="language-{}" data-lang="{}">"#, lang, lang),
+                "</code>",
+                "</pre>",
+            );
+        }
+        _ => unreachable!(),
+    }
+}
+
 pub fn listing_block(ast: Pair<Rule>) -> String {
     let mut result = String::new();
 
-    let elems = ast.into_inner();
-    for e in elems {
+    // 如果发现是 source、literal、verse、quote
+    // 需要替换掉这里的类型
+    let mut elem_type = ElementAttribute::LiteralAttribute;
+    let mut listing_block_tpl = String::new();
+
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
-                //element_attributes(e);
+                // TODO 这里需要看时用 attrs 返回一个大结构好
+                // TODO 还是依次调用 attr 来单独处理好
+                // element_attributes(e);
                 let attrs = e.into_inner();
                 for attr in attrs {
-                    element_attribute(attr);
+                    let mut res = element_attribute(attr);
+                    match &res {
+                        ElementAttribute::SourceAttributes(lang) => {
+                            //elem_type = ElementAttribute::SourceAttributes(lang);
+                            listing_block_tpl = get_listing_block_tpl(res)
+                        }
+                        // currently
+                        _ => unreachable!(),
+                    }
                 }
             }
             Rule::listing_block_delimiter => {} // do nothing
             Rule::listing_block_element => {
-                result += listing_block_element(e).as_str();
+                // println!("{}", code_block);
+                result += listing_block_tpl
+                    .replace("#place_holder#", listing_block_element(e).as_str())
+                    .as_str();
             }
             _ => unreachable!(),
         }
@@ -445,8 +444,7 @@ pub fn listing_block_element(ast: Pair<Rule>) -> String {
 
 // listing_block_paragraph = { listing_block_paragraph_line+ }
 pub fn listing_block_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::listing_block_paragraph_line => listing_block_paragraph_line(e),
             _ => unreachable!(),
@@ -459,8 +457,7 @@ pub fn listing_block_paragraph_line(ast: Pair<Rule>) {
 }
 
 pub fn example_block(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 element_attributes(e);
@@ -477,8 +474,7 @@ pub fn example_block(ast: Pair<Rule>) {
 
 // example_block_paragraph = { example_block_paragraph_line+ }
 pub fn example_block_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::example_block_paragraph_line => example_block_paragraph_line(e),
             _ => unreachable!(),
@@ -487,8 +483,7 @@ pub fn example_block_paragraph(ast: Pair<Rule>) {
 }
 
 pub fn example_block_paragraph_line(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::inline_elements => inline_elements(e),
             _ => unreachable!(),
@@ -497,8 +492,7 @@ pub fn example_block_paragraph_line(ast: Pair<Rule>) {
 }
 
 pub fn verse_block(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 element_attributes(e);
@@ -531,8 +525,7 @@ pub fn verse_file_include(ast: Pair<Rule>) {
 
 // verse_block_paragraph = { verse_block_paragraph_line+ }
 pub fn verse_block_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::verse_block_paragraph_line => verse_block_paragraph_line(e),
             _ => unreachable!(),
@@ -541,8 +534,7 @@ pub fn verse_block_paragraph(ast: Pair<Rule>) {
 }
 
 pub fn verse_block_paragraph_line(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::verse_block_paragraph_line_element => verse_block_paragraph_line_element(e),
             _ => unreachable!(),
@@ -621,8 +613,7 @@ pub fn inline_user_macro(ast: Pair<Rule>) {
 }
 
 pub fn inline_footnote(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::footnote_ref => println!("foot note ref"),
             Rule::footnote_content => println!("foot note conc"),
@@ -653,8 +644,7 @@ pub fn link(ast: Pair<Rule>) {
 }
 
 pub fn inline_image(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::URL => println!("url"),
             Rule::image_attributes => println!("image attr"),
@@ -664,8 +654,7 @@ pub fn inline_image(ast: Pair<Rule>) {
 }
 
 pub fn quote_block(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 element_attributes(e);
@@ -678,8 +667,7 @@ pub fn quote_block(ast: Pair<Rule>) {
 }
 
 pub fn quote_block_element(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::blank_line => blank_line(e),
             Rule::file_inclusion => file_inclusion(e),
@@ -706,8 +694,7 @@ pub fn quote_block_element(ast: Pair<Rule>) {
 }
 
 pub fn quote_block_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::inline_elements => inline_elements(e),
             _ => unreachable!(),
@@ -716,8 +703,7 @@ pub fn quote_block_paragraph(ast: Pair<Rule>) {
 }
 
 pub fn sidebar_block(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 element_attributes(e);
@@ -760,8 +746,7 @@ pub fn non_sidebar_block(ast: Pair<Rule>) {
 }
 
 pub fn sidebar_block_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::sidebar_block_paragraph_line => sidebar_block_paragraph_line(e),
             _ => unreachable!(),
@@ -787,8 +772,7 @@ pub fn single_line_comment(ast: Pair<Rule>) {
 }
 
 pub fn table(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 element_attributes(e);
@@ -802,8 +786,7 @@ pub fn table(ast: Pair<Rule>) {
 }
 // table_line = { !table_delimiter ~ table_cell+ ~ EOL ~ blank_line* }
 pub fn table_line(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::table_cell => table_cell(e),
             Rule::blank_line => blank_line(e),
@@ -813,8 +796,7 @@ pub fn table_line(ast: Pair<Rule>) {
 }
 
 pub fn table_line_header(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::table_cell => table_cell(e),
             Rule::blank_line => blank_line(e),
@@ -824,8 +806,7 @@ pub fn table_line_header(ast: Pair<Rule>) {
 }
 
 pub fn table_cell(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::inline_element => inline_element(e),
             _ => unreachable!(),
@@ -853,8 +834,7 @@ pub fn inline_element(ast: Pair<Rule>) {
 }
 
 pub fn comment_block(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::comment_block_delimiter => {} // do nothing
             Rule::NEWLINE => {}                 // do nothing?
@@ -869,8 +849,7 @@ pub fn comment_block_line(ast: Pair<Rule>) {
 }
 
 pub fn file_inclusion(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::file_location => {
                 println!("file inc : file loc");
@@ -884,8 +863,7 @@ pub fn file_inclusion(ast: Pair<Rule>) {
 }
 
 pub fn verse_paragraph(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for elem in elems {
+    for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::element_attributes => {
                 element_attributes(elem);
@@ -898,8 +876,7 @@ pub fn verse_paragraph(ast: Pair<Rule>) {
 }
 
 pub fn image_block(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for elem in elems {
+    for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::element_attributes => println!("img blo : ele attr"),
             Rule::URL => println!("img blo : url"),
@@ -935,8 +912,7 @@ pub fn literal_block(ast: Pair<Rule>) {
 }
 
 pub fn document_attribute_declaration(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for elem in elems {
+    for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::document_attribute_name => println!("dad : dan"),
             Rule::document_attribute_value => println!("dad : dav"),
@@ -946,8 +922,7 @@ pub fn document_attribute_declaration(ast: Pair<Rule>) {
 }
 
 pub fn document_attribute_reset(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for elem in elems {
+    for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::document_attribute_name => println!("doc attr reset : doc attr name"),
             _ => unreachable!(),
@@ -961,8 +936,7 @@ pub fn table_of_contents_macro(ast: Pair<Rule>) {
 }
 
 pub fn user_macro_block(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for elem in elems {
+    for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::user_macro_name => println!("umb : umn"),
             Rule::user_macro_value => println!("umb : umv"),
@@ -974,8 +948,7 @@ pub fn user_macro_block(ast: Pair<Rule>) {
 
 pub fn paragraph(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    let elems = ast.into_inner();
-    for elem in elems {
+    for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::element_attributes => {
                 element_attributes(elem);
@@ -1010,8 +983,7 @@ pub fn sections(ast: Pair<Rule>) -> String {
     let mut section_list = vec![];
     let mut result = String::new();
 
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::section => {
                 let sec = section(e);
@@ -1028,7 +1000,6 @@ pub fn sections(ast: Pair<Rule>) -> String {
 
 pub fn section(ast: Pair<Rule>) -> Section {
     let mut result = String::new();
-    let elems = ast.into_inner();
     let mut body = String::new();
     let mut header = SectionHeader {
         level: 0,
@@ -1037,7 +1008,7 @@ pub fn section(ast: Pair<Rule>) -> Section {
 
     let mut body_list = vec![];
 
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::section_header => {
                 header = section_header(e);
@@ -1070,8 +1041,7 @@ pub fn front_matter(ast: Pair<Rule>) {
 }
 
 pub fn yaml_front_matter(ast: Pair<Rule>) {
-    let elems = ast.into_inner();
-    for e in elems {
+    for e in ast.into_inner() {
         match e.as_rule() {
             Rule::yaml_front_matter_token => println!("token in yml front matter"), // do nothing
             Rule::yaml_front_matter_content => println!("yaml front matter content"),

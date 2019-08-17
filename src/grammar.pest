@@ -212,7 +212,11 @@ admonition_marker_attribute = { "[" ~ admonition_kind ~ "]" ~ EOLS }
 
 // a paragraph or a delimited block may contain source code in a given language
 source_attributes = {
-    "[source" ~ ","? ~ ((spaces | (!( NEWLINE |"]" ) ~ ASCII_ALPHANUMERIC))+)? ~ "]" ~ EOLS
+    "[source" ~ ("," ~ source_lang)? ~ "]" ~ EOLS
+}
+
+source_lang = {
+    (spaces | (!( NEWLINE |"]" ) ~ ASCII_ALPHANUMERIC))+
 }
 
 // one or more attributes. eg: [foo, key1=value1, key2 = value2 , ]
