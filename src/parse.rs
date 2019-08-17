@@ -3,6 +3,7 @@ extern crate pest;
 use pest::iterators::Pair;
 use pest::{Parser, RuleType};
 use std::collections::HashMap;
+use std::hint::unreachable_unchecked;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -112,57 +113,65 @@ pub fn list_items(ast: Pair<Rule>) {
 }
 
 // element_attributes = { element_attribute+ }
-pub fn element_attributes(ast: Pair<Rule>) -> Vec<ElementAttribute> {
-    let mut result = vec![];
-    for e in ast.into_inner() {
-        match e.as_rule() {
+pub fn element_attributes(ast: Pair<Rule>) -> Block {
+    let mut b = Block {
+        id: "".to_string(),
+        role: "".to_string(),
+        title: "".to_string(),
+        block_type: BlockType::NotBlock,
+    };
+
+    for elem in ast.into_inner() {
+        match elem.as_rule() {
             Rule::element_attribute => {
-                result.push(element_attribute(e));
+                let mut e = elem.into_inner().next().unwrap();
+                match e.as_rule() {
+                    Rule::element_id => b.id = e.to_string(),
+                    Rule::element_role => b.role = e.to_string(),
+                    Rule::element_title => b.title = e.to_string(),
+                    Rule::literal_attribute => b.block_type = BlockType::LiteralBlock,
+                    Rule::source_attributes => {
+                        b.block_type = BlockType::SourceBlock {
+                            lang: "".to_string(),
+                        }
+                    }
+                    Rule::quote_attributes => {
+                        b.block_type = BlockType::QuoteBlock {
+                            author: "".to_string(),
+                            source: "".to_string(),
+                        }
+                    }
+                    Rule::verse_attributes => {
+                        b.block_type = BlockType::VerseBlock {
+                            author: "".to_string(),
+                            source: "".to_string(),
+                        }
+                    }
+                    //Rule::admonition_marker_attribute
+                    //Rule::attribute_group
+                    _ => unreachable!(),
+                }
             }
             _ => unreachable!(),
         }
     }
 
-    result
+    b
 }
 
-pub enum ElementAttribute {
-    ElementID(String),
-    ElementTitle(String),
-    ElementRole(String),
-    LiteralAttribute,
-    SourceAttributes(String),
-    QuoteAttributes(String),
-    VerseAttributes(String),
-    AdmonitionMarker(String),
-    Horizontal(String),
-    AttributeGroup(String),
+pub struct Block {
+    id: String,
+    role: String,
+    title: String,
+    block_type: BlockType,
 }
 
-pub fn element_attribute(ast: Pair<Rule>) -> ElementAttribute {
-    let elem = ast.into_inner().next().unwrap();
-    match elem.as_rule() {
-        Rule::element_id => return ElementAttribute::ElementID(elem.to_string()),
-        Rule::element_title => return ElementAttribute::ElementTitle(elem.to_string()),
-        Rule::element_role => return ElementAttribute::ElementRole(elem.to_string()),
-        Rule::literal_attribute => return ElementAttribute::LiteralAttribute,
-        Rule::source_attributes => {
-            let lang_str = if let Some(l) = elem.into_inner().next() {
-                l.as_str()
-            } else {
-                ""
-            };
-            return ElementAttribute::SourceAttributes(lang_str.to_string());
-        }
-        Rule::quote_attributes => return ElementAttribute::QuoteAttributes(elem.to_string()),
-        Rule::verse_attributes => return ElementAttribute::VerseAttributes(elem.to_string()),
-        Rule::admonition_marker_attribute => {
-            return ElementAttribute::AdmonitionMarker(elem.to_string());
-        }
-        Rule::horizontal_layout => return ElementAttribute::Horizontal(elem.to_string()),
-        Rule::attribute_group => return ElementAttribute::AttributeGroup(elem.to_string()),
-        _ => unreachable!(),
-    }
+pub enum BlockType {
+    NotBlock,
+    LiteralBlock,
+    VerseBlock { author: String, source: String },
+    QuoteBlock { author: String, source: String },
+    SourceBlock { lang: String },
 }
 
 pub fn first_paragraph_line(ast: Pair<Rule>) {
@@ -365,13 +374,16 @@ pub fn fenced_block_paragraph_line(ast: Pair<Rule>) {
     }
 }
 
-fn get_listing_block_tpl(e: ElementAttribute) -> String {
-    match e {
-        ElementAttribute::SourceAttributes(lang) => {
+fn get_listing_block_tpl(s: String, param_list: Vec<String>) -> String {
+    match s.as_str() {
+        "source" => {
             return format!(
                 "{}{}#place_holder#{}{}",
                 r#"<pre class="highlight">"#,
-                format!(r#"<code class="language-{}" data-lang="{}">"#, lang, lang),
+                format!(
+                    r#"<code class="language-{}" data-lang="{}">"#,
+                    param_list[0], param_list[0]
+                ),
                 "</code>",
                 "</pre>",
             );
@@ -385,29 +397,21 @@ pub fn listing_block(ast: Pair<Rule>) -> String {
 
     // 如果发现是 source、literal、verse、quote
     // 需要替换掉这里的类型
-    let mut elem_type = ElementAttribute::LiteralAttribute;
+    // let mut elem_type = ElementAttribute::LiteralAttribute;
     let mut listing_block_tpl = String::new();
+
+    let (mut elem_id, mut elem_role, mut elem_title) = ("default", "default", "default");
+    let mut block_type = "literal";
+    let mut source_attr = "default";
+
+    // FIXME, 从 element attributes 中获取 tpl
+    // FIXME, 用 block element 填充内容
 
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
-                // TODO 这里需要看时用 attrs 返回一个大结构好
-                // TODO 还是依次调用 attr 来单独处理好
-                // element_attributes(e);
-                let attrs = e.into_inner();
-                for attr in attrs {
-                    let mut res = element_attribute(attr);
-                    match &res {
-                        ElementAttribute::SourceAttributes(lang) => {
-                            //elem_type = ElementAttribute::SourceAttributes(lang);
-                            listing_block_tpl = get_listing_block_tpl(res)
-                        }
-                        // currently
-                        _ => unreachable!(),
-                    }
-                }
+                let attrs = element_attributes(e);
             }
-            Rule::listing_block_delimiter => {} // do nothing
             Rule::listing_block_element => {
                 // println!("{}", code_block);
                 result += listing_block_tpl

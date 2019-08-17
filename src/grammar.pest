@@ -182,7 +182,7 @@ element_attribute = {
         | quote_attributes
         | verse_attributes
         | admonition_marker_attribute
-        | horizontal_layout
+        //| horizontal_layout
         | attribute_group
     )
 }
@@ -238,7 +238,7 @@ attribute_value = {
 
 other_attribute_char = { (!(WS |"=" |"," |"]") ~ ANY) }
 
-horizontal_layout = { "[horizontal]" ~ EOLS }
+//horizontal_layout = { "[horizontal]" ~ EOLS }
 
 quote_attributes = {
     "[quote" ~ WS* ~ ","?
@@ -1018,7 +1018,7 @@ fenced_block_paragraph_line = {
 // -------------------------------------------------------------------------------------
 // listing blocks
 // -------------------------------------------------------------------------------------
-listing_block_delimiter = { "----" ~ EOLS }
+listing_block_delimiter = _{ "----" ~ EOLS }
 
 // listing block: verbatim content
 listing_block = {
