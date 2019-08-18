@@ -9,7 +9,7 @@ Rewrite all grammars using pest
     - [x] document header support
     - [x] section header support
     - [x] normal content support
-    - [ ] source block/paragraph support
+    - [x] source block/paragraph support
     - [ ] verse block/paragraph support
     - [ ] literal block/paragraph support
     - [ ] quote block/paragraph support

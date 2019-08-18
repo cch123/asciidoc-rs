@@ -131,9 +131,12 @@ pub fn element_attributes(ast: Pair<Rule>) -> Block {
                     Rule::element_title => b.title = e.to_string(),
                     Rule::literal_attribute => b.block_type = BlockType::LiteralBlock,
                     Rule::source_attributes => {
-                        b.block_type = BlockType::SourceBlock {
-                            lang: "".to_string(),
-                        }
+                        let mut lang = if let Some(source_lang) = e.into_inner().next() {
+                            source_lang.as_str().to_string()
+                        } else {
+                            "c".to_string()
+                        };
+                        b.block_type = BlockType::SourceBlock { lang }
                     }
                     Rule::quote_attributes => {
                         b.block_type = BlockType::QuoteBlock {
@@ -374,60 +377,58 @@ pub fn fenced_block_paragraph_line(ast: Pair<Rule>) {
     }
 }
 
-fn get_listing_block_tpl(s: String, param_list: Vec<String>) -> String {
-    match s.as_str() {
-        "source" => {
+fn get_listing_block_tpl(block: Block) -> String {
+    match block.block_type {
+        BlockType::SourceBlock { lang } => {
             return format!(
-                "{}{}#place_holder#{}{}",
-                r#"<pre class="highlight">"#,
+                r#"<div class="listingblock"><div class="content"><pre class="highlight">{}</pre></div></div>"#,
                 format!(
-                    r#"<code class="language-{}" data-lang="{}">"#,
-                    param_list[0], param_list[0]
-                ),
-                "</code>",
-                "</pre>",
-            );
+                    r#"<code class="language-{}" data-lang="{}">#place_holder</code>"#,
+                    lang, lang
+                )
+            )
         }
-        _ => unreachable!(),
+        // TODO
+        BlockType::VerseBlock { author, source } => {}
+        // TODO
+        BlockType::QuoteBlock { author, source } => {}
+        // TODO
+        BlockType::LiteralBlock => {}
+        // TODO
+        BlockType::NotBlock => {}
     }
+
+    // default tpl
+    String::new()
 }
 
 pub fn listing_block(ast: Pair<Rule>) -> String {
-    let mut result = String::new();
 
     // 如果发现是 source、literal、verse、quote
     // 需要替换掉这里的类型
     // let mut elem_type = ElementAttribute::LiteralAttribute;
-    let mut listing_block_tpl = String::new();
 
-    let (mut elem_id, mut elem_role, mut elem_title) = ("default", "default", "default");
-    let mut block_type = "literal";
-    let mut source_attr = "default";
+    let mut tpl =
+        r#"<div class="listingblock"><div class="content">#place_holder</div></div>"#.to_string();
 
-    // FIXME, 从 element attributes 中获取 tpl
-    // FIXME, 用 block element 填充内容
-
+    let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
-                let attrs = element_attributes(e);
+                // step 1 通过 element attr 获取 block 的属性和模板
+                let block = element_attributes(e);
+                let t = get_listing_block_tpl(block);
+                tpl = if t.len() > 0 { t } else { tpl };
             }
             Rule::listing_block_element => {
-                // println!("{}", code_block);
-                result += listing_block_tpl
-                    .replace("#place_holder#", listing_block_element(e).as_str())
-                    .as_str();
+                // step 2 向 tpl 中填充内容
+                content += listing_block_element(e).as_str();
             }
             _ => unreachable!(),
         }
     }
 
-    // todo, listing block 内部的 result
-    // 需要根据 element attr 修改样式
-    format!(
-        "{}{}{}{}{}",
-        r#"<div class="listingblock">"#, r#"<div class="content">"#, result, "</div>", r"</div>"
-    )
+    tpl.replace("#place_holder", content.as_str())
 }
 
 // listing_block_element = { file_inclusion | listing_block_paragraph }
@@ -952,24 +953,24 @@ pub fn user_macro_block(ast: Pair<Rule>) {
 
 pub fn paragraph(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    for elem in ast.into_inner() {
-        match elem.as_rule() {
+    let mut tpl = r#"<div class="paragraph"><p>#place_holder</p></div>"#.to_string();
+    for e in ast.into_inner() {
+        match e.as_rule() {
             Rule::element_attributes => {
-                element_attributes(elem);
+                let mut block = element_attributes(e);
+                let t = get_listing_block_tpl(block);
+                tpl = if t.len() > 0 { t } else { tpl };
             }
             Rule::admonition_kind => println!("para : ak"),
             Rule::inline_elements => {
                 //inline_elements(elem)
-                result += elem.as_str();
+                result += e.as_str();
             }
             _ => unreachable!(),
         }
     }
-    result = format!(
-        "{}{}{}",
-        r#"<div class="paragraph"><p>"#, result, "</p></div>"
-    );
-    result
+    //println!("xxx{}", tpl);
+    tpl.replace("#place_holder", result.as_str())
 }
 
 pub struct SectionHeader {
