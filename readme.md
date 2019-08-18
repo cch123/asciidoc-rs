@@ -10,10 +10,11 @@ Rewrite all grammars using pest
     - [x] section header support
     - [x] normal content support
     - [x] source block/paragraph support
+    - [x] literal block/paragraph support
     - [ ] verse block/paragraph support
-    - [ ] literal block/paragraph support
     - [ ] quote block/paragraph support
     - [ ] markdown style quote support
+    - [ ] element id/title/role support
     - [ ] admonition block/paragraph support
     - [ ] fenced block support
     - [ ] listing block support
