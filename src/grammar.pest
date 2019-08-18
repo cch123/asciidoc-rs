@@ -1215,12 +1215,12 @@ single_line_comment_content = { (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))* }
 // Literal_blocks (see http://asciidoctor.org/docs/user-manual/#literal-text-and-blocks)
 // -------------------------------------------------------------------------------------
 literal_block = {
-    paragraph_with_literal_attribute
-    | paragraph_with_headingspaces
+    //paragraph_with_literal_attribute
+    paragraph_with_headingspaces
     | paragraph_with_literal_block_delimiter
 }
 
-literal_block_delimiter = { "...." ~ EOLS}
+literal_block_delimiter = _{ "...." ~ EOLS}
 
 // paragraph indented with one or more spaces on the first line
 paragraph_with_headingspaces = {
@@ -1252,6 +1252,7 @@ paragraph_with_literal_block_delimiter_line = {
 }
 
 // paragraph with the literal attribute (`[literal]`)
+/*
 paragraph_with_literal_attribute = { 
     (&"[literal" ~ element_attributes)
     ~ paragraph_with_literal_attribute_lines
@@ -1266,6 +1267,7 @@ paragraph_with_literal_attribute_line = {
     !blank_line ~
     (ASCII_ALPHANUMERIC+ | spaces | (!EOL ~ ANY))+ ~ EOL
 }
+*/
 
 // ------------------------------------------
 // blank_line

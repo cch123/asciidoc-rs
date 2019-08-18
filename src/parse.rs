@@ -84,7 +84,7 @@ pub fn section_body(ast: Pair<Rule>) -> String {
             }
             Rule::blank_line => {}
             Rule::literal_block => {
-                literal_block(e);
+                result += literal_block(e).as_str();
             }
             Rule::delimited_block => {
                 result += delimited_block(e).as_str();
@@ -95,7 +95,7 @@ pub fn section_body(ast: Pair<Rule>) -> String {
             Rule::image_block => image_block(e),
             Rule::list_items => list_items(e),
             Rule::paragraph => {
-                result = result + "\n" + paragraph(e).as_str();
+                result += paragraph(e).as_str();
             }
             _ => unreachable!(),
         }
@@ -162,6 +162,7 @@ pub fn element_attributes(ast: Pair<Rule>) -> Block {
     b
 }
 
+#[derive(Debug)]
 pub struct Block {
     id: String,
     role: String,
@@ -169,6 +170,7 @@ pub struct Block {
     block_type: BlockType,
 }
 
+#[derive(Debug)]
 pub enum BlockType {
     NotBlock,
     LiteralBlock,
@@ -207,6 +209,7 @@ pub fn other_paragraph_line(ast: Pair<Rule>) {
     }
 }
 
+/*
 pub fn simple_paragraph(ast: Pair<Rule>) {
     let c = ast.into_inner();
     for elem in c {
@@ -220,6 +223,7 @@ pub fn simple_paragraph(ast: Pair<Rule>) {
         }
     }
 }
+*/
 
 pub fn document_header(ast: Pair<Rule>) -> String {
     let mut result = String::new();
@@ -392,8 +396,9 @@ fn get_listing_block_tpl(block: Block) -> String {
         BlockType::VerseBlock { author, source } => {}
         // TODO
         BlockType::QuoteBlock { author, source } => {}
-        // TODO
-        BlockType::LiteralBlock => {}
+        BlockType::LiteralBlock => {
+           return r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#.to_string();
+        }
         // TODO
         BlockType::NotBlock => {}
     }
@@ -403,7 +408,6 @@ fn get_listing_block_tpl(block: Block) -> String {
 }
 
 pub fn listing_block(ast: Pair<Rule>) -> String {
-
     // 如果发现是 source、literal、verse、quote
     // 需要替换掉这里的类型
     // let mut elem_type = ElementAttribute::LiteralAttribute;
@@ -688,7 +692,9 @@ pub fn quote_block_element(ast: Pair<Rule>) {
             Rule::quote_block => quote_block(e),
             Rule::sidebar_block => sidebar_block(e),
             Rule::table => table(e),
-            Rule::literal_block => literal_block(e),
+            Rule::literal_block => {
+                literal_block(e);
+            }
             Rule::document_attribute_declaration => document_attribute_declaration(e),
             Rule::document_attribute_reset => document_attribute_reset(e),
             Rule::table_of_contents_macro => table_of_contents_macro(e),
@@ -906,14 +912,62 @@ pub fn blank_line(ast: Pair<Rule>) {
     // do nothing
 }
 
-pub fn literal_block(ast: Pair<Rule>) {
-    let elem = ast.into_inner().next().unwrap();
-    match elem.as_rule() {
-        Rule::paragraph_with_literal_attribute => println!("lit blo : pla"),
-        Rule::paragraph_with_headingspaces => println!("lit blo : ph"),
-        Rule::paragraph_with_literal_block_delimiter => println!("lit blo plbd"),
+pub fn literal_block(ast: Pair<Rule>) -> String {
+    let e = ast.into_inner().next().unwrap();
+    match e.as_rule() {
+        Rule::paragraph_with_headingspaces => {
+            return paragraph_with_headingspaces(e);
+        }
+        Rule::paragraph_with_literal_block_delimiter => {
+            return paragraph_with_literal_block_delimiter(e);
+        }
         _ => unreachable!(),
     }
+}
+
+pub fn paragraph_with_literal_block_delimiter(ast: Pair<Rule>) -> String {
+    let mut tpl =
+        r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#
+            .to_string();
+    let mut content = String::new();
+    for e in ast.into_inner() {
+        match e.as_rule() {
+            Rule::element_attributes => {
+                let mut b = element_attributes(e);
+                tpl = get_listing_block_tpl(b);
+            }
+            Rule::paragraph_with_literal_block_delimiter_lines => {
+                content += e.as_str();
+            }
+            Rule::EOI => {}
+            _ => unreachable!(),
+        }
+    }
+
+    tpl.replace("#place_holder", content.as_str())
+}
+
+pub fn paragraph_with_headingspaces(ast: Pair<Rule>) -> String {
+    let mut tpl =
+        r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#
+            .to_string();
+    let mut content = String::new();
+    for e in ast.into_inner() {
+        match e.as_rule() {
+            Rule::element_attributes => {
+                let mut b = element_attributes(e);
+                // the block type should always be literal block
+                b.block_type = BlockType::LiteralBlock;
+                tpl = get_listing_block_tpl(b);
+            }
+            Rule::paragraph_with_headingspaces_lines => {
+                content += e.as_str().trim_start();
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    tpl.replace("#place_holder", content.as_str())
 }
 
 pub fn document_attribute_declaration(ast: Pair<Rule>) {

@@ -47,7 +47,10 @@ pub fn convert(query: &str) {
                 page_tpl()
                     .replace("{{content}}", result.as_str())
                     .replace("{{header}}", "")
-                    .replace("{{footer}}", r#"<div id="footer-text">Last updated 2019-06-17 12:57:58 CST</div>"#)
+                    .replace(
+                        "{{footer}}",
+                        r#"<div id="footer-text">Last updated 2019-06-17 12:57:58 CST</div>"#
+                    )
             );
         }
         Err(e) => {
