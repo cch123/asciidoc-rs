@@ -82,7 +82,7 @@ pub fn section_body(ast: Pair<Rule>) -> String {
             Rule::user_macro_block => {
                 user_macro_block(e);
             }
-            Rule::blank_line => {}
+            Rule::blank_line => {} // do nothing
             Rule::literal_block => {
                 result += literal_block(e).as_str();
             }
@@ -139,16 +139,26 @@ pub fn element_attributes(ast: Pair<Rule>) -> Block {
                         b.block_type = BlockType::SourceBlock { lang }
                     }
                     Rule::quote_attributes => {
-                        b.block_type = BlockType::QuoteBlock {
-                            author: "".to_string(),
-                            source: "".to_string(),
+                        let (mut author, mut source) = (String::new(), String::new());
+                        for e_in in e.into_inner() {
+                            match e_in.as_rule() {
+                                Rule::quote_author => author = e_in.as_str().to_string(),
+                                Rule::quote_source => source = e_in.as_str().to_string(),
+                                _ => unreachable!(),
+                            }
                         }
+                        b.block_type = BlockType::QuoteBlock { author, source }
                     }
                     Rule::verse_attributes => {
-                        b.block_type = BlockType::VerseBlock {
-                            author: "".to_string(),
-                            source: "".to_string(),
+                        let (mut author, mut source) = (String::new(), String::new());
+                        for e_in in e.into_inner() {
+                            match e_in.as_rule() {
+                                Rule::quote_author => author = e_in.as_str().to_string(),
+                                Rule::quote_source => source = e_in.as_str().to_string(),
+                                _ => unreachable!(),
+                            }
                         }
+                        b.block_type = BlockType::VerseBlock { author, source }
                     }
                     //Rule::admonition_marker_attribute
                     //Rule::attribute_group
@@ -318,13 +328,15 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
 
     let elem = ast.into_inner().next().unwrap();
     match elem.as_rule() {
-        Rule::fenced_block => fenced_block(elem),
+        Rule::fenced_block => {
+            result += fenced_block(elem).as_str();
+        }
         Rule::listing_block => {
             result += listing_block(elem).as_str();
         }
         Rule::example_block => example_block(elem),
-        Rule::verse_block => verse_block(elem),
-        Rule::quote_block => quote_block(elem),
+        Rule::verse_block => result += verse_block(elem).as_str(),
+        Rule::quote_block => result += quote_block(elem).as_str(),
         Rule::sidebar_block => sidebar_block(elem),
         Rule::single_line_comment => single_line_comment(elem),
         Rule::table => table(elem),
@@ -335,30 +347,43 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
     result
 }
 
-pub fn fenced_block(ast: Pair<Rule>) {
+pub fn fenced_block(ast: Pair<Rule>) -> String {
+    let mut tpl = r#"<div class="listingblock"><div class="content"><pre class="highlight"><code>#place_holder</code></pre></div></div>"#.to_string();
+    let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
-                element_attributes(e);
+                let mut b = element_attributes(e);
+                // 强制使用 source block
+                b.block_type = BlockType::SourceBlock {
+                    lang: "".to_string(),
+                };
+                let t = get_listing_block_tpl(b);
+                tpl = if t.len() > 0 { t } else { tpl };
             }
-            Rule::fenced_block_delimiter => println!("fenced block ----"),
-            Rule::fenced_block_content => fenced_block_content(e),
+            Rule::fenced_block_delimiter => {} // do nothing
+            Rule::fenced_block_content => content = fenced_block_content(e),
             _ => unreachable!(),
         }
     }
+
+    tpl.replace("#place_holder", content.as_str().trim())
 }
 
 // fenced_block_content = {
 //   blank_line | file_inclusion | list_item | fenced_block_paragraph
 // }
-pub fn fenced_block_content(ast: Pair<Rule>) {
+pub fn fenced_block_content(ast: Pair<Rule>) -> String {
+    // FIXME
     let e = ast.into_inner().next().unwrap();
     match e.as_rule() {
-        Rule::blank_line => println!("blank line"),
-        Rule::file_inclusion => file_inclusion(e),
-        Rule::list_item => list_item(e),
-        Rule::fenced_block_paragraph => fenced_block_paragraph(e),
-        _ => unreachable!(),
+        /*
+        Rule::blank_line
+        Rule::file_inclusion
+        Rule::list_item
+        Rule::fenced_block_paragraph
+        */
+        _ => return e.as_str().to_string(),
     }
 }
 
@@ -384,13 +409,16 @@ pub fn fenced_block_paragraph_line(ast: Pair<Rule>) {
 fn get_listing_block_tpl(block: Block) -> String {
     match block.block_type {
         BlockType::SourceBlock { lang } => {
-            return format!(
-                r#"<div class="listingblock"><div class="content"><pre class="highlight">{}</pre></div></div>"#,
-                format!(
-                    r#"<code class="language-{}" data-lang="{}">#place_holder</code>"#,
-                    lang, lang
-                )
-            )
+            match lang.len()  {
+                0 => return r#"<div class="listingblock"><div class="content"><pre class="highlight"><code>#place_holder</code></pre></div></div>"#.to_string(),
+                _ => return format!(
+                        r#"<div class="listingblock"><div class="content"><pre class="highlight">{}</pre></div></div>"#,
+                        format!(
+                            r#"<code class="language-{}" data-lang="{}">#place_holder</code>"#,
+                            lang, lang
+                        )
+                    ),
+            }
         }
         // TODO
         BlockType::VerseBlock { author, source } => {}
@@ -399,8 +427,7 @@ fn get_listing_block_tpl(block: Block) -> String {
         BlockType::LiteralBlock => {
            return r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#.to_string();
         }
-        // TODO
-        BlockType::NotBlock => {}
+        BlockType::NotBlock => {} // do nothing
     }
 
     // default tpl
@@ -500,27 +527,40 @@ pub fn example_block_paragraph_line(ast: Pair<Rule>) {
     }
 }
 
-pub fn verse_block(ast: Pair<Rule>) {
+pub fn verse_block(ast: Pair<Rule>) -> String {
+    let mut tpl = "".to_string();
+    let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
-                element_attributes(e);
+                let mut b = element_attributes(e);
+                let t = get_listing_block_tpl(b);
+                tpl = if t.len() > 0 { t } else { tpl };
+            }
+            Rule::verse_block_element => {
+                content = verse_block_element(e);
             }
             Rule::quote_block_delimiter => {} // do nothing
-            Rule::verse_block_element => verse_block_element(e),
             _ => unreachable!(),
         }
     }
+
+    tpl.replace("#place_holder", content.as_str())
 }
 
 // verse_block_element = { verse_file_include | blank_line | verse_block_paragraph }
-pub fn verse_block_element(ast: Pair<Rule>) {
+pub fn verse_block_element(ast: Pair<Rule>) -> String {
     let e = ast.into_inner().next().unwrap();
     match e.as_rule() {
+        // TODO
+        // FIXME
+        /*
         Rule::verse_file_include => verse_file_include(e),
         Rule::blank_line => blank_line(e),
         Rule::verse_block_paragraph => verse_block_paragraph(e),
         _ => unreachable!(),
+        */
+        _ => return e.as_str().to_string(),
     }
 }
 
@@ -662,34 +702,45 @@ pub fn inline_image(ast: Pair<Rule>) {
     }
 }
 
-pub fn quote_block(ast: Pair<Rule>) {
+pub fn quote_block(ast: Pair<Rule>) -> String {
+    let mut tpl = String::new();
+    let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
-                element_attributes(e);
+                let b = element_attributes(e);
+                let t = get_listing_block_tpl(b);
+                tpl = if t.len() > 0 { t } else { tpl };
             }
+            Rule::quote_block_element => content = quote_block_element(e),
             Rule::quote_block_delimiter => {} // do nothing
-            Rule::quote_block_element => quote_block_element(e),
             _ => unreachable!(),
         }
     }
+
+    tpl.replace("#place_holder", content.as_str())
 }
 
-pub fn quote_block_element(ast: Pair<Rule>) {
+pub fn quote_block_element(ast: Pair<Rule>) -> String {
+    // TODO
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::blank_line => blank_line(e),
             Rule::file_inclusion => file_inclusion(e),
             Rule::image_block => image_block(e),
             Rule::list_item => list_item(e),
-            Rule::fenced_block => fenced_block(e),
+            Rule::fenced_block => {
+                fenced_block(e);
+            }
             Rule::listing_block => {
                 listing_block(e);
             }
             Rule::example_block => example_block(e),
             Rule::comment_block => comment_block(e),
             Rule::single_line_comment => single_line_comment(e),
-            Rule::quote_block => quote_block(e),
+            Rule::quote_block => {
+                quote_block(e);
+            }
             Rule::sidebar_block => sidebar_block(e),
             Rule::table => table(e),
             Rule::literal_block => {
@@ -702,6 +753,7 @@ pub fn quote_block_element(ast: Pair<Rule>) {
             _ => unreachable!(),
         }
     }
+    String::new()
 }
 
 pub fn quote_block_paragraph(ast: Pair<Rule>) {

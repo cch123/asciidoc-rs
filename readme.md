@@ -16,7 +16,7 @@ Rewrite all grammars using pest
     - [ ] markdown style quote support
     - [ ] element id/title/role support
     - [ ] admonition block/paragraph support
-    - [ ] fenced block support
+    - [x] fenced block support
     - [ ] listing block support
     - [ ] example block support
     - [ ] unordered list support

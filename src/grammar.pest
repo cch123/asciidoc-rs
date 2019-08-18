@@ -242,17 +242,20 @@ other_attribute_char = { (!(WS |"=" |"," |"]") ~ ANY) }
 
 quote_attributes = {
     "[quote" ~ WS* ~ ","?
-    ~ quote_attribute? ~ ","?
-    ~ quote_attribute? ~ "]"
+    ~ quote_author? ~ ","?
+    ~ quote_source? ~ "]"
     ~ EOLS
 }
 
 verse_attributes = {
     "[verse" ~ WS*
-    ~ ","? ~ quote_attribute?
-    ~ ","? ~ quote_attribute?
+    ~ ","? ~ quote_author?
+    ~ ","? ~ quote_source?
     ~ "]" ~ EOLS
 }
+
+quote_author = {quote_attribute}
+quote_source = {quote_attribute}
 
 quote_attribute = { (ASCII_ALPHANUMERIC+ | spaces | (! ("," |"]" | EOL) ~  ANY))* }
 
