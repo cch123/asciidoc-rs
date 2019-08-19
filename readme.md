@@ -13,7 +13,7 @@ Rewrite all grammars using pest
     - [x] literal block/paragraph support
     - [ ] verse block/paragraph support
     - [ ] quote block/paragraph support
-    - [ ] markdown style quote support
+    - [ ] markdown style quote support and nested markdown quote
     - [ ] element id/title/role support
     - [ ] admonition block/paragraph support
     - [x] fenced block support
@@ -21,6 +21,7 @@ Rewrite all grammars using pest
     - [ ] example block support
     - [ ] unordered list support
     - [ ] ordered list support
+    - [ ] nested example/quote block
     - [ ] comment block support
     - [ ] mixed unordered/ordered list
     - [ ] toc support
