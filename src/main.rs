@@ -8,6 +8,8 @@ use parse::*;
 pub mod tpl;
 use tpl::*;
 
+pub mod structs;
+
 use pest::iterators::Pair;
 use pest::{Parser, RuleType};
 use std::env;

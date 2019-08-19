@@ -3,18 +3,12 @@ extern crate pest;
 use pest::iterators::Pair;
 use pest::{Parser, RuleType};
 use std::collections::HashMap;
-use std::hint::unreachable_unchecked;
+
+use crate::structs::*;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
 pub struct ExprParser;
-
-/// error occurred when parsing user input
-#[derive(Debug)]
-pub struct ParseError {
-    pub location: pest::error::InputLocation,
-    pub expected: String,
-}
 
 pub fn document_blocks(ast: Pair<Rule>) -> String {
     let mut result = String::new();
@@ -170,23 +164,6 @@ pub fn element_attributes(ast: Pair<Rule>) -> Block {
     }
 
     b
-}
-
-#[derive(Debug)]
-pub struct Block {
-    id: String,
-    role: String,
-    title: String,
-    block_type: BlockType,
-}
-
-#[derive(Debug)]
-pub enum BlockType {
-    NotBlock,
-    LiteralBlock,
-    VerseBlock { author: String, source: String },
-    QuoteBlock { author: String, source: String },
-    SourceBlock { lang: String },
 }
 
 pub fn first_paragraph_line(ast: Pair<Rule>) {
@@ -1079,16 +1056,6 @@ pub fn paragraph(ast: Pair<Rule>) -> String {
     tpl.replace("#place_holder", result.as_str())
 }
 
-pub struct SectionHeader {
-    level: usize,
-    title: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct Section {
-    level: usize,
-    content: String,
-}
 
 pub fn sections(ast: Pair<Rule>) -> String {
     let mut section_list = vec![];
