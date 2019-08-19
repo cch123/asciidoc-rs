@@ -107,10 +107,6 @@ pub fn list_items(ast: Pair<Rule>) {
     }
 }
 
-pub fn element_attributes2(elems: Vec<Pair<Rule>>) -> Block {
-    elem_attrs(elems)
-}
-
 pub fn elem_attrs(elems: Vec<Pair<Rule>>) -> Block {
     let mut b = Block {
         id: "".to_string(),
@@ -318,12 +314,8 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
 
     let elem = ast.into_inner().next().unwrap();
     match elem.as_rule() {
-        Rule::fenced_block => {
-            result += fenced_block(elem).as_str();
-        }
-        Rule::listing_block => {
-            result += listing_block(elem).as_str();
-        }
+        Rule::fenced_block => result += fenced_block(elem).as_str(),
+        Rule::listing_block => result += listing_block(elem).as_str(),
         Rule::example_block => example_block(elem),
         Rule::verse_block => result += verse_block(elem).as_str(),
         Rule::quote_block => result += quote_block(elem).as_str(),
@@ -415,8 +407,11 @@ fn get_listing_block_tpl(block: Block) -> String {
                 author, source,
             )
         }
-        // TODO
-        BlockType::QuoteBlock { author, source } => {}
+        BlockType::QuoteBlock { author, source } => {
+            return format!(r#"<div class="quoteblock"><blockquote>#place_holder</blockquote><div class="attribution">-{}<br/><cite>{}</cite></div></div>"#,
+                author, source,
+            )
+        }
         BlockType::LiteralBlock => {
            return r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#.to_string();
         }
@@ -712,7 +707,13 @@ pub fn quote_block(ast: Pair<Rule>) -> String {
                 let t = get_listing_block_tpl(b);
                 tpl = if t.len() > 0 { t } else { tpl };
             }
-            Rule::quote_block_element => content = quote_block_element(e),
+            Rule::quote_block_element => {
+                content += format!(
+                    r#"<div class="paragraph"><p>{}</p></div>"#,
+                    quote_block_element(e).as_str()
+                )
+                .as_str();
+            }
             Rule::quote_block_delimiter => {} // do nothing
             _ => unreachable!(),
         }
@@ -722,8 +723,10 @@ pub fn quote_block(ast: Pair<Rule>) -> String {
 }
 
 pub fn quote_block_element(ast: Pair<Rule>) -> String {
+    ast.as_str().to_string()
     // TODO
-    for e in ast.into_inner() {
+    /*
+    for e in ast.clone().into_inner() {
         match e.as_rule() {
             Rule::blank_line => blank_line(e),
             Rule::file_inclusion => file_inclusion(e),
@@ -753,7 +756,7 @@ pub fn quote_block_element(ast: Pair<Rule>) -> String {
             _ => unreachable!(),
         }
     }
-    String::new()
+    */
 }
 
 pub fn quote_block_paragraph(ast: Pair<Rule>) {
