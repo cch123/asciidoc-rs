@@ -25,6 +25,8 @@ Rewrite all grammars using pest
     - [x] comment block support
     - [ ] mixed unordered/ordered list
     - [ ] toc support
+    - [ ] image support
+    - [ ] file inclusion support
     - [ ] footer support
     - [ ] table support
     - [ ] substitution support
