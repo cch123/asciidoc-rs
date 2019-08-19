@@ -11,7 +11,7 @@ Rewrite all grammars using pest
     - [x] normal content support
     - [x] source block/paragraph support
     - [x] literal block/paragraph support
-    - [ ] verse block/paragraph support
+    - [x] verse block/paragraph support
     - [ ] quote block/paragraph support
     - [ ] markdown style quote support and nested markdown quote
     - [ ] element id/title/role support

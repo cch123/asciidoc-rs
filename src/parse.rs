@@ -107,11 +107,11 @@ pub fn list_items(ast: Pair<Rule>) {
     }
 }
 
-pub fn element_attributes2(elems : Vec<Pair<Rule>>) -> Block {
+pub fn element_attributes2(elems: Vec<Pair<Rule>>) -> Block {
     elem_attrs(elems)
 }
 
-pub fn elem_attrs(elems : Vec<Pair<Rule>>) -> Block {
+pub fn elem_attrs(elems: Vec<Pair<Rule>>) -> Block {
     let mut b = Block {
         id: "".to_string(),
         role: "".to_string(),
