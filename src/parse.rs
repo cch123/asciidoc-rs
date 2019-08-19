@@ -4,6 +4,7 @@ use pest::iterators::Pair;
 use pest::{Parser, RuleType};
 use std::collections::HashMap;
 
+use crate::structs::BlockType::VerseBlock;
 use crate::structs::*;
 
 #[derive(Parser)]
@@ -106,8 +107,11 @@ pub fn list_items(ast: Pair<Rule>) {
     }
 }
 
-// element_attributes = { element_attribute+ }
-pub fn element_attributes(ast: Pair<Rule>) -> Block {
+pub fn element_attributes2(elems : Vec<Pair<Rule>>) -> Block {
+    elem_attrs(elems)
+}
+
+pub fn elem_attrs(elems : Vec<Pair<Rule>>) -> Block {
     let mut b = Block {
         id: "".to_string(),
         role: "".to_string(),
@@ -115,7 +119,7 @@ pub fn element_attributes(ast: Pair<Rule>) -> Block {
         block_type: BlockType::NotBlock,
     };
 
-    for elem in ast.into_inner() {
+    for elem in elems {
         match elem.as_rule() {
             Rule::element_attribute => {
                 let mut e = elem.into_inner().next().unwrap();
@@ -164,6 +168,15 @@ pub fn element_attributes(ast: Pair<Rule>) -> Block {
     }
 
     b
+}
+
+// element_attributes = { element_attribute+ }
+pub fn element_attributes(ast: Pair<Rule>) -> Block {
+    let mut param = vec![];
+    for e in ast.into_inner() {
+        param.push(e);
+    }
+    return elem_attrs(param);
 }
 
 pub fn first_paragraph_line(ast: Pair<Rule>) {
@@ -317,7 +330,7 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
         Rule::sidebar_block => sidebar_block(elem),
         Rule::single_line_comment => single_line_comment(elem),
         Rule::table => table(elem),
-        Rule::comment_block => {}, // do nothing
+        Rule::comment_block => {} // do nothing
         _ => unreachable!(),
     }
 
@@ -397,8 +410,11 @@ fn get_listing_block_tpl(block: Block) -> String {
                     ),
             }
         }
-        // TODO
-        BlockType::VerseBlock { author, source } => {}
+        BlockType::VerseBlock { author, source } => {
+            return format!(r#"<div class="verseblock"><pre class="content">#place_holder</pre><div class="attribution">—{}<br/><cite>{}</cite></div></div>"#,
+                author, source,
+            )
+        }
         // TODO
         BlockType::QuoteBlock { author, source } => {}
         BlockType::LiteralBlock => {
@@ -507,20 +523,27 @@ pub fn example_block_paragraph_line(ast: Pair<Rule>) {
 pub fn verse_block(ast: Pair<Rule>) -> String {
     let mut tpl = "".to_string();
     let mut content = String::new();
+
+    let mut elem_attr_list = vec![];
+
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::element_attributes => {
-                let mut b = element_attributes(e);
-                let t = get_listing_block_tpl(b);
-                tpl = if t.len() > 0 { t } else { tpl };
+            // verse block 可能会进入两次
+            Rule::element_attribute => {
+                elem_attr_list.push(e);
             }
             Rule::verse_block_element => {
-                content = verse_block_element(e);
+                content += verse_block_element(e).as_str();
             }
             Rule::quote_block_delimiter => {} // do nothing
             _ => unreachable!(),
         }
     }
+
+    let mut merged_block = elem_attrs(elem_attr_list);
+
+    let t = get_listing_block_tpl(merged_block);
+    tpl = if t.len() > 0 { t } else { tpl };
 
     tpl.replace("#place_holder", content.as_str())
 }
@@ -713,7 +736,7 @@ pub fn quote_block_element(ast: Pair<Rule>) -> String {
                 listing_block(e);
             }
             Rule::example_block => example_block(e),
-            Rule::comment_block => {}, // do nothing
+            Rule::comment_block => {} // do nothing
             Rule::single_line_comment => single_line_comment(e),
             Rule::quote_block => {
                 quote_block(e);
@@ -1059,7 +1082,6 @@ pub fn paragraph(ast: Pair<Rule>) -> String {
     //println!("xxx{}", tpl);
     tpl.replace("#place_holder", result.as_str())
 }
-
 
 pub fn sections(ast: Pair<Rule>) -> String {
     let mut section_list = vec![];

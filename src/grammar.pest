@@ -980,7 +980,7 @@ delimited_block = {
     fenced_block
     | listing_block
     | example_block
-    | verse_block
+    | verse_block // must
     | quote_block
     | sidebar_block
     | table
@@ -1021,7 +1021,7 @@ fenced_block_paragraph_line = {
 // -------------------------------------------------------------------------------------
 // listing blocks
 // -------------------------------------------------------------------------------------
-listing_block_delimiter = _{ "----" ~ EOLS }
+listing_block_delimiter = { "----" ~ EOLS }
 
 // listing block: verbatim content
 listing_block = {
@@ -1106,7 +1106,7 @@ quote_block_paragraph = { inline_elements+ }
 // verse_block_delimiter: see Quote_block_delimiter
 
 verse_block = {
-    &"[verse" ~ element_attributes
+    ((&"[verse" ~ element_attribute+) | ((!"[verse" ~ element_attribute)+ ~ &"[verse" ~ element_attribute+))
     ~ quote_block_delimiter ~ verse_block_element*
     ~ (quote_block_delimiter | EOI)
 }
@@ -1223,7 +1223,7 @@ literal_block = {
     | paragraph_with_literal_block_delimiter
 }
 
-literal_block_delimiter = _{ "...." ~ EOLS}
+literal_block_delimiter = { "...." ~ EOLS}
 
 // paragraph indented with one or more spaces on the first line
 paragraph_with_headingspaces = {

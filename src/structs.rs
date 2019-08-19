@@ -13,7 +13,7 @@ pub struct Block {
     pub block_type: BlockType,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BlockType {
     NotBlock,
     LiteralBlock,
@@ -32,4 +32,3 @@ pub struct Section {
     pub level: usize,
     pub content: String,
 }
-
