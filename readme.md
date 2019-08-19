@@ -22,11 +22,12 @@ Rewrite all grammars using pest
     - [ ] unordered list support
     - [ ] ordered list support
     - [ ] nested example/quote block
-    - [ ] comment block support
+    - [x] comment block support
     - [ ] mixed unordered/ordered list
     - [ ] toc support
     - [ ] footer support
     - [ ] table support
+    - [ ] substitution support
 - [ ] finish ast
 - [ ] display ast
 - [ ] output html

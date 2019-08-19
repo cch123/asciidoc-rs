@@ -317,7 +317,7 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
         Rule::sidebar_block => sidebar_block(elem),
         Rule::single_line_comment => single_line_comment(elem),
         Rule::table => table(elem),
-        Rule::comment_block => comment_block(elem),
+        Rule::comment_block => {}, // do nothing
         _ => unreachable!(),
     }
 
@@ -713,7 +713,7 @@ pub fn quote_block_element(ast: Pair<Rule>) -> String {
                 listing_block(e);
             }
             Rule::example_block => example_block(e),
-            Rule::comment_block => comment_block(e),
+            Rule::comment_block => {}, // do nothing
             Rule::single_line_comment => single_line_comment(e),
             Rule::quote_block => {
                 quote_block(e);
@@ -873,6 +873,7 @@ pub fn inline_element(ast: Pair<Rule>) {
     }
 }
 
+/*
 pub fn comment_block(ast: Pair<Rule>) {
     for e in ast.into_inner() {
         match e.as_rule() {
@@ -883,10 +884,13 @@ pub fn comment_block(ast: Pair<Rule>) {
         }
     }
 }
+*/
 
+/*
 pub fn comment_block_line(ast: Pair<Rule>) {
     // return string
 }
+*/
 
 pub fn file_inclusion(ast: Pair<Rule>) {
     for e in ast.into_inner() {
@@ -1072,7 +1076,6 @@ pub fn sections(ast: Pair<Rule>) -> String {
         }
     }
 
-    //section_list
     result
 }
 
@@ -1092,7 +1095,10 @@ pub fn section(ast: Pair<Rule>) -> Section {
                 header = section_header(e);
             }
             Rule::section_body => {
-                body_list.push(section_body(e));
+                let body = section_body(e);
+                if body.len() > 0 {
+                    body_list.push(body);
+                }
             }
             _ => unreachable!(),
         }
@@ -1101,7 +1107,7 @@ pub fn section(ast: Pair<Rule>) -> Section {
     Section {
         level: header.level,
         content: format!(
-            "{}\n{}{}{}",
+            "{}{}{}{}",
             header.title,
             r#"<div class="section_body">"#,
             body_list.join("").as_str(),

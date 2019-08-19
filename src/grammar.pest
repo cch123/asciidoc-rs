@@ -1195,7 +1195,7 @@ table_cell = {
 // -------------------------------------------------------------------------------------
 comment_block_delimiter = { "////" }
 
-comment_block = {
+comment_block = @{
     comment_block_delimiter ~ WS* ~ NEWLINE
     ~ comment_block_line*
     ~ ((comment_block_delimiter ~ EOLS) | EOI)
