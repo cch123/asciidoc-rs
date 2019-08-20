@@ -4,7 +4,7 @@ use pest::iterators::Pair;
 use pest::{Parser, RuleType};
 use std::collections::HashMap;
 
-use crate::structs::BlockType::VerseBlock;
+use crate::structs::BlockType::{VerseBlock, ExampleBlock};
 use crate::structs::*;
 
 #[derive(Parser)]
@@ -316,7 +316,7 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
     match elem.as_rule() {
         Rule::fenced_block => result += fenced_block(elem).as_str(),
         Rule::listing_block => result += listing_block(elem).as_str(),
-        Rule::example_block => example_block(elem),
+        Rule::example_block => result += example_block(elem).as_str(),
         Rule::verse_block => result += verse_block(elem).as_str(),
         Rule::quote_block => result += quote_block(elem).as_str(),
         Rule::sidebar_block => sidebar_block(elem),
@@ -415,6 +415,9 @@ fn get_listing_block_tpl(block: Block) -> String {
         BlockType::LiteralBlock => {
            return r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#.to_string();
         }
+        BlockType::ExampleBlock => {
+           return r#"<div class="exampleblock"><div class="content">#place_holder</div></div>"#.to_string();
+        }
         BlockType::NotBlock => {} // do nothing
     }
 
@@ -480,30 +483,42 @@ pub fn listing_block_paragraph_line(ast: Pair<Rule>) {
     // 不用处理，直接拿到文本内容就行了
 }
 
-pub fn example_block(ast: Pair<Rule>) {
+pub fn example_block(ast: Pair<Rule>) -> String {
+    let mut content = String::new();
+    let mut tpl = r#"<div class="exampleblock"><div class="content">#place_holder</div></div>"#.to_string();
+
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
-                element_attributes(e);
+                let mut b = element_attributes(e);
+                b.block_type = BlockType::ExampleBlock;
+                let t = get_listing_block_tpl(b);
+                tpl = if t.len() > 0 {t} else {tpl};
             }
-            Rule::example_block_delimiter => {} // do nothing
+            // TODO
             Rule::blank_line => blank_line(e),
             Rule::file_inclusion => file_inclusion(e),
             Rule::list_item => list_item(e),
-            Rule::example_block_paragraph => example_block_paragraph(e),
+            // TODO
+            Rule::example_block_paragraph => content += example_block_paragraph(e).as_str(),
+            Rule::example_block_delimiter => {} // do nothing
             _ => unreachable!(),
         }
     }
+
+    tpl.replace("#place_holder", content.as_str())
 }
 
 // example_block_paragraph = { example_block_paragraph_line+ }
-pub fn example_block_paragraph(ast: Pair<Rule>) {
-    for e in ast.into_inner() {
+pub fn example_block_paragraph(ast: Pair<Rule>) -> String {
+    for e in ast.clone().into_inner() {
         match e.as_rule() {
             Rule::example_block_paragraph_line => example_block_paragraph_line(e),
             _ => unreachable!(),
         }
     }
+
+    format!(r#"<div class="paragraph"><p>{}</p></div>"#, ast.as_str())
 }
 
 pub fn example_block_paragraph_line(ast: Pair<Rule>) {

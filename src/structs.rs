@@ -17,6 +17,7 @@ pub struct Block {
 pub enum BlockType {
     NotBlock,
     LiteralBlock,
+    ExampleBlock,
     VerseBlock { author: String, source: String },
     QuoteBlock { author: String, source: String },
     SourceBlock { lang: String },
