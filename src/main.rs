@@ -1,4 +1,3 @@
-extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
@@ -11,7 +10,7 @@ use tpl::*;
 pub mod structs;
 
 use pest::iterators::Pair;
-use pest::{Parser, RuleType};
+use pest::Parser;
 use std::env;
 use std::fs::File;
 use std::io::Read;
@@ -34,13 +33,13 @@ fn main() -> Result<(), i32> {
 
     // add toc to str will destroy the ast
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn convert(query: &str) {
     let parse_result = ExprParser::parse(Rule::pre_flight_document, query);
     match parse_result {
-        Ok(mut top_ast) => {
+        Ok(top_ast) => {
             let result = walk_tree(top_ast.clone().next().unwrap());
             //println!("{:#?}", top_ast);
             //            println!("the parse result is \n{}", result);
@@ -51,7 +50,7 @@ pub fn convert(query: &str) {
                     .replace("{{header}}", "")
                     .replace(
                         "{{footer}}",
-                        r#"<div id="footer-text">Last updated 2019-06-17 12:57:58 CST</div>"#
+                        r#"<div id="footer-text">Last updated 2019-06-17 12:57:58 CST</div>"#,
                     )
             );
         }

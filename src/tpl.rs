@@ -1,5 +1,5 @@
 pub fn page_tpl() -> String {
-    return r##"
+    r##"
     <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -438,5 +438,5 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">{{footer}}</div>
 </body>
 </html>
-    "##.to_string();
+    "##.to_string()
 }
