@@ -314,7 +314,7 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
         Rule::example_block => result += example_block(elem).as_str(),
         Rule::verse_block => result += verse_block(elem).as_str(),
         Rule::quote_block => result += quote_block(elem).as_str(),
-        Rule::sidebar_block => sidebar_block(elem),
+        Rule::sidebar_block => result += sidebar_block(elem).as_str(),
         Rule::single_line_comment => single_line_comment(elem),
         Rule::table => table(elem),
         Rule::comment_block => {} // do nothing
@@ -413,6 +413,9 @@ fn get_listing_block_tpl(block: Block) -> String {
         BlockType::ExampleBlock => {
             return r#"<div class="exampleblock"><div class="content">#place_holder</div></div>"#
                 .to_string();
+        }
+        BlockType::SidebarBlock => {
+            return r#"<div class="sidebarblock"><div class="content">#place_holder</div></div>"#.to_string();
         }
         BlockType::NotBlock => {} // do nothing
     }
@@ -780,17 +783,30 @@ pub fn quote_block_paragraph(ast: Pair<Rule>) {
     }
 }
 
-pub fn sidebar_block(ast: Pair<Rule>) {
+pub fn sidebar_block(ast: Pair<Rule>) -> String {
+    let mut tpl = r#"<div class="sidebarblock"><div class="content">#place_holder</div></div>"#.to_string();
+    let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
-                element_attributes(e);
+                let mut b = element_attributes(e);
+                b.block_type = BlockType::SidebarBlock;
+                let t = get_listing_block_tpl(b);
+                tpl = if !t.is_empty() { t } else { tpl };
+            }
+            Rule::sidebar_block_content => {
+                content += format!(
+                    r#"<div class="paragraph"><p>{}</p></div>"#,
+                    sidebar_block_content(e)
+                )
+                .as_str();
             }
             Rule::sidebar_block_delimiter => {} // do nothing
-            Rule::sidebar_block_content => sidebar_block_content(e),
             _ => unreachable!(),
         }
     }
+
+    tpl.replace("#place_holder", content.as_str())
 }
 
 // sidebar_block_content = {
@@ -800,8 +816,9 @@ pub fn sidebar_block(ast: Pair<Rule>) {
 // | non_sidebar_block
 // | sidebar_block_paragraph
 // }
-pub fn sidebar_block_content(ast: Pair<Rule>) {
-    let e = ast.into_inner().next().unwrap();
+pub fn sidebar_block_content(ast: Pair<Rule>) -> String {
+    let e = ast.clone().into_inner().next().unwrap();
+    return ast.into_inner().next().unwrap().as_str().to_string();
     match e.as_rule() {
         Rule::blank_line => blank_line(e),
         Rule::file_inclusion => file_inclusion(e),
@@ -810,6 +827,8 @@ pub fn sidebar_block_content(ast: Pair<Rule>) {
         Rule::sidebar_block_paragraph => sidebar_block_paragraph(e),
         _ => unreachable!(),
     }
+
+    ast.into_inner().next().unwrap().as_str().to_string()
 }
 
 // non_sidebar_block = { !sidebar_block ~ delimited_block }
@@ -1090,7 +1109,7 @@ pub fn paragraph(ast: Pair<Rule>) -> String {
             _ => unreachable!(),
         }
     }
-    //println!("xxx{}", tpl);
+
     tpl.replace("#place_holder", result.as_str())
 }
 
