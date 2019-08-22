@@ -19,9 +19,9 @@ Rewrite all grammars using pest
     - [x] listing block support
     - [x] sidebar block
     - [x] footer support
+    - [x] admonition block/paragraph support
     - [ ] markdown style quote support and nested markdown quote
     - [ ] element id/title/role support
-    - [ ] admonition block/paragraph support
     - [ ] unordered list support
     - [ ] ordered list support
     - [ ] nested example/quote block
