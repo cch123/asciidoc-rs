@@ -1,3 +1,4 @@
+use crate::structs::BlockType::{AdmonitionBlock, ExampleBlock, NotBlock};
 use crate::structs::*;
 use pest::iterators::Pair;
 
@@ -114,17 +115,25 @@ pub fn elem_attrs(elems: Vec<Pair<Rule>>) -> Block {
             Rule::element_attribute => {
                 let e = elem.into_inner().next().unwrap();
                 match e.as_rule() {
-                    Rule::element_id => b.id = e.to_string(),
-                    Rule::element_role => b.role = e.to_string(),
-                    Rule::element_title => b.title = e.to_string(),
-                    Rule::literal_attribute => b.block_type = BlockType::LiteralBlock,
+                    Rule::element_id => {
+                        b.id = e.to_string();
+                    }
+                    Rule::element_role => {
+                        b.role = e.to_string();
+                    }
+                    Rule::element_title => {
+                        b.title = e.to_string();
+                    }
+                    Rule::literal_attribute => {
+                        b.block_type = BlockType::LiteralBlock;
+                    }
                     Rule::source_attributes => {
                         let lang = if let Some(source_lang) = e.into_inner().next() {
                             source_lang.as_str().to_string()
                         } else {
                             "c".to_string()
                         };
-                        b.block_type = BlockType::SourceBlock { lang }
+                        b.block_type = BlockType::SourceBlock { lang };
                     }
                     Rule::quote_attributes => {
                         let (mut author, mut source) = (String::new(), String::new());
@@ -135,7 +144,7 @@ pub fn elem_attrs(elems: Vec<Pair<Rule>>) -> Block {
                                 _ => unreachable!(),
                             }
                         }
-                        b.block_type = BlockType::QuoteBlock { author, source }
+                        b.block_type = BlockType::QuoteBlock { author, source };
                     }
                     Rule::verse_attributes => {
                         let (mut author, mut source) = (String::new(), String::new());
@@ -146,9 +155,12 @@ pub fn elem_attrs(elems: Vec<Pair<Rule>>) -> Block {
                                 _ => unreachable!(),
                             }
                         }
-                        b.block_type = BlockType::VerseBlock { author, source }
+                        b.block_type = BlockType::VerseBlock { author, source };
                     }
-                    //Rule::admonition_marker_attribute
+                    Rule::admonition_marker_attribute => {
+                        let marker = e.into_inner().next().unwrap().as_str().to_string();
+                        b.block_type = BlockType::AdmonitionBlock { marker };
+                    }
                     //Rule::attribute_group
                     _ => unreachable!(),
                 }
@@ -417,6 +429,9 @@ fn get_listing_block_tpl(block: Block) -> String {
         BlockType::SidebarBlock => {
             return r#"<div class="sidebarblock"><div class="content">#place_holder</div></div>"#.to_string();
         }
+        BlockType::AdmonitionBlock {marker} => {
+            return format!(r#"<div class="admonitionblock {}"><table><tbody><tr><td class="icon"><div class="title">{}</div></td><td>#place_holder</td></tr></tbody></table></div>"#, marker, marker);
+        }
         BlockType::NotBlock => {} // do nothing
     }
 
@@ -491,7 +506,11 @@ pub fn example_block(ast: Pair<Rule>) -> String {
         match e.as_rule() {
             Rule::element_attributes => {
                 let mut b = element_attributes(e);
-                b.block_type = BlockType::ExampleBlock;
+                match &b.block_type {
+                    BlockType::AdmonitionBlock { marker: _ } => {}
+                    _ => b.block_type = BlockType::ExampleBlock,
+                }
+
                 let t = get_listing_block_tpl(b);
                 tpl = if !t.is_empty() { t } else { tpl };
             }
@@ -1095,14 +1114,33 @@ pub fn user_macro_block(ast: Pair<Rule>) {
 pub fn paragraph(ast: Pair<Rule>) -> String {
     let mut result = String::new();
     let mut tpl = r#"<div class="paragraph"><p>#place_holder</p></div>"#.to_string();
+    let mut b = Block {
+        id: "".to_string(),
+        role: "".to_string(),
+        title: "".to_string(),
+        block_type: BlockType::NotBlock,
+    };
+
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 let block = element_attributes(e);
-                let t = get_listing_block_tpl(block);
-                tpl = if !t.is_empty() { t } else { tpl };
+                if !block.title.is_empty() {
+                    b.title = block.title
+                }
+                if !block.role.is_empty() {
+                    b.role = block.role
+                };
+                if !block.id.is_empty() {
+                    b.id = block.id
+                };
+                b.block_type = block.block_type;
             }
-            Rule::admonition_kind => println!("para : ak"),
+            Rule::admonition_kind => {
+                b.block_type = AdmonitionBlock {
+                    marker: e.as_str().to_string(),
+                };
+            }
             Rule::inline_elements => {
                 //inline_elements(elem)
                 result += e.as_str();
@@ -1110,6 +1148,9 @@ pub fn paragraph(ast: Pair<Rule>) -> String {
             _ => unreachable!(),
         }
     }
+
+    let t = get_listing_block_tpl(b);
+    tpl = if !t.is_empty() { t } else { tpl };
 
     tpl.replace("#place_holder", result.as_str())
 }

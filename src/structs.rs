@@ -19,6 +19,7 @@ pub enum BlockType {
     LiteralBlock,
     ExampleBlock,
     SidebarBlock,
+    AdmonitionBlock { marker: String },
     VerseBlock { author: String, source: String },
     QuoteBlock { author: String, source: String },
     SourceBlock { lang: String },

@@ -1,13 +1,11 @@
-= Title
-:icons: font
-
-== section
-
-content line
-
-[WARNING]
+[NOTE]
 ====
-dancing with eyes
+this is the note
+
+this is second line
 ====
 
-TIP: sdfasdf
+WARNING: this is warning
+
+[TIP]
+this is tip paragraph
