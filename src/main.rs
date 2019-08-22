@@ -9,9 +9,11 @@ use tpl::*;
 
 pub mod structs;
 
+use chrono::{prelude, DateTime};
 use pest::iterators::Pair;
 use pest::Parser;
 use std::env;
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -28,15 +30,24 @@ fn main() -> Result<(), i32> {
         .or(Err(-1))?
         .read_to_string(&mut buffer)
         .or(Err(-1))?;
+    let m = File::open(Path::new(path.as_str()))
+        .or(Err(-1))?
+        .metadata()
+        .or(Err(01))
+        .unwrap()
+        .modified()
+        .or(Err(-1))
+        .unwrap();
 
-    convert(buffer.as_str());
+    let m: DateTime<chrono::offset::Local> = DateTime::from(m);
+    convert(buffer.as_str(), m.format("%+").to_string().as_str());
 
     // add toc to str will destroy the ast
 
     Ok(())
 }
 
-pub fn convert(query: &str) {
+pub fn convert(query: &str, modify_time: &str) {
     let parse_result = ExprParser::parse(Rule::pre_flight_document, query);
     match parse_result {
         Ok(top_ast) => {
@@ -50,7 +61,11 @@ pub fn convert(query: &str) {
                     .replace("{{header}}", "")
                     .replace(
                         "{{footer}}",
-                        r#"<div id="footer-text">Last updated 2019-06-17 12:57:58 CST</div>"#,
+                        format!(
+                            r#"<div id="footer-text">Last updated {}</div>"#,
+                            modify_time
+                        )
+                        .as_str(),
                     )
             );
         }

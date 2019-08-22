@@ -784,7 +784,8 @@ pub fn quote_block_paragraph(ast: Pair<Rule>) {
 }
 
 pub fn sidebar_block(ast: Pair<Rule>) -> String {
-    let mut tpl = r#"<div class="sidebarblock"><div class="content">#place_holder</div></div>"#.to_string();
+    let mut tpl =
+        r#"<div class="sidebarblock"><div class="content">#place_holder</div></div>"#.to_string();
     let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {

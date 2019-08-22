@@ -18,6 +18,7 @@ Rewrite all grammars using pest
     - [x] comment block support
     - [x] listing block support
     - [x] sidebar block
+    - [x] footer support
     - [ ] markdown style quote support and nested markdown quote
     - [ ] element id/title/role support
     - [ ] admonition block/paragraph support
@@ -28,7 +29,6 @@ Rewrite all grammars using pest
     - [ ] toc support
     - [ ] image support
     - [ ] file inclusion support
-    - [ ] footer support
     - [ ] table support
     - [ ] substitution support
 - [ ] finish ast
