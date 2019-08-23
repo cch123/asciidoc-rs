@@ -290,6 +290,7 @@ section_body = {
     | table_of_contents_macro
     | document_attribute_declaration
     | document_attribute_reset
+    | image_block
     | user_macro_block
     | literal_block
     // 感觉 simple paragraph 没什么必要啊
@@ -297,7 +298,6 @@ section_body = {
     //| simple_paragraph // 以空行或者 EOI 结尾的段落
     | delimited_block
     | file_inclusion
-    | image_block
     | list_items
     | paragraph
 }

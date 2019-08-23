@@ -20,6 +20,7 @@ Rewrite all grammars using pest
     - [x] sidebar block
     - [x] footer support
     - [x] admonition block/paragraph support
+    - [x] image block support
     - [ ] markdown style quote support and nested markdown quote
     - [ ] element id/title/role support
     - [ ] unordered list support
@@ -27,7 +28,6 @@ Rewrite all grammars using pest
     - [ ] nested example/quote block
     - [ ] mixed unordered/ordered list
     - [ ] toc support
-    - [ ] image support
     - [ ] file inclusion support
     - [ ] table support
     - [ ] substitution support

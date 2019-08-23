@@ -32,7 +32,7 @@ fn main() -> Result<(), i32> {
     let m = File::open(Path::new(path.as_str()))
         .or(Err(-1))?
         .metadata()
-        .or(Err(01))
+        .or(Err(-1))
         .unwrap()
         .modified()
         .or(Err(-1))
