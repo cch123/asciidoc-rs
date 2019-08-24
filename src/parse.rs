@@ -82,7 +82,9 @@ pub fn section_body(ast: Pair<Rule>) -> String {
             Rule::file_inclusion => {
                 file_inclusion(e);
             }
-            Rule::image_block => image_block(e),
+            Rule::image_block => {
+                result += image_block(e).as_str();
+            }
             Rule::list_items => list_items(e),
             Rule::paragraph => {
                 result += paragraph(e).as_str();
@@ -996,16 +998,37 @@ pub fn verse_paragraph(ast: Pair<Rule>) {
     }
 }
 
-pub fn image_block(ast: Pair<Rule>) {
+pub fn image_block(ast: Pair<Rule>) -> String {
+    // url - alt - title
+    let mut img = (String::new(), String::new(), String::new());
     for elem in ast.into_inner() {
         match elem.as_rule() {
-            Rule::element_attributes => println!("img blo : ele attr"),
-            Rule::URL => println!("img blo : url"),
-            Rule::image_attributes => println!("img blo : img attr"),
+            Rule::element_attributes => {
+                // TODO
+                // currently not supported
+                let b = element_attributes(elem);
+                // TODO
+            }
+            Rule::URL => {
+                img.0 = elem.as_str().to_string();
+            }
+            Rule::image_attributes => {
+                img.1 = elem.as_str().to_string();
+            }
             _ => unreachable!(),
         }
     }
+
+    // TODO trim the suffix
+    if img.1.is_empty() {
+        img.1 = img.0.clone()
+    }
+    format!(
+        r#"<div class="imageblock"><div class="content"><img src="{}" alt="{}"></div></div>"#,
+        img.0, img.1
+    )
 }
+
 // list_item = { ordered_list_item | unordered_list_item | labeled_list_item | continued_list_item_element }
 pub fn list_item(ast: Pair<Rule>) {
     let elem = ast.into_inner().next().unwrap();
