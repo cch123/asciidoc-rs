@@ -1044,12 +1044,14 @@ listing_block_paragraph_line = @{
 // -------------------------------------------------------------------------------------
 // Example blocks
 // -------------------------------------------------------------------------------------
-example_block_delimiter = { "====" ~ EOLS }
+example_block_delimiter = { "="{4,} ~ EOLS }
 
+// use PUSH POP to match the exactly same mark
+// just like the rust r####""####
 example_block = {
-    element_attributes? ~ example_block_delimiter
+    element_attributes? ~ PUSH(example_block_delimiter)
     ~ (blank_line | file_inclusion | list_item | example_block_paragraph)*
-    ~ (example_block_delimiter | EOI)
+    ~ (POP| EOI)
 }
 
 // blocks content
