@@ -1050,7 +1050,7 @@ example_block_delimiter = { "="{4,} ~ EOLS }
 // just like the rust r####""####
 example_block = {
     element_attributes? ~ PUSH(example_block_delimiter)
-    ~ (blank_line | file_inclusion | list_item | example_block_paragraph)*
+    ~ (blank_line | file_inclusion | list_item | (!PEEK ~ example_block) | example_block_paragraph)*
     ~ (POP| EOI)
 }
 
