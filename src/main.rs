@@ -42,7 +42,7 @@ fn main() -> Result<(), i32> {
 
     let after = precompile(buffer);
 
-    //convert(after.as_str(), m.format("%+").to_string().as_str());
+    convert(after.as_str(), m.format("%+").to_string().as_str());
 
     // add toc to str will destroy the ast
 
@@ -74,13 +74,13 @@ use std::collections::HashMap;
 pub fn precompile(before: String) -> String {
     let mut lines: Vec<&str> = before.split("\n").collect();
 
-    let mut line_to_mode: HashMap<&str, mode> = vec![
-        (r#"={4,}"#, mode::Example),
-        (r#".{4,}"#, mode::Literal),
-        (r#"_{4,}"#, mode::Quote),
-        (r#"-{4,}"#, mode::Listing),
-        (r#"*{4,}"#, mode::Sidebar),
-        (r#"/{4,}"#, mode::Comment),
+    let mut line_to_mode: HashMap<char, mode> = vec![
+        ('=', mode::Example),
+        ('.', mode::Literal),
+        ('_', mode::Quote),
+        ('-', mode::Listing),
+        ('*', mode::Sidebar),
+        ('/', mode::Comment),
     ]
     .into_iter()
     .collect();
@@ -89,7 +89,6 @@ pub fn precompile(before: String) -> String {
     let mut mark_stack = vec![];
     let mut mode_stack = vec![mode::Normal];
     lines.iter().for_each(|&l| {
-        final_lines.push(l);
         // if match key of mode, then:
         // find any same line in stack
         // if there is same line in stack
@@ -97,7 +96,40 @@ pub fn precompile(before: String) -> String {
         // else
         //    push to stack
         //    change mode
-        mark_stack.push(l);
+        let line = l.trim();
+        //        let c0 = line.chars().nth(0).unwrap();
+        let c0 = if line.len() > 0 {
+            line.chars().nth(0).unwrap()
+        } else {
+            '#'
+        };
+        for (idx, c) in line.chars().enumerate() {
+            if !line_to_mode.contains_key(&c) || c != c0 {
+                break;
+            }
+
+            // final character
+            if idx == line.len() - 1 {
+                // find the match from stack top to stack bottom
+                if mark_stack.contains(&line) {
+                    // if there is a match, pop && push to final lines until match
+                    loop {
+                        let mark = mark_stack.pop().unwrap();
+                        if mark == line {
+                            break;
+                        }
+                        // mark != line
+                        // should append this to out document to satisfy
+                        // the parser situation
+                        final_lines.push(mark);
+                    }
+                } else {
+                    // if there is no match, push this line to stack
+                    mark_stack.push(line);
+                }
+            }
+        }
+        final_lines.push(l);
     });
 
     final_lines.join("\n")
