@@ -97,7 +97,7 @@ pub fn precompile(before: String) -> String {
         // else
         //    push to stack
         //    change mode
-        mark_stack.push(final_lines);
+        mark_stack.push(l);
     });
 
     final_lines.join("\n")
