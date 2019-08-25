@@ -1021,14 +1021,14 @@ fenced_block_paragraph_line = {
 // -------------------------------------------------------------------------------------
 // listing blocks
 // -------------------------------------------------------------------------------------
-listing_block_delimiter = { "----" ~ EOLS }
+listing_block_delimiter = { "-"{4,} ~ EOLS }
 
 // listing block: verbatim content
 listing_block = {
     element_attributes?
-    ~ listing_block_delimiter
+    ~ PUSH(listing_block_delimiter)
     ~ listing_block_element*
-    ~ (listing_block_delimiter | EOI)
+    ~ (POP | EOI)
 }
 
 listing_block_element = { file_inclusion | listing_block_paragraph }
@@ -1068,13 +1068,13 @@ markdown_style_quote = {
     ((">" ~ WS+ ~ inline_elements) | ">" ~ EOL)+
 }
 
-quote_block_delimiter = { "____" ~ EOLS }// same for verse blocks
+quote_block_delimiter = { "_"{4,} ~ EOLS }// same for verse blocks
 
 quote_block = {
     element_attributes?
-    ~ quote_block_delimiter
+    ~ PUSH(quote_block_delimiter)
     ~ quote_block_element*
-    ~ (quote_block_delimiter | EOI)
+    ~ (POP| EOI)
 }
 
 quote_block_element = { 
@@ -1109,8 +1109,8 @@ quote_block_paragraph = { inline_elements+ }
 
 verse_block = {
     ((&"[verse" ~ element_attribute+) | ((!"[verse" ~ element_attribute)+ ~ &"[verse" ~ element_attribute+))
-    ~ quote_block_delimiter ~ verse_block_element*
-    ~ (quote_block_delimiter | EOI)
+    ~ PUSH(quote_block_delimiter) ~ verse_block_element*
+    ~ (POP | EOI)
 }
 
 verse_block_element = { verse_file_include | blank_line | verse_block_paragraph }
@@ -1145,12 +1145,12 @@ verse_block_paragraph_line_element = {
 // -------------------------------------------------------------------------------------
 // Sidebars
 // -------------------------------------------------------------------------------------
-sidebar_block_delimiter = { "****" ~ EOLS }
+sidebar_block_delimiter = { "*"{4,} ~ EOLS }
 
 sidebar_block = {
-    element_attributes? ~ sidebar_block_delimiter
+    element_attributes? ~ PUSH(sidebar_block_delimiter)
     ~ sidebar_block_content*
-    ~ (sidebar_block_delimiter | EOI)
+    ~ (POP | EOI)
 }
 
 sidebar_block_content = { blank_line | file_inclusion | list_item | non_sidebar_block | sidebar_block_paragraph }
@@ -1195,12 +1195,12 @@ table_cell = {
 // -------------------------------------------------------------------------------------
 // Comments
 // -------------------------------------------------------------------------------------
-comment_block_delimiter = { "////" }
+comment_block_delimiter = { "/"{4,} }
 
 comment_block = @{
-    comment_block_delimiter ~ WS* ~ NEWLINE
+    PUSH(comment_block_delimiter) ~ WS* ~ NEWLINE
     ~ comment_block_line*
-    ~ ((comment_block_delimiter ~ EOLS) | EOI)
+    ~ ((POP ~ EOLS) | EOI)
 }
 
 comment_block_line = {
@@ -1225,7 +1225,7 @@ literal_block = {
     | paragraph_with_literal_block_delimiter
 }
 
-literal_block_delimiter = { "...." ~ EOLS}
+literal_block_delimiter = { "."{4,} ~ EOLS}
 
 // paragraph indented with one or more spaces on the first line
 paragraph_with_headingspaces = {
@@ -1242,9 +1242,9 @@ paragraph_with_headingspaces_lines = {
 // paragraph with the literal block delimiter (`....`)
 paragraph_with_literal_block_delimiter = {
     element_attributes?
-    ~ literal_block_delimiter
+    ~ PUSH(literal_block_delimiter)
     ~ paragraph_with_literal_block_delimiter_lines
-    ~ ((literal_block_delimiter ~ EOLS) | EOI)
+    ~ ((POP ~ EOLS) | EOI)
 }
 
 // include all lines until delimiter is reached

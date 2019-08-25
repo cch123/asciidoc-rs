@@ -39,11 +39,68 @@ fn main() -> Result<(), i32> {
         .unwrap();
 
     let m: DateTime<chrono::offset::Local> = DateTime::from(m);
-    convert(buffer.as_str(), m.format("%+").to_string().as_str());
+
+    let after = precompile(buffer);
+
+    //convert(after.as_str(), m.format("%+").to_string().as_str());
 
     // add toc to str will destroy the ast
 
     Ok(())
+}
+
+/*
+block_delimiter = {
+    literal_block_delimiter ....
+    | fenced_block_delimiter
+    | listing_block_delimiter ----
+    | example_block_delimiter ====
+    | comment_block_delimiter ////
+    | quote_block_delimiter ____
+    | sidebar_block_delimiter ****
+}
+*/
+enum mode {
+    Normal,
+    Example,
+    Quote,
+    Literal,
+    Listing,
+    Sidebar,
+    Comment,
+}
+use std::collections::HashMap;
+
+pub fn precompile(before: String) -> String {
+    let mut lines: Vec<&str> = before.split("\n").collect();
+
+    let mut line_to_mode: HashMap<&str, mode> = vec![
+        (r#"={4,}"#, mode::Example),
+        (r#".{4,}"#, mode::Literal),
+        (r#"_{4,}"#, mode::Quote),
+        (r#"-{4,}"#, mode::Listing),
+        (r#"*{4,}"#, mode::Sidebar),
+        (r#"/{4,}"#, mode::Comment),
+    ]
+    .into_iter()
+    .collect();
+
+    let mut final_lines = vec![];
+    let mut mark_stack = vec![];
+    let mut mode_stack = vec![mode::Normal];
+    lines.iter().for_each(|&l| {
+        final_lines.push(l);
+        // if match key of mode, then:
+        // find any same line in stack
+        // if there is same line in stack
+        //    pop until match
+        // else
+        //    push to stack
+        //    change mode
+        mark_stack.push(final_lines);
+    });
+
+    final_lines.join("\n")
 }
 
 pub fn convert(query: &str, modify_time: &str) {
