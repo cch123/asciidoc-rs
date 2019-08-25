@@ -21,11 +21,11 @@ Rewrite all grammars using pest
     - [x] footer support
     - [x] admonition block/paragraph support
     - [x] image block support
+    - [x] nested example/quote block
     - [ ] markdown style quote support and nested markdown quote
     - [ ] element id/title/role support
     - [ ] unordered list support
     - [ ] ordered list support
-    - [ ] nested example/quote block
     - [ ] mixed unordered/ordered list
     - [ ] toc support
     - [ ] file inclusion support
