@@ -71,6 +71,9 @@ enum mode {
 }
 use std::collections::HashMap;
 
+// FIXME
+// should not fix quote/example block
+// which is in literal or source block
 pub fn precompile(before: String) -> String {
     let mut lines: Vec<&str> = before.split("\n").collect();
 
