@@ -41,6 +41,7 @@ fn main() -> Result<(), i32> {
     let m: DateTime<chrono::offset::Local> = DateTime::from(m);
 
     let after = precompile(buffer);
+    //println!("after compile, {}", after);
 
     convert(after.as_str(), m.format("%+").to_string().as_str());
 
@@ -100,7 +101,6 @@ pub fn precompile(before: String) -> String {
         //    push to stack
         //    change mode
         let line = l.trim();
-        //        let c0 = line.chars().nth(0).unwrap();
         let c0 = if line.len() > 0 {
             line.chars().nth(0).unwrap()
         } else {
@@ -118,7 +118,15 @@ pub fn precompile(before: String) -> String {
                 // support nested block
                 match mode_stack.last().unwrap() {
                     mode::Normal | mode::Sidebar | mode::Example | mode::Quote => {}
-                    _ => break,
+                    _ => {
+                        if mark_stack.last().unwrap() == &line {
+                            // the source, literal ... block has come to the end
+                            // pop the match line, and revert to previous mode
+                            mark_stack.pop();
+                            mode_stack.pop();
+                        }
+                        break;
+                    }
                 }
                 // find the match from stack top to stack bottom
                 if mark_stack.contains(&line) {

@@ -406,7 +406,7 @@ fn get_listing_block_tpl(block: Block) -> String {
                         r#"<div class="listingblock"><div class="content"><pre class="highlight">{}</pre></div></div>"#,
                         format!(
                             r#"<code class="language-{}" data-lang="{}">#place_holder</code>"#,
-                            lang, lang
+                            lang.trim(), lang.trim()
                         )
                     ),
             }
@@ -462,6 +462,7 @@ pub fn listing_block(ast: Pair<Rule>) -> String {
                 // step 2 向 tpl 中填充内容
                 content += listing_block_element(e).as_str();
             }
+            Rule::listing_block_delimiter | Rule::EOI => {}
             _ => unreachable!(),
         }
     }
@@ -841,26 +842,28 @@ pub fn sidebar_block(ast: Pair<Rule>) -> String {
 // | sidebar_block_paragraph
 // }
 pub fn sidebar_block_content(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     let e = ast.clone().into_inner().next().unwrap();
-    return ast.into_inner().next().unwrap().as_str().to_string();
     match e.as_rule() {
         Rule::blank_line => blank_line(e),
+        // TODO
         Rule::file_inclusion => file_inclusion(e),
+        // TODO
         Rule::list_item => list_item(e),
-        Rule::non_sidebar_block => non_sidebar_block(e),
+        Rule::non_sidebar_block => result += non_sidebar_block(e).as_str(),
         Rule::sidebar_block_paragraph => sidebar_block_paragraph(e),
         _ => unreachable!(),
     }
 
-    ast.into_inner().next().unwrap().as_str().to_string()
+    result
 }
 
 // non_sidebar_block = { !sidebar_block ~ delimited_block }
-pub fn non_sidebar_block(ast: Pair<Rule>) {
+pub fn non_sidebar_block(ast: Pair<Rule>) -> String {
     let e = ast.into_inner().next().unwrap();
     match e.as_rule() {
         Rule::delimited_block => {
-            delimited_block(e);
+            return delimited_block(e);
         }
         _ => unreachable!(),
     }

@@ -1,0 +1,22 @@
+[source, go]
+----
+package main
+func main()
+=====
+----
+
+======
+a block
+====
+b block
+======
+
+*****
+side bar
+====
+internal example
+*****
+
+====
+yes this is it
+====
