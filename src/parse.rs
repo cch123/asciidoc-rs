@@ -524,7 +524,7 @@ pub fn example_block(ast: Pair<Rule>) -> String {
             Rule::example_block_paragraph => content += example_block_paragraph(e).as_str(),
             Rule::example_block_delimiter => {} // do nothing
             Rule::example_block => content += example_block(e).as_str(),
-            Rule::EOI => {},
+            Rule::EOI => {}
             _ => unreachable!(),
         }
     }

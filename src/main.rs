@@ -90,7 +90,7 @@ pub fn precompile(before: String) -> String {
 
     let mut final_lines = vec![];
     let mut mark_stack = vec![];
-    let mut mode_stack = vec![mode::Normal];
+    let mut mode_stack = vec![&mode::Normal];
     lines.iter().for_each(|&l| {
         // if match key of mode, then:
         // find any same line in stack
@@ -113,6 +113,15 @@ pub fn precompile(before: String) -> String {
 
             // final character
             if idx == line.len() - 1 {
+                // only :
+                // 1. sidebar; 2. example; 3. quote
+                // support nested block
+                match mode_stack.last().unwrap(){
+                    mode::Sidebar => {}
+                    mode::Example => {}
+                    mode::Quote => {}
+                    _ => break,
+                }
                 // find the match from stack top to stack bottom
                 if mark_stack.contains(&line) {
                     // if there is a match, pop && push to final lines until match
@@ -129,6 +138,7 @@ pub fn precompile(before: String) -> String {
                 } else {
                     // if there is no match, push this line to stack
                     mark_stack.push(line);
+                    mode_stack.push(line_to_mode.get(&c0).unwrap())
                 }
             }
         }
