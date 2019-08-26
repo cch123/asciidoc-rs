@@ -117,9 +117,7 @@ pub fn precompile(before: String) -> String {
                 // 1. sidebar; 2. example; 3. quote
                 // support nested block
                 match mode_stack.last().unwrap(){
-                    mode::Sidebar => {}
-                    mode::Example => {}
-                    mode::Quote => {}
+                    mode::Sidebar | mode::Example | mode::Quote => {}
                     _ => break,
                 }
                 // find the match from stack top to stack bottom
