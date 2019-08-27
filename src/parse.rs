@@ -115,56 +115,57 @@ pub fn elem_attrs(elems: Vec<Pair<Rule>>) -> Block {
     for elem in elems {
         match elem.as_rule() {
             Rule::element_attribute => {
-                let e = elem.into_inner().next().unwrap();
-                match e.as_rule() {
-                    Rule::element_id => {
-                        b.id = e.as_str().to_string();
-                    }
-                    Rule::element_role => {
-                        b.role = e.as_str().to_string();
-                    }
-                    Rule::element_title => {
-                        b.title = e.as_str().to_string();
-                    }
-                    Rule::literal_attribute => {
-                        b.block_type = BlockType::LiteralBlock;
-                    }
-                    Rule::source_attributes => {
-                        let lang = if let Some(source_lang) = e.into_inner().next() {
-                            source_lang.as_str().to_string()
-                        } else {
-                            "c".to_string()
-                        };
-                        b.block_type = BlockType::SourceBlock { lang };
-                    }
-                    Rule::quote_attributes => {
-                        let (mut author, mut source) = (String::new(), String::new());
-                        for e_in in e.into_inner() {
-                            match e_in.as_rule() {
-                                Rule::quote_author => author = e_in.as_str().to_string(),
-                                Rule::quote_source => source = e_in.as_str().to_string(),
-                                _ => unreachable!(),
-                            }
+                if let Some(e) = elem.into_inner().next() {
+                    match e.as_rule() {
+                        Rule::element_id => {
+                            b.id = e.as_str().to_string();
                         }
-                        b.block_type = BlockType::QuoteBlock { author, source };
-                    }
-                    Rule::verse_attributes => {
-                        let (mut author, mut source) = (String::new(), String::new());
-                        for e_in in e.into_inner() {
-                            match e_in.as_rule() {
-                                Rule::quote_author => author = e_in.as_str().to_string(),
-                                Rule::quote_source => source = e_in.as_str().to_string(),
-                                _ => unreachable!(),
-                            }
+                        Rule::element_role => {
+                            b.role = e.as_str().to_string();
                         }
-                        b.block_type = BlockType::VerseBlock { author, source };
+                        Rule::element_title => {
+                            b.title = e.as_str().to_string();
+                        }
+                        Rule::literal_attribute => {
+                            b.block_type = BlockType::LiteralBlock;
+                        }
+                        Rule::source_attributes => {
+                            let lang = if let Some(source_lang) = e.into_inner().next() {
+                                source_lang.as_str().to_string()
+                            } else {
+                                "c".to_string()
+                            };
+                            b.block_type = BlockType::SourceBlock { lang };
+                        }
+                        Rule::quote_attributes => {
+                            let (mut author, mut source) = (String::new(), String::new());
+                            for e_in in e.into_inner() {
+                                match e_in.as_rule() {
+                                    Rule::quote_author => author = e_in.as_str().to_string(),
+                                    Rule::quote_source => source = e_in.as_str().to_string(),
+                                    _ => unreachable!(),
+                                }
+                            }
+                            b.block_type = BlockType::QuoteBlock { author, source };
+                        }
+                        Rule::verse_attributes => {
+                            let (mut author, mut source) = (String::new(), String::new());
+                            for e_in in e.into_inner() {
+                                match e_in.as_rule() {
+                                    Rule::quote_author => author = e_in.as_str().to_string(),
+                                    Rule::quote_source => source = e_in.as_str().to_string(),
+                                    _ => unreachable!(),
+                                }
+                            }
+                            b.block_type = BlockType::VerseBlock { author, source };
+                        }
+                        Rule::admonition_marker_attribute => {
+                            let marker = e.into_inner().next().unwrap().as_str().to_string();
+                            b.block_type = BlockType::AdmonitionBlock { marker };
+                        }
+                        //Rule::attribute_group
+                        _ => unreachable!(),
                     }
-                    Rule::admonition_marker_attribute => {
-                        let marker = e.into_inner().next().unwrap().as_str().to_string();
-                        b.block_type = BlockType::AdmonitionBlock { marker };
-                    }
-                    //Rule::attribute_group
-                    _ => unreachable!(),
                 }
             }
             _ => unreachable!(),
@@ -268,19 +269,21 @@ pub fn document_revision(ast: Pair<Rule>) {
 }
 
 pub fn document_authors(ast: Pair<Rule>) {
-    let elem = ast.into_inner().next().unwrap();
-    match elem.as_rule() {
-        Rule::document_authors_inline_form => println!("da : daif"),
-        Rule::document_authors_attribute_form => println!("da: daaf"),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::document_authors_inline_form => println!("da : daif"),
+            Rule::document_authors_attribute_form => println!("da: daaf"),
+            _ => unreachable!(),
+        }
     }
 }
 
 pub fn inline_element_id(ast: Pair<Rule>) {
-    let elem = ast.into_inner().next().unwrap();
-    match elem.as_rule() {
-        Rule::ID => println!("iei : id"),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::ID => println!("iei : id"),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -325,18 +328,19 @@ pub fn section_header(ast: Pair<Rule>) -> SectionHeader {
 pub fn delimited_block(ast: Pair<Rule>) -> String {
     let mut result = String::new();
 
-    let elem = ast.into_inner().next().unwrap();
-    match elem.as_rule() {
-        Rule::fenced_block => result += fenced_block(elem).as_str(),
-        Rule::listing_block => result += listing_block(elem).as_str(),
-        Rule::example_block => result += example_block(elem).as_str(),
-        Rule::verse_block => result += verse_block(elem).as_str(),
-        Rule::quote_block => result += quote_block(elem).as_str(),
-        Rule::sidebar_block => result += sidebar_block(elem).as_str(),
-        Rule::single_line_comment => single_line_comment(elem),
-        Rule::table => table(elem),
-        Rule::comment_block => {} // do nothing
-        _ => unreachable!(),
+    if let Some(elem) = ast.into_inner().next() {
+        match elem.as_rule() {
+            Rule::fenced_block => result += fenced_block(elem).as_str(),
+            Rule::listing_block => result += listing_block(elem).as_str(),
+            Rule::example_block => result += example_block(elem).as_str(),
+            Rule::verse_block => result += verse_block(elem).as_str(),
+            Rule::quote_block => result += quote_block(elem).as_str(),
+            Rule::sidebar_block => result += sidebar_block(elem).as_str(),
+            Rule::single_line_comment => single_line_comment(elem),
+            Rule::table => table(elem),
+            Rule::comment_block => {} // do nothing
+            _ => unreachable!(),
+        }
     }
 
     result
@@ -369,16 +373,18 @@ pub fn fenced_block(ast: Pair<Rule>) -> String {
 // }
 pub fn fenced_block_content(ast: Pair<Rule>) -> String {
     // FIXME
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        /*
-        Rule::blank_line
-        Rule::file_inclusion
-        Rule::list_item
-        Rule::fenced_block_paragraph
-        */
-        _ => e.as_str().to_string(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            /*
+            Rule::blank_line
+            Rule::file_inclusion
+            Rule::list_item
+            Rule::fenced_block_paragraph
+            */
+            _ => return e.as_str().to_string(),
+        }
     }
+    String::new()
 }
 
 // fenced_block_paragraph = { fenced_block_paragraph_line+ }
@@ -494,14 +500,15 @@ pub fn listing_block(ast: Pair<Rule>) -> String {
 // listing_block_element = { file_inclusion | listing_block_paragraph }
 pub fn listing_block_element(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::file_inclusion => file_inclusion(e),
-        Rule::listing_block_paragraph => {
-            //listing_block_paragraph(e)
-            result += e.as_str();
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::file_inclusion => file_inclusion(e),
+            Rule::listing_block_paragraph => {
+                //listing_block_paragraph(e)
+                result += e.as_str();
+            }
+            _ => unreachable!(),
         }
-        _ => unreachable!(),
     }
 
     result
@@ -608,25 +615,28 @@ pub fn verse_block(ast: Pair<Rule>) -> String {
 
 // verse_block_element = { verse_file_include | blank_line | verse_block_paragraph }
 pub fn verse_block_element(ast: Pair<Rule>) -> String {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        // TODO
-        // FIXME
-        /*
-        Rule::verse_file_include => verse_file_include(e),
-        Rule::blank_line => blank_line(e),
-        Rule::verse_block_paragraph => verse_block_paragraph(e),
-        _ => unreachable!(),
-        */
-        _ => e.as_str().to_string(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            // TODO
+            // FIXME
+            /*
+            Rule::verse_file_include => verse_file_include(e),
+            Rule::blank_line => blank_line(e),
+            Rule::verse_block_paragraph => verse_block_paragraph(e),
+            _ => unreachable!(),
+            */
+            _ => return e.as_str().to_string(),
+        }
     }
+    String::new()
 }
 
 pub fn verse_file_include(ast: Pair<Rule>) {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::file_inclusion => file_inclusion(e),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::file_inclusion => file_inclusion(e),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -651,20 +661,21 @@ pub fn verse_block_paragraph_line(ast: Pair<Rule>) {
 
 pub fn verse_block_paragraph_line_element(ast: Pair<Rule>) {
     //println!("{:?}", ast);
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::spaces => {} // do nothing
-        Rule::inline_image => inline_image(e),
-        Rule::link => link(e),
-        Rule::passthrough => passthrough(e),
-        Rule::inline_footnote => inline_footnote(e),
-        Rule::inline_user_macro => inline_user_macro(e),
-        Rule::quoted_text => quote_text(e),
-        Rule::cross_reference => cross_reference(e),
-        Rule::document_attribute_substitution => document_attribute_substitution(e),
-        Rule::inline_element_id => inline_element_id(e),
-        Rule::other_word => other_word(e),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::spaces => {} // do nothing
+            Rule::inline_image => inline_image(e),
+            Rule::link => link(e),
+            Rule::passthrough => passthrough(e),
+            Rule::inline_footnote => inline_footnote(e),
+            Rule::inline_user_macro => inline_user_macro(e),
+            Rule::quoted_text => quote_text(e),
+            Rule::cross_reference => cross_reference(e),
+            Rule::document_attribute_substitution => document_attribute_substitution(e),
+            Rule::inline_element_id => inline_element_id(e),
+            Rule::other_word => other_word(e),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -679,20 +690,21 @@ pub fn other_word(ast: Pair<Rule>) {
 }
 
 pub fn quote_text(ast: Pair<Rule>) {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::bold_text => bold_text(e),
-        Rule::italic_text => italic_text(e),
-        Rule::monospace_text => monospace_text(e),
-        Rule::subscript_text => subscript_text(e),
-        Rule::superscript_text => superscript_text(e),
-        Rule::escaped_bold_text => escaped_bold_text(e),
-        Rule::escaped_italic_text => escaped_italic_text(e),
-        Rule::escaped_monospace_text => escaped_monospace_text(e),
-        Rule::escaped_subscript_text => escaped_subscript_text(e),
-        Rule::escaped_superscript_text => escaped_superscript_text(e),
-        Rule::subscript_or_superscript_prefix => subscript_or_superscript_prefix(e),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::bold_text => bold_text(e),
+            Rule::italic_text => italic_text(e),
+            Rule::monospace_text => monospace_text(e),
+            Rule::subscript_text => subscript_text(e),
+            Rule::superscript_text => superscript_text(e),
+            Rule::escaped_bold_text => escaped_bold_text(e),
+            Rule::escaped_italic_text => escaped_italic_text(e),
+            Rule::escaped_monospace_text => escaped_monospace_text(e),
+            Rule::escaped_subscript_text => escaped_subscript_text(e),
+            Rule::escaped_superscript_text => escaped_superscript_text(e),
+            Rule::subscript_or_superscript_prefix => subscript_or_superscript_prefix(e),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -731,22 +743,24 @@ pub fn inline_footnote(ast: Pair<Rule>) {
 
 // passthrough = { triple_plus_passthrough | single_plus_passthrough | passthrough_macro }
 pub fn passthrough(ast: Pair<Rule>) {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::triple_plus_passthrough => println!("tri plus pass th"),
-        Rule::single_plus_passthrough => println!("sin plus pass th"),
-        Rule::passthrough_macro => println!("pass th macro"),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::triple_plus_passthrough => println!("tri plus pass th"),
+            Rule::single_plus_passthrough => println!("sin plus pass th"),
+            Rule::passthrough_macro => println!("pass th macro"),
+            _ => unreachable!(),
+        }
     }
 }
 
 // link = { relative_link | external_link }
 pub fn link(ast: Pair<Rule>) {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::relative_link => println!("rel link"),
-        Rule::external_link => println!("ext link"),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::relative_link => println!("rel link"),
+            Rule::external_link => println!("ext link"),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -870,16 +884,17 @@ pub fn sidebar_block(ast: Pair<Rule>) -> String {
 // }
 pub fn sidebar_block_content(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    let e = ast.clone().into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::blank_line => blank_line(e),
-        // TODO
-        Rule::file_inclusion => file_inclusion(e),
-        // TODO
-        Rule::list_item => list_item(e),
-        Rule::non_sidebar_block => result += non_sidebar_block(e).as_str(),
-        Rule::sidebar_block_paragraph => result += sidebar_block_paragraph(e).as_str(),
-        _ => unreachable!(),
+    if let Some(e) = ast.clone().into_inner().next() {
+        match e.as_rule() {
+            Rule::blank_line => blank_line(e),
+            // TODO
+            Rule::file_inclusion => file_inclusion(e),
+            // TODO
+            Rule::list_item => list_item(e),
+            Rule::non_sidebar_block => result += non_sidebar_block(e).as_str(),
+            Rule::sidebar_block_paragraph => result += sidebar_block_paragraph(e).as_str(),
+            _ => unreachable!(),
+        }
     }
 
     result
@@ -887,13 +902,15 @@ pub fn sidebar_block_content(ast: Pair<Rule>) -> String {
 
 // non_sidebar_block = { !sidebar_block ~ delimited_block }
 pub fn non_sidebar_block(ast: Pair<Rule>) -> String {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::delimited_block => {
-            return delimited_block(e);
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::delimited_block => {
+                return delimited_block(e);
+            }
+            _ => unreachable!(),
         }
-        _ => unreachable!(),
     }
+    String::new()
 }
 
 pub fn sidebar_block_paragraph(ast: Pair<Rule>) -> String {
@@ -910,19 +927,22 @@ pub fn sidebar_block_paragraph(ast: Pair<Rule>) -> String {
 }
 
 pub fn sidebar_block_paragraph_line(ast: Pair<Rule>) -> String {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::inline_elements => return inline_elements(e),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::inline_elements => return inline_elements(e),
+            _ => unreachable!(),
+        }
     }
+    String::new()
 }
 
 pub fn single_line_comment(ast: Pair<Rule>) {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        // 这里感觉直接返回文本就可以了
-        Rule::single_line_comment_content => println!("single line comment content"),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            // 这里感觉直接返回文本就可以了
+            Rule::single_line_comment_content => println!("single line comment content"),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -1068,13 +1088,14 @@ pub fn image_block(ast: Pair<Rule>) -> String {
 
 // list_item = { ordered_list_item | unordered_list_item | labeled_list_item | continued_list_item_element }
 pub fn list_item(ast: Pair<Rule>) {
-    let elem = ast.into_inner().next().unwrap();
-    match elem.as_rule() {
-        Rule::ordered_list_item => println!("list item : olist"),
-        Rule::unordered_list_item => println!("list item : ulist"),
-        Rule::labeled_list_item => println!("list item : llist"),
-        Rule::continued_list_item_element => println!("list item : clist"),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::ordered_list_item => println!("list item : olist"),
+            Rule::unordered_list_item => println!("list item : ulist"),
+            Rule::labeled_list_item => println!("list item : llist"),
+            Rule::continued_list_item_element => println!("list item : clist"),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -1083,12 +1104,16 @@ pub fn blank_line(_ast: Pair<Rule>) {
 }
 
 pub fn literal_block(ast: Pair<Rule>) -> String {
-    let e = ast.into_inner().next().unwrap();
-    match e.as_rule() {
-        Rule::paragraph_with_headingspaces => paragraph_with_headingspaces(e),
-        Rule::paragraph_with_literal_block_delimiter => paragraph_with_literal_block_delimiter(e),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::paragraph_with_headingspaces => return paragraph_with_headingspaces(e),
+            Rule::paragraph_with_literal_block_delimiter => {
+                return paragraph_with_literal_block_delimiter(e)
+            }
+            _ => unreachable!(),
+        }
     }
+    String::new()
 }
 
 pub fn paragraph_with_literal_block_delimiter(ast: Pair<Rule>) -> String {
@@ -1271,10 +1296,11 @@ pub fn section(ast: Pair<Rule>) -> Section {
 }
 
 pub fn front_matter(ast: Pair<Rule>) {
-    let elem = ast.into_inner().next().unwrap();
-    match elem.as_rule() {
-        Rule::yaml_front_matter => yaml_front_matter(elem),
-        _ => unreachable!(),
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::yaml_front_matter => yaml_front_matter(e),
+            _ => unreachable!(),
+        }
     }
 }
 
