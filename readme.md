@@ -22,8 +22,9 @@ Rewrite all grammars using pest
     - [x] admonition block/paragraph support
     - [x] image block support
     - [x] nested example/quote block
+    - [x] element id/title support
+    - [ ] element role
     - [ ] markdown style quote support and nested markdown quote
-    - [ ] element id/title/role support
     - [ ] unordered list support
     - [ ] ordered list support
     - [ ] mixed unordered/ordered list

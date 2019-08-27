@@ -118,13 +118,13 @@ pub fn elem_attrs(elems: Vec<Pair<Rule>>) -> Block {
                 let e = elem.into_inner().next().unwrap();
                 match e.as_rule() {
                     Rule::element_id => {
-                        b.id = e.to_string();
+                        b.id = e.as_str().to_string();
                     }
                     Rule::element_role => {
-                        b.role = e.to_string();
+                        b.role = e.as_str().to_string();
                     }
                     Rule::element_title => {
-                        b.title = e.to_string();
+                        b.title = e.as_str().to_string();
                     }
                     Rule::literal_attribute => {
                         b.block_type = BlockType::LiteralBlock;
@@ -195,20 +195,24 @@ pub fn first_paragraph_line(ast: Pair<Rule>) {
     }
 }
 
-pub fn inline_elements(ast: Pair<Rule>) {
+pub fn inline_elements(ast: Pair<Rule>) -> String {
+    let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::single_line_comment => println!("single_line cmt"),
-            Rule::inline_element => println!("inline ele"),
+            Rule::inline_element => content += inline_element(e).as_str(),
             _ => unreachable!(),
         }
     }
+    content
 }
 
 pub fn other_paragraph_line(ast: Pair<Rule>) {
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::inline_elements => inline_elements(e),
+            Rule::inline_elements => {
+                inline_elements(e);
+            }
             _ => unreachable!(),
         }
     }
@@ -339,7 +343,7 @@ pub fn delimited_block(ast: Pair<Rule>) -> String {
 }
 
 pub fn fenced_block(ast: Pair<Rule>) -> String {
-    let mut tpl = r#"<div class="listingblock"><div class="content"><pre class="highlight"><code>#place_holder</code></pre></div></div>"#.to_string();
+    let mut tpl = r#"<div #id_holder class="listingblock">#title_holder<div class="content"><pre class="highlight"><code>#place_holder</code></pre></div></div>"#.to_string();
     let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
@@ -349,8 +353,7 @@ pub fn fenced_block(ast: Pair<Rule>) -> String {
                 b.block_type = BlockType::SourceBlock {
                     lang: "".to_string(),
                 };
-                let t = get_listing_block_tpl(b);
-                tpl = if !t.is_empty() { t } else { tpl };
+                tpl = get_listing_block_tpl(b, tpl);
             }
             Rule::fenced_block_delimiter => {} // do nothing
             Rule::fenced_block_content => content = fenced_block_content(e),
@@ -382,55 +385,72 @@ pub fn fenced_block_content(ast: Pair<Rule>) -> String {
 pub fn fenced_block_paragraph(ast: Pair<Rule>) {
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::fenced_block_paragraph_line => fenced_block_paragraph_line(e),
+            Rule::fenced_block_paragraph_line => {
+                fenced_block_paragraph_line(e);
+            }
             _ => unreachable!(),
         }
     }
 }
 
-pub fn fenced_block_paragraph_line(ast: Pair<Rule>) {
+pub fn fenced_block_paragraph_line(ast: Pair<Rule>) -> String {
+    let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::inline_elements => inline_elements(e),
+            Rule::inline_elements => {
+                content += inline_elements(e).as_str();
+            }
             _ => unreachable!(),
         }
     }
+    content
 }
 
-fn get_listing_block_tpl(block: Block) -> String {
+fn get_listing_block_tpl(block: Block, default_tpl: String) -> String {
+    let (mut block_title_str, mut block_id_str) = (String::new(), String::new());
+    if !block.title.is_empty() {
+        block_title_str = format!(r#"<div class="title">{}</div>"#, block.title);
+    }
+    if !block.id.is_empty() {
+        block_id_str = format!(r#" id="{}" "#, block.id);
+    }
     match block.block_type {
         BlockType::SourceBlock { lang } => {
+            let lang = lang.trim();
             match lang.len() {
-                0 => return r#"<div class="listingblock"><div class="content"><pre class="highlight"><code>#place_holder</code></pre></div></div>"#.to_string(),
+                0 => return format!(r#"<div {} class="listingblock">{}<div class="content"><pre class="highlight"><code>#place_holder</code></pre></div></div>"#,
+                       block_id_str, block_title_str
+                ),
                 _ => return format!(
-                        r#"<div class="listingblock"><div class="content"><pre class="highlight">{}</pre></div></div>"#,
+                        r#"<div {} class="listingblock">{}<div class="content"><pre class="highlight">{}</pre></div></div>"#,
+                        block_id_str, block_title_str,
                         format!(
                             r#"<code class="language-{}" data-lang="{}">#place_holder</code>"#,
-                            lang.trim(), lang.trim()
+                            lang, lang
                         )
-                    ),
+                ),
             }
         }
         BlockType::VerseBlock { author, source } => {
-            return format!(r#"<div class="verseblock"><pre class="content">#place_holder</pre><div class="attribution">—{}<br/><cite>{}</cite></div></div>"#,
-                author, source,
+            return format!(r#"<div {} class="verseblock">{}<pre class="content">#place_holder</pre><div class="attribution">—{}<br/><cite>{}</cite></div></div>"#,
+                block_id_str, block_title_str, author, source,
             )
         }
         BlockType::QuoteBlock { author, source } => {
-            return format!(r#"<div class="quoteblock"><blockquote>#place_holder</blockquote><div class="attribution">-{}<br/><cite>{}</cite></div></div>"#,
-                author, source,
+            return format!(r#"<div {} class="quoteblock">{}<blockquote>#place_holder</blockquote><div class="attribution">-{}<br/><cite>{}</cite></div></div>"#,
+                block_id_str, block_title_str, author, source,
             )
         }
         BlockType::LiteralBlock => {
-            return r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#.to_string();
+            return format!(r#"<div {} class="literalblock">{}<div class="content"><pre>#place_holder</pre></div></div>"#, block_id_str, block_title_str);
         }
         BlockType::ExampleBlock => {
-            return r#"<div class="exampleblock"><div class="content">#place_holder</div></div>"#
-                .to_string();
+            return format!(r#"<div {} class="exampleblock">{}<div class="content">#place_holder</div></div>"#, block_id_str, block_title_str);
         }
         BlockType::SidebarBlock => {
-            return r#"<div class="sidebarblock"><div class="content">#place_holder</div></div>"#.to_string();
+            return format!(r#"<div {} class="sidebarblock">{}<div class="content">#place_holder</div></div>"#, block_id_str, block_title_str);
         }
+        // TODO, support id and title
         BlockType::AdmonitionBlock {marker} => {
             return format!(r#"<div class="admonitionblock {}"><table><tbody><tr><td class="icon"><div class="title">{}</div></td><td>#place_holder</td></tr></tbody></table></div>"#, marker, marker);
         }
@@ -438,7 +458,9 @@ fn get_listing_block_tpl(block: Block) -> String {
     }
 
     // default tpl
-    String::new()
+    default_tpl
+        .replace("#id_holder", block_id_str.as_str())
+        .replace("#title_holder", block_title_str.as_str())
 }
 
 pub fn listing_block(ast: Pair<Rule>) -> String {
@@ -447,7 +469,7 @@ pub fn listing_block(ast: Pair<Rule>) -> String {
     // let mut elem_type = ElementAttribute::LiteralAttribute;
 
     let mut tpl =
-        r#"<div class="listingblock"><div class="content">#place_holder</div></div>"#.to_string();
+        r#"<div #id_holder class="listingblock">#title_holder<div class="content">#place_holder</div></div>"#.to_string();
 
     let mut content = String::new();
     for e in ast.into_inner() {
@@ -455,8 +477,7 @@ pub fn listing_block(ast: Pair<Rule>) -> String {
             Rule::element_attributes => {
                 // step 1 通过 element attr 获取 block 的属性和模板
                 let block = element_attributes(e);
-                let t = get_listing_block_tpl(block);
-                tpl = if !t.is_empty() { t } else { tpl };
+                tpl = get_listing_block_tpl(block, tpl);
             }
             Rule::listing_block_element => {
                 // step 2 向 tpl 中填充内容
@@ -503,7 +524,7 @@ pub fn listing_block_paragraph_line(_ast: Pair<Rule>) {
 pub fn example_block(ast: Pair<Rule>) -> String {
     let mut content = String::new();
     let mut tpl =
-        r#"<div class="exampleblock"><div class="content">#place_holder</div></div>"#.to_string();
+        r#"<div #id_holder class="exampleblock">#title_holder<div class="content">#place_holder</div></div>"#.to_string();
 
     for e in ast.into_inner() {
         match e.as_rule() {
@@ -514,8 +535,7 @@ pub fn example_block(ast: Pair<Rule>) -> String {
                     _ => b.block_type = BlockType::ExampleBlock,
                 }
 
-                let t = get_listing_block_tpl(b);
-                tpl = if !t.is_empty() { t } else { tpl };
+                tpl = get_listing_block_tpl(b, tpl);
             }
             // TODO
             Rule::blank_line => blank_line(e),
@@ -531,6 +551,8 @@ pub fn example_block(ast: Pair<Rule>) -> String {
     }
 
     tpl.replace("#place_holder", content.as_str())
+        .replace("#id_holder", "")
+        .replace("#title_holder", "")
 }
 
 // example_block_paragraph = { example_block_paragraph_line+ }
@@ -548,13 +570,16 @@ pub fn example_block_paragraph(ast: Pair<Rule>) -> String {
 pub fn example_block_paragraph_line(ast: Pair<Rule>) {
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::inline_elements => inline_elements(e),
+            Rule::inline_elements => {
+                inline_elements(e);
+            }
             _ => unreachable!(),
         }
     }
 }
 
 pub fn verse_block(ast: Pair<Rule>) -> String {
+    // fix me
     let mut tpl = "".to_string();
     let mut content = String::new();
 
@@ -576,8 +601,7 @@ pub fn verse_block(ast: Pair<Rule>) -> String {
 
     let merged_block = elem_attrs(elem_attr_list);
 
-    let t = get_listing_block_tpl(merged_block);
-    tpl = if !t.is_empty() { t } else { tpl };
+    tpl = get_listing_block_tpl(merged_block, tpl);
 
     tpl.replace("#place_holder", content.as_str())
 }
@@ -737,14 +761,14 @@ pub fn inline_image(ast: Pair<Rule>) {
 }
 
 pub fn quote_block(ast: Pair<Rule>) -> String {
+    // fix me?
     let mut tpl = String::new();
     let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 let b = element_attributes(e);
-                let t = get_listing_block_tpl(b);
-                tpl = if !t.is_empty() { t } else { tpl };
+                tpl = get_listing_block_tpl(b, tpl);
             }
             Rule::quote_block_element => {
                 content += format!(
@@ -801,7 +825,9 @@ pub fn quote_block_element(ast: Pair<Rule>) -> String {
 pub fn quote_block_paragraph(ast: Pair<Rule>) {
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::inline_elements => inline_elements(e),
+            Rule::inline_elements => {
+                inline_elements(e);
+            }
             _ => unreachable!(),
         }
     }
@@ -809,15 +835,14 @@ pub fn quote_block_paragraph(ast: Pair<Rule>) {
 
 pub fn sidebar_block(ast: Pair<Rule>) -> String {
     let mut tpl =
-        r#"<div class="sidebarblock"><div class="content">#place_holder</div></div>"#.to_string();
+        r#"<div #id_holder class="sidebarblock">#title_holder<div class="content">#place_holder</div></div>"#.to_string();
     let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 let mut b = element_attributes(e);
                 b.block_type = BlockType::SidebarBlock;
-                let t = get_listing_block_tpl(b);
-                tpl = if !t.is_empty() { t } else { tpl };
+                tpl = get_listing_block_tpl(b, tpl);
             }
             Rule::sidebar_block_content => {
                 content += format!(
@@ -832,6 +857,8 @@ pub fn sidebar_block(ast: Pair<Rule>) -> String {
     }
 
     tpl.replace("#place_holder", content.as_str())
+        .replace("#id_holder", "")
+        .replace("#title_holder", "")
 }
 
 // sidebar_block_content = {
@@ -851,7 +878,7 @@ pub fn sidebar_block_content(ast: Pair<Rule>) -> String {
         // TODO
         Rule::list_item => list_item(e),
         Rule::non_sidebar_block => result += non_sidebar_block(e).as_str(),
-        Rule::sidebar_block_paragraph => sidebar_block_paragraph(e),
+        Rule::sidebar_block_paragraph => result += sidebar_block_paragraph(e).as_str(),
         _ => unreachable!(),
     }
 
@@ -869,19 +896,23 @@ pub fn non_sidebar_block(ast: Pair<Rule>) -> String {
     }
 }
 
-pub fn sidebar_block_paragraph(ast: Pair<Rule>) {
+pub fn sidebar_block_paragraph(ast: Pair<Rule>) -> String {
+    let mut result = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::sidebar_block_paragraph_line => sidebar_block_paragraph_line(e),
+            Rule::sidebar_block_paragraph_line => {
+                result += sidebar_block_paragraph_line(e).as_str()
+            }
             _ => unreachable!(),
         }
     }
+    result
 }
 
-pub fn sidebar_block_paragraph_line(ast: Pair<Rule>) {
+pub fn sidebar_block_paragraph_line(ast: Pair<Rule>) -> String {
     let e = ast.into_inner().next().unwrap();
     match e.as_rule() {
-        Rule::inline_elements => inline_elements(e),
+        Rule::inline_elements => return inline_elements(e),
         _ => unreachable!(),
     }
 }
@@ -932,17 +963,31 @@ pub fn table_line_header(ast: Pair<Rule>) {
 pub fn table_cell(ast: Pair<Rule>) {
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::inline_element => inline_element(e),
+            Rule::inline_element => {
+                inline_element(e);
+            }
             _ => unreachable!(),
         }
     }
 }
 
-pub fn inline_element(ast: Pair<Rule>) {
+pub fn inline_element(ast: Pair<Rule>) -> String {
+    return ast
+        .clone()
+        .into_inner()
+        .next()
+        .unwrap()
+        .as_str()
+        .to_string();
+    /*
     let e = ast.into_inner().next().unwrap();
     match e.as_rule() {
-        Rule::simple_word => println!("simple word"),
-        Rule::spaces => println!("spaces"),
+        Rule::simple_word => {
+            println!("simple word");
+        },
+        Rule::spaces => {
+            println!("spaces");
+        },
         Rule::inline_image => inline_image(e),
         Rule::link => link(e),
         Rule::passthrough => passthrough(e),
@@ -954,7 +999,7 @@ pub fn inline_element(ast: Pair<Rule>) {
         Rule::inline_element_id => inline_element_id(e),
         Rule::other_word => other_word(e),
         _ => unreachable!(),
-    }
+    }*/
 }
 
 /*
@@ -985,19 +1030,6 @@ pub fn file_inclusion(ast: Pair<Rule>) {
             Rule::file_include_attributes => {
                 println!("file inc : file inc attr");
             }
-            _ => unreachable!(),
-        }
-    }
-}
-
-pub fn verse_paragraph(ast: Pair<Rule>) {
-    for elem in ast.into_inner() {
-        match elem.as_rule() {
-            Rule::element_attributes => {
-                element_attributes(elem);
-            }
-            Rule::admonition_kind => println!("verse para : adm kine{}", elem.as_str()),
-            Rule::inline_elements => inline_elements(elem),
             _ => unreachable!(),
         }
     }
@@ -1061,14 +1093,14 @@ pub fn literal_block(ast: Pair<Rule>) -> String {
 
 pub fn paragraph_with_literal_block_delimiter(ast: Pair<Rule>) -> String {
     let mut tpl =
-        r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#
+        r#"<div #id_holder class="literalblock">#title_holder<div class="content"><pre>#place_holder</pre></div></div>"#
             .to_string();
     let mut content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
             Rule::element_attributes => {
                 let b = element_attributes(e);
-                tpl = get_listing_block_tpl(b);
+                tpl = get_listing_block_tpl(b, tpl);
             }
             Rule::paragraph_with_literal_block_delimiter_lines => {
                 content += e.as_str();
@@ -1083,7 +1115,7 @@ pub fn paragraph_with_literal_block_delimiter(ast: Pair<Rule>) -> String {
 
 pub fn paragraph_with_headingspaces(ast: Pair<Rule>) -> String {
     let mut tpl =
-        r#"<div class="literalblock"><div class="content"><pre>#place_holder</pre></div></div>"#
+        r#"<div #id_holder class="literalblock">#title_holder<div class="content"><pre>#place_holder</pre></div></div>"#
             .to_string();
     let mut content = String::new();
     for e in ast.into_inner() {
@@ -1092,7 +1124,7 @@ pub fn paragraph_with_headingspaces(ast: Pair<Rule>) -> String {
                 let mut b = element_attributes(e);
                 // the block type should always be literal block
                 b.block_type = BlockType::LiteralBlock;
-                tpl = get_listing_block_tpl(b);
+                tpl = get_listing_block_tpl(b, tpl);
             }
             Rule::paragraph_with_headingspaces_lines => {
                 content += e.as_str().trim_start();
@@ -1141,7 +1173,8 @@ pub fn user_macro_block(ast: Pair<Rule>) {
 
 pub fn paragraph(ast: Pair<Rule>) -> String {
     let mut result = String::new();
-    let mut tpl = r#"<div class="paragraph"><p>#place_holder</p></div>"#.to_string();
+    let mut tpl =
+        r#"<div #id_holder class="paragraph">#title_holder<p>#place_holder</p></div>"#.to_string();
     let mut b = Block {
         id: "".to_string(),
         role: "".to_string(),
@@ -1177,8 +1210,7 @@ pub fn paragraph(ast: Pair<Rule>) -> String {
         }
     }
 
-    let t = get_listing_block_tpl(b);
-    tpl = if !t.is_empty() { t } else { tpl };
+    tpl = get_listing_block_tpl(b, tpl);
 
     tpl.replace("#place_holder", result.as_str())
 }
