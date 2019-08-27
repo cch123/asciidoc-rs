@@ -61,7 +61,7 @@ block_delimiter = {
     | sidebar_block_delimiter ****
 }
 */
-enum mode {
+enum Mode {
     Normal,
     Example,
     Quote,
@@ -76,30 +76,30 @@ use std::collections::HashMap;
 // should not fix quote/example block
 // which is in literal or source block
 pub fn precompile(before: String) -> String {
-    let mut lines: Vec<&str> = before.split("\n").collect();
+    let lines: Vec<&str> = before.split("\n").collect();
 
-    let mut line_to_mode: HashMap<char, mode> = vec![
-        ('=', mode::Example),
-        ('.', mode::Literal),
-        ('_', mode::Quote),
-        ('-', mode::Listing),
-        ('*', mode::Sidebar),
-        ('/', mode::Comment),
+    let line_to_mode: HashMap<char, Mode> = vec![
+        ('=', Mode::Example),
+        ('.', Mode::Literal),
+        ('_', Mode::Quote),
+        ('-', Mode::Listing),
+        ('*', Mode::Sidebar),
+        ('/', Mode::Comment),
     ]
     .into_iter()
     .collect();
 
     let mut final_lines = vec![];
     let mut mark_stack = vec![];
-    let mut mode_stack = vec![&mode::Normal];
+    let mut mode_stack = vec![&Mode::Normal];
     lines.iter().for_each(|&l| {
-        // if match key of mode, then:
+        // if match key of Mode, then:
         // find any same line in stack
         // if there is same line in stack
         //    pop until match
         // else
         //    push to stack
-        //    change mode
+        //    change Mode
         let line = l.trim();
         let c0 = if line.len() > 0 {
             line.chars().nth(0).unwrap()
@@ -117,11 +117,11 @@ pub fn precompile(before: String) -> String {
                 // 1. sidebar; 2. example; 3. quote
                 // support nested block
                 match mode_stack.last().unwrap() {
-                    mode::Normal | mode::Sidebar | mode::Example | mode::Quote => {}
+                    Mode::Normal | Mode::Sidebar | Mode::Example | Mode::Quote => {}
                     _ => {
                         if mark_stack.last().unwrap() == &line {
                             // the source, literal ... block has come to the end
-                            // pop the match line, and revert to previous mode
+                            // pop the match line, and revert to previous Mode
                             mark_stack.pop();
                             mode_stack.pop();
                         }

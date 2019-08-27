@@ -1043,7 +1043,7 @@ pub fn image_block(ast: Pair<Rule>) -> String {
             Rule::element_attributes => {
                 // TODO
                 // currently not supported
-                let b = element_attributes(elem);
+                let _b = element_attributes(elem);
                 // TODO
             }
             Rule::URL => {
