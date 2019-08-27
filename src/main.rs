@@ -10,12 +10,8 @@ use tpl::*;
 pub mod structs;
 
 use chrono::DateTime;
-use pest::iterators::Pair;
-use pest::Parser;
-use std::env;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
+use pest::{iterators::Pair, Parser};
+use std::{env, fs::File, io::Read, path::Path};
 
 fn main() -> Result<(), i32> {
     if env::args().len() < 2 {
