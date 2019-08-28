@@ -35,3 +35,18 @@ pub struct Section {
     pub level: usize,
     pub content: String,
 }
+
+#[derive(Debug)]
+pub enum ListItemType {
+    OrderedItem,
+    UnorderedItem,
+    LabeledItem,
+}
+
+#[derive(Debug)]
+pub struct ListItem {
+    pub typ: ListItemType,
+    pub level: i8,
+    pub children: Vec<ListItem>,
+    pub content: String,
+}

@@ -396,7 +396,7 @@ undefined_line_range = {
 // ------------------------------------------
 // Lists
 // ------------------------------------------
-list_items = { list_item+ }
+list_items = { (list_item~ blank_line)+ }
 
 list_item = { ordered_list_item | unordered_list_item | labeled_list_item | continued_list_item_element }
 
@@ -991,10 +991,10 @@ block_delimiter = {
 fenced_block_delimiter = { "```" ~ EOLS }
 
 fenced_block = {
-    element_attributes? ~ fenced_block_delimiter ~ fenced_block_content* ~ (fenced_block_delimiter | EOI)
+    element_attributes? ~ PUSH(fenced_block_delimiter) ~ fenced_block_content* ~ (POP | EOI)
 }
 
-fenced_block_content = { blank_line | file_inclusion | list_item | fenced_block_paragraph }
+fenced_block_content = { blank_line | file_inclusion | list_items | fenced_block_paragraph }
 
 // blocks content
 fenced_block_paragraph = { fenced_block_paragraph_line+ }
@@ -1036,7 +1036,7 @@ example_block_delimiter = { "="{4,} ~ EOLS }
 // just like the rust r####""####
 example_block = {
     element_attributes? ~ PUSH(example_block_delimiter)
-    ~ (blank_line | file_inclusion | list_item | (!PEEK ~ example_block) | example_block_paragraph)*
+    ~ (blank_line | file_inclusion | list_items | (!PEEK ~ example_block) | example_block_paragraph)*
     ~ (POP| EOI)
 }
 
@@ -1069,7 +1069,7 @@ quote_block_element = {
         blank_line
         | file_inclusion
         | image_block
-        | list_item
+        | list_items
         | fenced_block
         | listing_block
         | example_block
@@ -1139,7 +1139,7 @@ sidebar_block = {
     ~ (POP | EOI)
 }
 
-sidebar_block_content = { blank_line | file_inclusion | list_item | non_sidebar_block | sidebar_block_paragraph }
+sidebar_block_content = { blank_line | file_inclusion | list_items | non_sidebar_block | sidebar_block_paragraph }
 
 non_sidebar_block = { !sidebar_block ~ delimited_block }
 

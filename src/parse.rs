@@ -495,6 +495,8 @@ pub fn listing_block(ast: Pair<Rule>) -> String {
     }
 
     tpl.replace("#place_holder", content.as_str())
+        .replace("#id_holder", "")
+        .replace("#title_holder", "")
 }
 
 // listing_block_element = { file_inclusion | listing_block_paragraph }
@@ -502,7 +504,9 @@ pub fn listing_block_element(ast: Pair<Rule>) -> String {
     let mut result = String::new();
     if let Some(e) = ast.into_inner().next() {
         match e.as_rule() {
-            Rule::file_inclusion => file_inclusion(e),
+            Rule::file_inclusion => {
+                result += file_inclusion(e).as_str();
+            }
             Rule::listing_block_paragraph => {
                 //listing_block_paragraph(e)
                 result += e.as_str();
@@ -546,7 +550,9 @@ pub fn example_block(ast: Pair<Rule>) -> String {
             }
             // TODO
             Rule::blank_line => blank_line(e),
-            Rule::file_inclusion => file_inclusion(e),
+            Rule::file_inclusion => {
+                content += file_inclusion(e).as_str();
+            }
             Rule::list_item => list_item(e),
             // TODO
             Rule::example_block_paragraph => content += example_block_paragraph(e).as_str(),
@@ -634,7 +640,9 @@ pub fn verse_block_element(ast: Pair<Rule>) -> String {
 pub fn verse_file_include(ast: Pair<Rule>) {
     if let Some(e) = ast.into_inner().next() {
         match e.as_rule() {
-            Rule::file_inclusion => file_inclusion(e),
+            Rule::file_inclusion => {
+                file_inclusion(e);
+            }
             _ => unreachable!(),
         }
     }
@@ -888,7 +896,9 @@ pub fn sidebar_block_content(ast: Pair<Rule>) -> String {
         match e.as_rule() {
             Rule::blank_line => blank_line(e),
             // TODO
-            Rule::file_inclusion => file_inclusion(e),
+            Rule::file_inclusion => {
+                result += file_inclusion(e).as_str();
+            }
             // TODO
             Rule::list_item => list_item(e),
             Rule::non_sidebar_block => result += non_sidebar_block(e).as_str(),
@@ -1022,27 +1032,8 @@ pub fn inline_element(ast: Pair<Rule>) -> String {
     }*/
 }
 
-/*
-pub fn comment_block(ast: Pair<Rule>) {
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::comment_block_delimiter => {} // do nothing
-            Rule::NEWLINE => {}                 // do nothing?
-            Rule::comment_block_line => comment_block_line(e),
-            _ => unreachable!(),
-        }
-    }
-}
-*/
-
-/*
-pub fn comment_block_line(ast: Pair<Rule>) {
-    // return string
-}
-*/
-
-pub fn file_inclusion(ast: Pair<Rule>) {
-    for e in ast.into_inner() {
+pub fn file_inclusion(ast: Pair<Rule>) -> String {
+    for e in ast.clone().into_inner() {
         match e.as_rule() {
             Rule::file_location => {
                 println!("file inc : file loc");
@@ -1053,6 +1044,8 @@ pub fn file_inclusion(ast: Pair<Rule>) {
             _ => unreachable!(),
         }
     }
+
+    ast.as_str().to_string()
 }
 
 pub fn image_block(ast: Pair<Rule>) -> String {
@@ -1238,6 +1231,8 @@ pub fn paragraph(ast: Pair<Rule>) -> String {
     tpl = get_listing_block_tpl(b, tpl);
 
     tpl.replace("#place_holder", result.as_str())
+        .replace("#id_holder", "")
+        .replace("#title_holder", "")
 }
 
 pub fn sections(ast: Pair<Rule>) -> String {
