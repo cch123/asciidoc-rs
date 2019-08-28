@@ -2,11 +2,16 @@
 extern crate pest_derive;
 
 pub mod parse;
+use document::*;
 use parse::*;
 
 pub mod tpl;
 use tpl::*;
 
+pub mod block;
+pub mod document;
+pub mod list;
+pub mod section;
 pub mod structs;
 
 use chrono::DateTime;
