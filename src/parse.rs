@@ -85,7 +85,9 @@ pub fn section_body(ast: Pair<Rule>) -> String {
             Rule::image_block => {
                 result += image_block(e).as_str();
             }
-            Rule::list_items => list_items(e),
+            Rule::list_items => {
+                result += list_items(e).as_str();
+            }
             Rule::paragraph => {
                 result += paragraph(e).as_str();
             }
@@ -95,13 +97,50 @@ pub fn section_body(ast: Pair<Rule>) -> String {
     result
 }
 
-pub fn list_items(ast: Pair<Rule>) {
+pub fn list_items(ast: Pair<Rule>) -> String {
+    let mut item_list: Vec<ListItem> = vec![];
+    let mut pre_content = String::new();
     for e in ast.into_inner() {
         match e.as_rule() {
-            Rule::list_item => list_item(e),
+            Rule::list_item => {
+                if let Some(e_in) = e.into_inner().next() {
+                    match e_in.as_rule() {
+                        Rule::ordered_list_item => {
+                            item_list.push(ListItem {
+                                typ: ListItemType::OrderedItem,
+                                level: 0,
+                                children: vec![],
+                                content: "".to_string(),
+                            });
+                        }
+                        Rule::unordered_list_item => {
+                            // TODO
+                        }
+                        Rule::labeled_list_item => {
+                            // TODO
+                        }
+                        Rule::continued_list_item_element => {
+                            if item_list.is_empty() {
+                                // in this case
+                                // this item should be treat as normal line/paragraph
+                                pre_content += e_in.as_str();
+                                continue;
+                            }
+                            item_list
+                                .last_mut()
+                                .unwrap()
+                                .content
+                                .push_str(e_in.as_str());
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+            }
+            Rule::blank_line => {}
             _ => unreachable!(),
         }
     }
+    String::new()
 }
 
 pub fn elem_attrs(elems: Vec<Pair<Rule>>) -> Block {
@@ -553,7 +592,9 @@ pub fn example_block(ast: Pair<Rule>) -> String {
             Rule::file_inclusion => {
                 content += file_inclusion(e).as_str();
             }
-            Rule::list_item => list_item(e),
+            Rule::list_items => {
+                content += list_items(e).as_str();
+            }
             // TODO
             Rule::example_block_paragraph => content += example_block_paragraph(e).as_str(),
             Rule::example_block_delimiter => {} // do nothing
@@ -900,7 +941,7 @@ pub fn sidebar_block_content(ast: Pair<Rule>) -> String {
                 result += file_inclusion(e).as_str();
             }
             // TODO
-            Rule::list_item => list_item(e),
+            Rule::list_items => result += list_items(e).as_str(),
             Rule::non_sidebar_block => result += non_sidebar_block(e).as_str(),
             Rule::sidebar_block_paragraph => result += sidebar_block_paragraph(e).as_str(),
             _ => unreachable!(),
@@ -1080,6 +1121,7 @@ pub fn image_block(ast: Pair<Rule>) -> String {
 }
 
 // list_item = { ordered_list_item | unordered_list_item | labeled_list_item | continued_list_item_element }
+/*
 pub fn list_item(ast: Pair<Rule>) {
     if let Some(e) = ast.into_inner().next() {
         match e.as_rule() {
@@ -1091,6 +1133,7 @@ pub fn list_item(ast: Pair<Rule>) {
         }
     }
 }
+*/
 
 pub fn blank_line(_ast: Pair<Rule>) {
     // do nothing

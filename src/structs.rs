@@ -36,17 +36,23 @@ pub struct Section {
     pub content: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ListItemType {
     OrderedItem,
     UnorderedItem,
     LabeledItem,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ListItem {
     pub typ: ListItemType,
     pub level: i8,
     pub children: Vec<ListItem>,
     pub content: String,
+}
+
+impl PartialEq for ListItem {
+    fn eq(&self, other: &Self) -> bool {
+        return other.typ == self.typ && other.level == self.level;
+    }
 }
