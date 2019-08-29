@@ -1,5 +1,7 @@
 use crate::block::*;
+use crate::document::*;
 use crate::list::*;
+use crate::paragraph::*;
 use crate::parse::*;
 use crate::structs::*;
 use pest::iterators::Pair;

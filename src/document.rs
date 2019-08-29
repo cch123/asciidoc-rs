@@ -86,3 +86,59 @@ pub fn pre_flight_document(ast: Pair<Rule>) -> String {
     }
     result
 }
+
+pub fn document_authors(ast: Pair<Rule>) {
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::document_authors_inline_form => println!("da : daif"),
+            Rule::document_authors_attribute_form => println!("da: daaf"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+// FIXME
+pub fn document_attribute_substitution(_ast: Pair<Rule>) {
+    println!("doc attr substi");
+}
+pub fn document_attribute_declaration(ast: Pair<Rule>) {
+    for elem in ast.into_inner() {
+        match elem.as_rule() {
+            Rule::document_attribute_name => println!("dad : dan"),
+            Rule::document_attribute_value => println!("dad : dav"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn document_attribute_reset(ast: Pair<Rule>) {
+    for elem in ast.into_inner() {
+        match elem.as_rule() {
+            Rule::document_attribute_name => println!("doc attr reset : doc attr name"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+// table_of_contents_macro = { "toc::[]" ~ EOL }
+pub fn table_of_contents_macro(_ast: Pair<Rule>) {
+    // do nothing currently
+}
+
+pub fn front_matter(ast: Pair<Rule>) {
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::yaml_front_matter => yaml_front_matter(e),
+            _ => unreachable!(),
+        }
+    }
+}
+pub fn yaml_front_matter(ast: Pair<Rule>) {
+    for e in ast.into_inner() {
+        match e.as_rule() {
+            Rule::yaml_front_matter_token => println!("token in yml front matter"), // do nothing
+            Rule::yaml_front_matter_content => println!("yaml front matter content"),
+            _ => unreachable!(),
+        }
+    }
+}

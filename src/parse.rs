@@ -1,5 +1,5 @@
-use crate::block::*;
-use crate::structs::BlockType::{AdmonitionBlock, ExampleBlock, NotBlock};
+//use crate::block::*;
+//use crate::structs::BlockType::{AdmonitionBlock, ExampleBlock, NotBlock};
 use crate::structs::*;
 use pest::iterators::Pair;
 
@@ -138,16 +138,6 @@ pub fn simple_paragraph(ast: Pair<Rule>) {
 }
 */
 
-pub fn document_authors(ast: Pair<Rule>) {
-    if let Some(e) = ast.into_inner().next() {
-        match e.as_rule() {
-            Rule::document_authors_inline_form => println!("da : daif"),
-            Rule::document_authors_attribute_form => println!("da: daaf"),
-            _ => unreachable!(),
-        }
-    }
-}
-
 pub fn inline_element_id(ast: Pair<Rule>) {
     if let Some(e) = ast.into_inner().next() {
         match e.as_rule() {
@@ -168,32 +158,8 @@ pub fn title_elements(ast: Pair<Rule>) {
 }
 
 // FIXME
-pub fn document_attribute_substitution(_ast: Pair<Rule>) {
-    println!("doc attr substi");
-}
-
-// FIXME
 pub fn other_word(ast: Pair<Rule>) {
     println!("other word : {}", ast.as_str());
-}
-
-pub fn quote_text(ast: Pair<Rule>) {
-    if let Some(e) = ast.into_inner().next() {
-        match e.as_rule() {
-            Rule::bold_text => bold_text(e),
-            Rule::italic_text => italic_text(e),
-            Rule::monospace_text => monospace_text(e),
-            Rule::subscript_text => subscript_text(e),
-            Rule::superscript_text => superscript_text(e),
-            Rule::escaped_bold_text => escaped_bold_text(e),
-            Rule::escaped_italic_text => escaped_italic_text(e),
-            Rule::escaped_monospace_text => escaped_monospace_text(e),
-            Rule::escaped_subscript_text => escaped_subscript_text(e),
-            Rule::escaped_superscript_text => escaped_superscript_text(e),
-            Rule::subscript_or_superscript_prefix => subscript_or_superscript_prefix(e),
-            _ => unreachable!(),
-        }
-    }
 }
 
 // FIXME
@@ -272,51 +238,6 @@ pub fn single_line_comment(ast: Pair<Rule>) {
     }
 }
 
-pub fn table(ast: Pair<Rule>) {
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::element_attributes => {
-                element_attributes(e);
-            }
-            Rule::table_delimiter => {} // do nothing
-            Rule::table_line_header => table_line_header(e),
-            Rule::table_line => table_line(e),
-            _ => unreachable!(),
-        }
-    }
-}
-// table_line = { !table_delimiter ~ table_cell+ ~ EOL ~ blank_line* }
-pub fn table_line(ast: Pair<Rule>) {
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::table_cell => table_cell(e),
-            Rule::blank_line => blank_line(e),
-            _ => unreachable!(),
-        }
-    }
-}
-
-pub fn table_line_header(ast: Pair<Rule>) {
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::table_cell => table_cell(e),
-            Rule::blank_line => blank_line(e),
-            _ => unreachable!(),
-        }
-    }
-}
-
-pub fn table_cell(ast: Pair<Rule>) {
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::inline_element => {
-                inline_element(e);
-            }
-            _ => unreachable!(),
-        }
-    }
-}
-
 pub fn inline_element(ast: Pair<Rule>) -> String {
     return ast
         .clone()
@@ -383,146 +304,12 @@ pub fn blank_line(_ast: Pair<Rule>) {
     // do nothing
 }
 
-pub fn paragraph_with_literal_block_delimiter(ast: Pair<Rule>) -> String {
-    let mut tpl =
-        r#"<div #id_holder class="literalblock">#title_holder<div class="content"><pre>#place_holder</pre></div></div>"#
-            .to_string();
-    let mut content = String::new();
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::element_attributes => {
-                let b = element_attributes(e);
-                tpl = get_listing_block_tpl(b, tpl);
-            }
-            Rule::paragraph_with_literal_block_delimiter_lines => {
-                content += e.as_str();
-            }
-            Rule::EOI => {}
-            _ => unreachable!(),
-        }
-    }
-
-    tpl.replace("#place_holder", content.as_str())
-}
-
-pub fn paragraph_with_headingspaces(ast: Pair<Rule>) -> String {
-    let mut tpl =
-        r#"<div #id_holder class="literalblock">#title_holder<div class="content"><pre>#place_holder</pre></div></div>"#
-            .to_string();
-    let mut content = String::new();
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::element_attributes => {
-                let mut b = element_attributes(e);
-                // the block type should always be literal block
-                b.block_type = BlockType::LiteralBlock;
-                tpl = get_listing_block_tpl(b, tpl);
-            }
-            Rule::paragraph_with_headingspaces_lines => {
-                content += e.as_str().trim_start();
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    tpl.replace("#place_holder", content.as_str())
-}
-
-pub fn document_attribute_declaration(ast: Pair<Rule>) {
-    for elem in ast.into_inner() {
-        match elem.as_rule() {
-            Rule::document_attribute_name => println!("dad : dan"),
-            Rule::document_attribute_value => println!("dad : dav"),
-            _ => unreachable!(),
-        }
-    }
-}
-
-pub fn document_attribute_reset(ast: Pair<Rule>) {
-    for elem in ast.into_inner() {
-        match elem.as_rule() {
-            Rule::document_attribute_name => println!("doc attr reset : doc attr name"),
-            _ => unreachable!(),
-        }
-    }
-}
-
-// table_of_contents_macro = { "toc::[]" ~ EOL }
-pub fn table_of_contents_macro(_ast: Pair<Rule>) {
-    // do nothing currently
-}
-
 pub fn user_macro_block(ast: Pair<Rule>) {
     for elem in ast.into_inner() {
         match elem.as_rule() {
             Rule::user_macro_name => println!("umb : umn"),
             Rule::user_macro_value => println!("umb : umv"),
             Rule::user_macro_attributes => println!("umb : uma"),
-            _ => unreachable!(),
-        }
-    }
-}
-
-pub fn paragraph(ast: Pair<Rule>) -> String {
-    let mut result = String::new();
-    let mut tpl =
-        r#"<div #id_holder class="paragraph">#title_holder<p>#place_holder</p></div>"#.to_string();
-    let mut b = Block {
-        id: "".to_string(),
-        role: "".to_string(),
-        title: "".to_string(),
-        block_type: BlockType::NotBlock,
-    };
-
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::element_attributes => {
-                let block = element_attributes(e);
-                if !block.title.is_empty() {
-                    b.title = block.title
-                }
-                if !block.role.is_empty() {
-                    b.role = block.role
-                };
-                if !block.id.is_empty() {
-                    b.id = block.id
-                };
-                b.block_type = block.block_type;
-            }
-            Rule::admonition_kind => {
-                b.block_type = AdmonitionBlock {
-                    marker: e.as_str().to_string(),
-                };
-            }
-            Rule::inline_elements => {
-                //inline_elements(elem)
-                result += e.as_str();
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    tpl = get_listing_block_tpl(b, tpl);
-
-    tpl.replace("#place_holder", result.as_str())
-        .replace("#id_holder", "")
-        .replace("#title_holder", "")
-}
-
-pub fn front_matter(ast: Pair<Rule>) {
-    if let Some(e) = ast.into_inner().next() {
-        match e.as_rule() {
-            Rule::yaml_front_matter => yaml_front_matter(e),
-            _ => unreachable!(),
-        }
-    }
-}
-
-pub fn yaml_front_matter(ast: Pair<Rule>) {
-    for e in ast.into_inner() {
-        match e.as_rule() {
-            Rule::yaml_front_matter_token => println!("token in yml front matter"), // do nothing
-            Rule::yaml_front_matter_content => println!("yaml front matter content"),
             _ => unreachable!(),
         }
     }

@@ -1,7 +1,11 @@
+use crate::document::*;
 use crate::list::*;
+use crate::paragraph::*;
 use crate::parse::*;
 use crate::structs::*;
+use crate::table::*;
 use pest::iterators::Pair;
+
 pub fn delimited_block(ast: Pair<Rule>) -> String {
     let mut result = String::new();
 
@@ -571,4 +575,23 @@ pub fn image_block(ast: Pair<Rule>) -> String {
         r#"<div class="imageblock"><div class="content"><img src="{}" alt="{}"></div></div>"#,
         img.0, img.1
     )
+}
+
+pub fn quote_text(ast: Pair<Rule>) {
+    if let Some(e) = ast.into_inner().next() {
+        match e.as_rule() {
+            Rule::bold_text => bold_text(e),
+            Rule::italic_text => italic_text(e),
+            Rule::monospace_text => monospace_text(e),
+            Rule::subscript_text => subscript_text(e),
+            Rule::superscript_text => superscript_text(e),
+            Rule::escaped_bold_text => escaped_bold_text(e),
+            Rule::escaped_italic_text => escaped_italic_text(e),
+            Rule::escaped_monospace_text => escaped_monospace_text(e),
+            Rule::escaped_subscript_text => escaped_subscript_text(e),
+            Rule::escaped_superscript_text => escaped_superscript_text(e),
+            Rule::subscript_or_superscript_prefix => subscript_or_superscript_prefix(e),
+            _ => unreachable!(),
+        }
+    }
 }

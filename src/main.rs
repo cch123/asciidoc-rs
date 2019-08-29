@@ -11,8 +11,10 @@ use tpl::*;
 pub mod block;
 pub mod document;
 pub mod list;
+mod paragraph;
 pub mod section;
 pub mod structs;
+mod table;
 
 use chrono::DateTime;
 use pest::{iterators::Pair, Parser};
