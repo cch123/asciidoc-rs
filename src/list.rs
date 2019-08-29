@@ -13,13 +13,14 @@ pub fn list_items(ast: Pair<Rule>) -> String {
                         Rule::ordered_list_item
                         | Rule::unordered_list_item
                         | Rule::labeled_list_item => {
-                            let (level, typ, need_checkbox, content) =
+                            let (level, typ, need_checkbox, title, description) =
                                 get_level_type_content(e_in.clone());
                             let current_item = ListItem {
                                 typ,
                                 level,
                                 children: vec![],
-                                content, //e_in.as_str().to_string(),
+                                title,
+                                description,
                             };
                             if item_list.contains(&current_item) {
                                 loop {
@@ -66,7 +67,7 @@ pub fn list_items(ast: Pair<Rule>) -> String {
                             item_list
                                 .last_mut()
                                 .unwrap()
-                                .content
+                                .description
                                 .push_str(e_in.as_str());
                         }
                         _ => unreachable!(),
@@ -94,10 +95,17 @@ pub fn list_items(ast: Pair<Rule>) -> String {
 }
 
 // TODO
-fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String) {
-    let (mut level, mut need_checkbox, mut content) = (0, false, String::new());
+fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String, String) {
+    let (mut typ, mut level, mut need_checkbox, mut title, mut description) = (
+        ListItemType::OrderedItem,
+        0,
+        false,
+        String::new(),
+        String::new(),
+    );
     match e.as_rule() {
         Rule::ordered_list_item => {
+            typ = ListItemType::OrderedItem;
             for e_in in e.into_inner() {
                 match e_in.as_rule() {
                     Rule::element_attributes => {} // TODO
@@ -124,13 +132,14 @@ fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String) {
                         }
                     }
                     Rule::ordered_list_item_content => {
-                        content.push_str(e_in.as_str());
+                        title.push_str(e_in.as_str());
                     }
                     _ => unreachable!(),
                 }
             }
         }
         Rule::unordered_list_item => {
+            typ = ListItemType::UnorderedItem;
             for e_in in e.into_inner() {
                 match e_in.as_rule() {
                     Rule::element_attributes => {} // todo
@@ -152,29 +161,32 @@ fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String) {
                         need_checkbox = true;
                     }
                     Rule::unordered_list_item_content => {
-                        content.push_str(e_in.as_str());
+                        // todo
+                        title.push_str(e_in.as_str());
                     }
                     _ => unreachable!(),
                 }
             }
         }
         Rule::labeled_list_item => {
+            typ = ListItemType::LabeledItem;
             for e_in in e.into_inner() {
                 match e_in.as_rule() {
                     Rule::element_attributes => {} // TODO
-                    Rule::labeled_list_item_term => {}
-                    Rule::labeled_list_item_separator => {}
-                    Rule::labeled_list_item_description => {}
+                    Rule::labeled_list_item_term => {
+                        title = e_in.as_str().to_string();
+                    }
+                    Rule::labeled_list_item_separator => {
+                        level = e_in.as_str().trim().chars().count() as i8;
+                    }
+                    Rule::labeled_list_item_description => {
+                        description.push_str(e_in.as_str());
+                    }
                     _ => unreachable!(),
                 }
             }
         }
         _ => unreachable!(),
     }
-    (
-        level,
-        ListItemType::OrderedItem,
-        need_checkbox,
-        String::new(),
-    )
+    (level, typ, need_checkbox, title, description)
 }

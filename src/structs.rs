@@ -48,7 +48,8 @@ pub struct ListItem {
     pub typ: ListItemType,
     pub level: i8,
     pub children: Vec<ListItem>,
-    pub content: String,
+    pub title: String,
+    pub description: String, // only labeled item has a description
 }
 
 impl PartialEq for ListItem {

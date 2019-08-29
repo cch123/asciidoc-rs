@@ -5,15 +5,15 @@ pub mod parse;
 use document::*;
 use parse::*;
 
-pub mod tpl;
+mod tpl;
 use tpl::*;
 
-pub mod block;
-pub mod document;
-pub mod list;
+mod block;
+mod document;
+mod list;
 mod paragraph;
-pub mod section;
-pub mod structs;
+mod section;
+mod structs;
 mod table;
 
 use chrono::DateTime;
