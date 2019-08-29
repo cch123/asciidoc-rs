@@ -396,7 +396,7 @@ undefined_line_range = {
 // ------------------------------------------
 // Lists
 // ------------------------------------------
-list_items = { (list_item)+ }
+list_items = { element_attributes? ~ list_item+ }
 
 list_item = { ordered_list_item | unordered_list_item | labeled_list_item | continued_list_item_element }
 
@@ -446,11 +446,11 @@ unordered_list_item = {
 }
 
 unordered_list_item_prefix = { 
-    WS* ~ (("*"{1,6} ~ WS*) | (("-") ~ WS+))
+    WS* ~ (("*"{1,} ~ WS*) | (("-") ~ WS+))
 }
 
 ordered_list_item_prefix = {
-    WS* ~ (("."{1,6} ~ WS*) | (ASCII_DIGIT ~ "." ~ WS+) | (ASCII_ALPHA ~ "." ~ WS+))
+    WS* ~ (("."{1,} ~ WS*) | (ASCII_DIGIT ~ "." ~ WS+) | (ASCII_ALPHA ~ "." ~ WS+))
 }
 
 unordered_list_item_check_style = {
@@ -474,7 +474,7 @@ labeled_list_item_term = {
 }
 
 labeled_list_item_separator = { 
-    ("::" ~ !":") | ("::::" ~ !":")
+    ":"{2,4}
     ~ ((WS | NEWLINE)+ | EOL)
 }
 

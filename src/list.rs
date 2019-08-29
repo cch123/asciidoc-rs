@@ -13,12 +13,12 @@ pub fn list_items(ast: Pair<Rule>) -> String {
                         Rule::ordered_list_item
                         | Rule::unordered_list_item
                         | Rule::labeled_list_item => {
-                            let (level, typ) = get_level_and_type(e_in.clone());
+                            let (level, typ, content) = get_level_type_content(e_in.clone());
                             let current_item = ListItem {
                                 typ,
                                 level,
                                 children: vec![],
-                                content: e_in.as_str().to_string(),
+                                content, //e_in.as_str().to_string(),
                             };
                             if item_list.contains(&current_item) {
                                 loop {
@@ -93,12 +93,69 @@ pub fn list_items(ast: Pair<Rule>) -> String {
 }
 
 // TODO
-fn get_level_and_type(e: Pair<Rule>) -> (i8, ListItemType) {
+fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, String) {
     match e.as_rule() {
-        Rule::ordered_list_item => {}
-        Rule::unordered_list_item => {}
-        Rule::labeled_list_item => {}
+        /*
+        ordered_list_item = {
+            element_attributes?
+            ~ ordered_list_item_prefix
+            ~ ordered_list_item_content
+        }
+        */
+        Rule::ordered_list_item => {
+            for e_in in e.into_inner() {
+                match e_in.as_rule() {
+                    Rule::element_attributes => {} // TODO
+                    Rule::ordered_list_item_prefix => {
+                        // .{1,}  => level = counter
+                        // 1. 2.  => level = -1
+                        // a. b.  => level = -2
+                        // A. B.  => level = -3
+                    }
+                    Rule::ordered_list_item_content => {}
+                    _ => unreachable!(),
+                }
+            }
+        }
+        /*
+        unordered_list_item = {
+            element_attributes?
+            ~ unordered_list_item_prefix
+            ~ unordered_list_item_check_style?
+            ~ unordered_list_item_content
+        }
+        */
+        Rule::unordered_list_item => {
+            for e_in in e.into_inner() {
+                match e_in.as_rule() {
+                    Rule::element_attributes => {} // todo
+                    Rule::unordered_list_item_prefix => {}
+                    Rule::unordered_list_item_check_style => {}
+                    Rule::unordered_list_item_content => {}
+                    _ => unreachable!(),
+                }
+            }
+        }
+        /*
+        labeled_list_item = {
+            element_attributes?
+            ~ labeled_list_item_term
+            ~ labeled_list_item_separator
+            ~ labeled_list_item_description?
+        }
+        */
+        Rule::labeled_list_item => {
+            for e_in in e.into_inner() {
+                match e_in.as_rule() {
+                    Rule::element_attributes => {} // TODO
+                    Rule::labeled_list_item_term => {}
+                    Rule::labeled_list_item_separator => {}
+                    Rule::labeled_list_item_description => {}
+                    _ => unreachable!(),
+                }
+            }
+        }
         _ => unreachable!(),
     }
-    (0, ListItemType::OrderedItem)
+    (0, ListItemType::OrderedItem, String::new())
 }
