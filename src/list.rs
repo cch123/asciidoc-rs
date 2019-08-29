@@ -13,7 +13,8 @@ pub fn list_items(ast: Pair<Rule>) -> String {
                         Rule::ordered_list_item
                         | Rule::unordered_list_item
                         | Rule::labeled_list_item => {
-                            let (level, typ, content) = get_level_type_content(e_in.clone());
+                            let (level, typ, need_checkbox, content) =
+                                get_level_type_content(e_in.clone());
                             let current_item = ListItem {
                                 typ,
                                 level,
@@ -93,15 +94,9 @@ pub fn list_items(ast: Pair<Rule>) -> String {
 }
 
 // TODO
-fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, String) {
+fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String) {
+    let (mut level, mut need_checkbox, mut content) = (0, false, String::new());
     match e.as_rule() {
-        /*
-        ordered_list_item = {
-            element_attributes?
-            ~ ordered_list_item_prefix
-            ~ ordered_list_item_content
-        }
-        */
         Rule::ordered_list_item => {
             for e_in in e.into_inner() {
                 match e_in.as_rule() {
@@ -111,39 +106,58 @@ fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, String) {
                         // 1. 2.  => level = -1
                         // a. b.  => level = -2
                         // A. B.  => level = -3
+                        let prefix = e_in.as_str();
+                        match prefix.chars().nth(0).unwrap() {
+                            '.' => {
+                                level = prefix.trim().chars().count() as i8;
+                            }
+                            '0'..='9' => {
+                                level = -1;
+                            }
+                            'a'..='z' => {
+                                level = -2;
+                            }
+                            'A'..='Z' => {
+                                level = -3;
+                            }
+                            _ => unreachable!(),
+                        }
                     }
-                    Rule::ordered_list_item_content => {}
+                    Rule::ordered_list_item_content => {
+                        content.push_str(e_in.as_str());
+                    }
                     _ => unreachable!(),
                 }
             }
         }
-        /*
-        unordered_list_item = {
-            element_attributes?
-            ~ unordered_list_item_prefix
-            ~ unordered_list_item_check_style?
-            ~ unordered_list_item_content
-        }
-        */
         Rule::unordered_list_item => {
             for e_in in e.into_inner() {
                 match e_in.as_rule() {
                     Rule::element_attributes => {} // todo
-                    Rule::unordered_list_item_prefix => {}
-                    Rule::unordered_list_item_check_style => {}
-                    Rule::unordered_list_item_content => {}
+                    Rule::unordered_list_item_prefix => {
+                        // * => counter
+                        // - => -1
+                        let prefix = e_in.as_str().trim();
+                        match prefix.chars().nth(0).unwrap() {
+                            '-' => {
+                                level = -1;
+                            }
+                            '*' => {
+                                level = prefix.chars().count() as i8;
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                    Rule::unordered_list_item_check_style => {
+                        need_checkbox = true;
+                    }
+                    Rule::unordered_list_item_content => {
+                        content.push_str(e_in.as_str());
+                    }
                     _ => unreachable!(),
                 }
             }
         }
-        /*
-        labeled_list_item = {
-            element_attributes?
-            ~ labeled_list_item_term
-            ~ labeled_list_item_separator
-            ~ labeled_list_item_description?
-        }
-        */
         Rule::labeled_list_item => {
             for e_in in e.into_inner() {
                 match e_in.as_rule() {
@@ -157,5 +171,10 @@ fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, String) {
         }
         _ => unreachable!(),
     }
-    (0, ListItemType::OrderedItem, String::new())
+    (
+        level,
+        ListItemType::OrderedItem,
+        need_checkbox,
+        String::new(),
+    )
 }
