@@ -2,6 +2,28 @@ use crate::parse::*;
 use crate::structs::*;
 use pest::iterators::Pair;
 
+fn walk_list(list: Vec<ListItem>) -> String {
+    let mut result = String::new();
+    let mut tpl = match list.first().unwrap().typ {
+        ListItemType::OrderedItem => r#"<div class="olist"><ol>#place_holder</ol></div>"#,
+        ListItemType::UnorderedItem => r#"<div class="ulist"><ul>#place_holder</ul></div>"#,
+        ListItemType::LabeledItem => r#"<div class="dlist"><dl>#place_holder</dl></div>"#,
+    };
+
+    let mut str_list = vec![];
+    for item in list {
+        // fixme, labeled list item is different
+        let mut content = "<p>".to_string() + item.title.as_str() + "</p>";
+        if item.children.len() > 0 {
+            content.push_str(walk_list(item.children).as_str());
+        }
+        // fixme, labeled list item is different
+        str_list.push("<li>".to_string() + content.as_str() + "</li>");
+    }
+
+    tpl.replace("#place_holder", str_list.join("\n").as_str())
+}
+
 pub fn list_items(ast: Pair<Rule>) -> String {
     let mut item_list: Vec<ListItem> = vec![];
     let mut pre_content = String::new();
