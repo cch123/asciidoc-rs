@@ -1,22 +1,19 @@
 #[macro_use]
 extern crate pest_derive;
 
-pub mod parse;
-use document::*;
-use parse::*;
-
-mod tpl;
-use tpl::*;
-
 mod block;
 mod document;
 mod list;
 mod paragraph;
+mod parse;
 mod section;
 mod structs;
 mod table;
+mod tpl;
 
 use chrono::DateTime;
+use document::*;
+use parse::*;
 use pest::{iterators::Pair, Parser};
 use std::{env, fs::File, io::Read, path::Path};
 
@@ -28,18 +25,15 @@ fn main() -> Result<(), i32> {
 
     let path = env::args().nth(1).ok_or(-1)?;
     let mut buffer = String::new();
-    File::open(Path::new(path.as_str()))
-        .or(Err(-1))?
-        .read_to_string(&mut buffer)
-        .or(Err(-1))?;
-    let m = File::open(Path::new(path.as_str()))
-        .or(Err(-1))?
+    let mut f = File::open(Path::new(path.as_str())).or(Err(-1))?;
+    let m = f
         .metadata()
         .or(Err(-1))
         .unwrap()
         .modified()
         .or(Err(-1))
         .unwrap();
+    f.read_to_string(&mut buffer).or(Err(-1))?;
 
     let m: DateTime<chrono::offset::Local> = DateTime::from(m);
 

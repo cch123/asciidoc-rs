@@ -1,5 +1,3 @@
-//use crate::block::*;
-//use crate::structs::BlockType::{AdmonitionBlock, ExampleBlock, NotBlock};
 use crate::structs::*;
 use pest::iterators::Pair;
 

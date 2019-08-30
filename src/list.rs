@@ -94,7 +94,6 @@ pub fn list_items(ast: Pair<Rule>) -> String {
     String::new()
 }
 
-// TODO
 fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String, String) {
     let (mut typ, mut level, mut need_checkbox, mut title, mut description) = (
         ListItemType::OrderedItem,
@@ -132,6 +131,7 @@ fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String, Str
                         }
                     }
                     Rule::ordered_list_item_content => {
+                        // fixme
                         title.push_str(e_in.as_str());
                     }
                     _ => unreachable!(),
@@ -161,7 +161,7 @@ fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String, Str
                         need_checkbox = true;
                     }
                     Rule::unordered_list_item_content => {
-                        // todo
+                        // fixme
                         title.push_str(e_in.as_str());
                     }
                     _ => unreachable!(),
@@ -180,6 +180,7 @@ fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String, Str
                         level = e_in.as_str().trim().chars().count() as i8;
                     }
                     Rule::labeled_list_item_description => {
+                        // fixme
                         description.push_str(e_in.as_str());
                     }
                     _ => unreachable!(),

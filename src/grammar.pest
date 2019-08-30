@@ -282,9 +282,6 @@ section_body = {
     // 不能有 === section 3 内部嵌入了 == section 2 的情况
     // 在语法上不是很好表达这个意思，需要再考虑考虑
     // section 
-    //verse_paragraph // must be before image_block
-    //source_paragraph
-    //listing_paragraph
     blank_line // must be before Literal_block
     | markdown_style_quote
     | table_of_contents_macro
@@ -396,7 +393,7 @@ undefined_line_range = {
 // ------------------------------------------
 // Lists
 // ------------------------------------------
-list_items = { element_attributes? ~ list_item+ }
+list_items = { element_attributes? ~ (list_item ~ blank_line*)+ }
 
 list_item = { ordered_list_item | unordered_list_item | labeled_list_item | continued_list_item_element }
 
@@ -421,7 +418,9 @@ list_paragraph_line = {
 list_item_continuation = { "+" ~ EOLS }
 
 continued_list_item_element = {
-    blank_line* ~ list_item_continuation ~ sections
+    blank_line* ~ list_item_continuation ~ blank_line*
+    // similar to section body, but not supporting all elem
+    ~ (markdown_style_quote|image_block|literal_block|delimited_block|list_item|paragraph)
 }
 
 // ------------------------------------------
