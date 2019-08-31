@@ -23,11 +23,13 @@ Rewrite all grammars using pest
     - [x] image block support
     - [x] nested example/quote block
     - [x] element id/title support
+    - [x] unordered list support
+    - [x] ordered list support
+    - [x] mixed unordered/ordered list
+    - [ ] labeled list support
+    - [ ] suitable list prefix handling
     - [ ] element role
     - [ ] markdown style quote support and nested markdown quote
-    - [ ] unordered list support
-    - [ ] ordered list support
-    - [ ] mixed unordered/ordered list
     - [ ] toc support
     - [ ] file inclusion support
     - [ ] table support

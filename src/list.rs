@@ -3,8 +3,7 @@ use crate::structs::*;
 use pest::iterators::Pair;
 
 fn walk_list(list: Vec<ListItem>) -> String {
-    let mut result = String::new();
-    let mut tpl = match list.first().unwrap().typ {
+    let tpl = match list.first().unwrap().typ {
         ListItemType::OrderedItem => r#"<div class="olist"><ol>#place_holder</ol></div>"#,
         ListItemType::UnorderedItem => r#"<div class="ulist"><ul>#place_holder</ul></div>"#,
         ListItemType::LabeledItem => r#"<div class="dlist"><dl>#place_holder</dl></div>"#,
@@ -35,7 +34,7 @@ pub fn list_items(ast: Pair<Rule>) -> String {
                         Rule::ordered_list_item
                         | Rule::unordered_list_item
                         | Rule::labeled_list_item => {
-                            let (level, typ, need_checkbox, title, description) =
+                            let (level, typ, _need_checkbox, title, description) =
                                 get_level_type_content(e_in.clone());
                             let current_item = ListItem {
                                 typ,
@@ -112,8 +111,10 @@ pub fn list_items(ast: Pair<Rule>) -> String {
         }
     }
 
-    println!("xx{:#?}", item_list);
-    String::new()
+    //println!("xx{:#?}", item_list);
+    //let r = walk_list(item_list);
+    //println!("{}", r);
+    walk_list(item_list)
 }
 
 fn get_level_type_content(e: Pair<Rule>) -> (i8, ListItemType, bool, String, String) {

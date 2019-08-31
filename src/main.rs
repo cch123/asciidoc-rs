@@ -16,6 +16,7 @@ use document::*;
 use parse::*;
 use pest::{iterators::Pair, Parser};
 use std::{env, fs::File, io::Read, path::Path};
+use tpl::*;
 
 fn main() -> Result<(), i32> {
     if env::args().len() < 2 {
@@ -158,7 +159,6 @@ pub fn convert(query: &str, modify_time: &str) {
             let result = walk_tree(top_ast.clone().next().unwrap());
             //println!("{:#?}", top_ast);
             //            println!("the parse result is \n{}", result);
-            /*
             println!(
                 "{}",
                 page_tpl()
@@ -173,7 +173,6 @@ pub fn convert(query: &str, modify_time: &str) {
                         .as_str(),
                     )
             );
-            */
         }
         Err(e) => {
             dbg!(e);
