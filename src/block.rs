@@ -569,7 +569,14 @@ pub fn image_block(ast: Pair<Rule>) -> String {
 
     // TODO trim the suffix
     if img.1.is_empty() {
-        img.1 = img.0.clone()
+        img.1 = img
+            .0
+            .clone()
+            .split(".")
+            .collect::<Vec<&str>>()
+            .first()
+            .unwrap()
+            .to_string();
     }
     format!(
         r#"<div class="imageblock"><div class="content"><img src="{}" alt="{}"></div></div>"#,
